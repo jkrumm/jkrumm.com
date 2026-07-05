@@ -27,3 +27,7 @@ pnpm-debug.log*
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# local design reference (kept out of the published repo)
+design_handoff_portfolio/
+docs/diagrams/wireframe.*
