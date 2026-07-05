@@ -148,3 +148,38 @@ Entry format:
   once touch validation passes. The mechanism (view-timeline shorthand,
   sticky pinning, center snap, @supports fallback) is the validated house
   pattern.
+
+## 2026-07-05 — Phase 2 mandatory-snap revert: proximity + narrative, never mandatory
+
+- **Context:** After shipping `y mandatory` snap with the narrative POC, the
+  owner tested it live and rejected it: "this enforced full page scrolling is
+  messing up the user experience immensely." Research followed (Smashing Mag,
+  MDN, web.dev, CSS-Tricks, Reddit) — the verdict was unanimous.
+- **Worked:** Reverting the single line (`mandatory` → `proximity`) restores the
+  natural scroll feel. The narrative POC (CSS `view-timeline` on Experience) is
+  the good part and stays. Added `scroll-snap-stop: always` on `.narrative-stage`
+  so a fast flick on a trackpad doesn't skip the narrative section under
+  proximity snap.
+- **Didn't:** Mandatory snap fundamentally doesn't work for content portfolios:
+  - It locks scroll even on sections that fit the viewport — the user can't
+    pause mid-section or scroll a few lines without being yanked back.
+  - At phone/tablet viewports (500–768 px wide), multiple sections overflow and
+    mandatory snap makes them unscrollable — content is permanently hidden.
+  - It reads as UX-hostile on trackpads where every gesture is a snap command.
+  - It fights programmatic `scrollTo` (tested in headless Chrome).
+- **Why every source says no:** Mandatory snap is for slides and carousels —
+  short, width-fixed, exact-fit, no overflow, no partial scroll needed. A
+  content portfolio is the opposite: variable-height content, inline scrolling
+  for reading, user freedom to scan at their own pace.
+- **Gotcha:** The only case where mandatory snap would ever work is a 7-page
+  slideshow where every slide fits exactly — and even then, most modern
+  portfolios use progressive disclosure (reveals + sticky + scroll-driven
+  animations) instead, because it feels like content the user controls rather
+  than a forced presentation.
+- **Verdict / decision:** **Proximity snap is the permanent default.** The
+  portfolio standard (2025–2026) is proximity + scroll-driven reveals + sticky
+  sections — which the site already has. Mandatory snap is off the table
+  permanently. Update `SKILL.md` to say "proximity + narrative, never
+  mandatory." The narrative POC stays as a progressive enhancement; if it ever
+  fights snap on touch devices, the kill path is to remove the `narrative` prop
+  from Experience (keeping SectionShell's narrative support for future use).

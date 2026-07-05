@@ -76,7 +76,10 @@ const { id, name, class: className, narrative = false } = Astro.props;
     top: 0;
     height: 100svh;
     /* Snap to center so the overview (start of narrative) is visible at rest,
-       not the mid-collapse state that start-alignment would land on. */
+       not the mid-collapse state that start-alignment would land on.
+       always: with proximity snap, a fast flick can skip sections — this
+       keeps the narrative from being overshot on trackpads. */
     scroll-snap-align: center;
+    scroll-snap-stop: always;
   }
 </style>
