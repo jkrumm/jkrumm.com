@@ -1,10 +1,10 @@
 ---
 /**
  * Experience section — overview lede + role timeline.
- * Phase 2 narrative POC: CSS scroll-driven expand/collapse of role detail.
- * The tall wrapper (SectionShell narrative mode) supplies scroll distance;
- * the sticky child stays a 100svh stage. Role scope text fades in/out
- * as the user scrolls through the section, driven by the named view-timeline.
+ * Scope text is shown inline (the CSS scroll-driven narrative POC was removed
+ * in July 2026 — the sticky + view-timeline interaction didn't animate
+ * reliably in natural flow, and the 200svh wrapper created a jarring gap).
+ * The SectionShell narrative prop stays available for future use.
  */
 import SectionShell from '@/components/primitives/SectionShell.astro';
 import SectionHeader from '@/components/primitives/SectionHeader.astro';
@@ -12,7 +12,7 @@ import MetaLink from '@/components/primitives/MetaLink.astro';
 import { overview, roles, resumeHref } from '@/data/experience.ts';
 ---
 
-<SectionShell id="experience" name="Experience" narrative>
+<SectionShell id="experience" name="Experience">
   <SectionHeader number="02" title="Experience" meta="OVERVIEW → ROLES" />
 
   <div class="overview reveal" data-delay="60">
@@ -42,10 +42,7 @@ import { overview, roles, resumeHref } from '@/data/experience.ts';
               <h3 class="role__title">{role.title}</h3>
               <span class="role__company">{role.company}</span>
             </div>
-            <!-- Scope text is the narrative detail — hidden at rest, revealed
-                 mid-scroll via CSS scroll-driven animation. The @supports +
-                 reduced-motion fallback shows it fully visible / static. -->
-            <p class="role__scope narrative-detail">{role.scope}</p>
+            <p class="role__scope">{role.scope}</p>
           </div>
         </div>
       ))
@@ -143,95 +140,5 @@ import { overview, roles, resumeHref } from '@/data/experience.ts';
     color: var(--muted);
     margin: 8px 0 0;
     max-width: 640px;
-  }
-
-  /* ==========================================================================
-     Narrative scroll-driven animation.
-     Detail is hidden by default; the animation reveals it mid-scroll via the
-     named view-timeline (--narrative, scoped on .narrative-wrap).
-     ========================================================================== */
-
-  .narrative-detail {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-
-  /* ---- Primary: CSS scroll-driven animation (Chrome/Edge 115+, Safari 26+) -- */
-  @supports (animation-timeline: view()) {
-    @media not (prefers-reduced-motion: reduce) {
-      /* Base: timeline + range on all detail elements; name defaults to
-         role-1's keyframe (roles 2 & 3 override below). */
-      .narrative-detail {
-        animation-name: expand-detail-1;
-        animation-duration: 1ms;
-        animation-timing-function: linear;
-        animation-fill-mode: both;
-        animation-timeline: --narrative;
-        /* The wrapper is 200svh; full entry→exit spans ~300svh of scroll.
-           Expand at ~25 %, hold visible through ~55 %, collapse through ~65 %. */
-        animation-range: entry 0% exit 100%;
-      }
-
-      /* Stagger: each role's detail peaks at a slightly different scroll point
-         so they cascade as the user scrolls through. */
-      .role:nth-child(1) .narrative-detail {
-        animation-name: expand-detail-1;
-      }
-      .role:nth-child(2) .narrative-detail {
-        animation-name: expand-detail-2;
-      }
-      .role:nth-child(3) .narrative-detail {
-        animation-name: expand-detail-3;
-      }
-    }
-  }
-
-  /* ---- Static fallback (Firefox, reduced-motion, keyboard, no-JS) -----------
-     Detail is always visible and readable — the same degrade every
-     non-Chromium / non-Safari-26+ browser rides. */
-  @supports not (animation-timeline: view()) {
-    .narrative-detail {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .narrative-detail {
-      opacity: 1;
-      transform: none;
-      animation: none;
-    }
-  }
-
-  /* Keyframes: expand → visible → collapse.
-     The wrapper is 200svh; with animation-range entry 0%→exit 100% the
-     scroll distance is ~300svh. Each keyframe set staggers the peak so
-     roles cascade visually. */
-  @keyframes expand-detail-1 {
-    0%   { opacity: 0; transform: translateY(14px); }
-    18%  { opacity: 0; transform: translateY(14px); }
-    28%  { opacity: 1; transform: translateY(0); }
-    50%  { opacity: 1; transform: translateY(0); }
-    60%  { opacity: 0; transform: translateY(-10px); }
-    100% { opacity: 0; transform: translateY(-10px); }
-  }
-
-  @keyframes expand-detail-2 {
-    0%   { opacity: 0; transform: translateY(14px); }
-    28%  { opacity: 0; transform: translateY(14px); }
-    38%  { opacity: 1; transform: translateY(0); }
-    55%  { opacity: 1; transform: translateY(0); }
-    65%  { opacity: 0; transform: translateY(-10px); }
-    100% { opacity: 0; transform: translateY(-10px); }
-  }
-
-  @keyframes expand-detail-3 {
-    0%   { opacity: 0; transform: translateY(14px); }
-    38%  { opacity: 0; transform: translateY(14px); }
-    48%  { opacity: 1; transform: translateY(0); }
-    62%  { opacity: 1; transform: translateY(0); }
-    72%  { opacity: 0; transform: translateY(-10px); }
-    100% { opacity: 0; transform: translateY(-10px); }
   }
 </style>
