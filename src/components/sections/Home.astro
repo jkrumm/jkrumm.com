@@ -10,14 +10,17 @@ import { navSections } from '@/data/nav';
 ---
 
 <section id="home" data-section data-name="Overview" class="home-section">
-  <Grid class="hero">
+  <Grid class="hero" data-hero-measure>
     <Cell class="hero__content">
-      <div class="reveal">
-        <p class="hero__eyebrow">{SITE.tagline}</p>
-        <h1 class="hero__statement">
-          I build resilient systems and lead teams that ship — with a bias for clean
-          architecture and software that lasts. Based in Munich.
-        </h1>
+      <div data-hero-collapse class="hero__collapse">
+        <div class="reveal">
+          <p class="hero__eyebrow">{SITE.tagline}</p>
+          <h1 class="hero__statement">Johannes Krumm</h1>
+          <p class="hero__sub">
+            I build resilient systems and lead teams that ship — with a bias for clean
+            architecture and software that lasts. Based in Munich.
+          </p>
+        </div>
       </div>
     </Cell>
     <Cell class="hero__portrait">
@@ -58,6 +61,13 @@ import { navSections } from '@/data/nav';
     justify-content: center;
   }
 
+  /* Scroll-driven collapse layer — fades/lifts the hero content out INSIDE the
+     opaque cell (never the cell itself), handing off to the compact bar.
+     Transform + opacity only; the lift stays within the cell padding. */
+  .hero__collapse {
+    will-change: opacity, transform;
+  }
+
   .hero__eyebrow {
     font: clamp(11px, 1.1vw, 12px) var(--mono);
     letter-spacing: 0.16em;
@@ -74,6 +84,15 @@ import { navSections } from '@/data/nav';
     letter-spacing: -0.02em;
     margin: 0;
     color: var(--ink);
+  }
+
+  .hero__sub {
+    font-family: var(--sans);
+    font-weight: 400;
+    font-size: clamp(15px, 1.8vw, 18px);
+    line-height: 1.5;
+    margin: 16px 0 0;
+    color: var(--ink-faint);
   }
 
   .hero__portrait {

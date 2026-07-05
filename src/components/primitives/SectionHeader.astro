@@ -1,16 +1,18 @@
 ---
 /**
  * The shared section header row: an opaque `--panel` cell holding
- * number · title · hairline · meta. Its inner content is the section's first
- * reveal (no delay); the cell itself stays fixed on the rail band.
+ * number · title · hairline · optional action button. Its inner content
+ * is the section's first reveal (no delay); the cell itself stays fixed
+ * on the rail band.
  */
 interface Props {
   number: string;
   title: string;
-  meta: string;
+  /** Optional CTA button — replaces the old dimmed meta text. */
+  action?: { label: string; href: string };
 }
 
-const { number, title, meta } = Astro.props;
+const { number, title, action } = Astro.props;
 ---
 
 <div class="section-header">
@@ -18,7 +20,14 @@ const { number, title, meta } = Astro.props;
     <span class="section-header__number">{number}</span>
     <h2 class="section-header__title">{title}</h2>
     <span class="section-header__hairline" aria-hidden="true"></span>
-    <span class="section-header__meta">{meta}</span>
+    {action ? (
+      <a href={action.href} class="section-header__action">
+        <span class="section-header__action-label">{action.label}</span>
+        <span class="section-header__action-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    ) : (
+      <span class="section-header__spacer" aria-hidden="true"></span>
+    )}
   </div>
 </div>
 
@@ -55,9 +64,73 @@ const { number, title, meta } = Astro.props;
     min-width: 20px;
   }
 
-  .section-header__meta {
-    font-size: 11px;
-    color: var(--faint);
-    letter-spacing: 0.14em;
+  /* ---- Action button ---------------------------------------------------- */
+  .section-header__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    height: 48px;
+    padding: 0 26px;
+    font: 13px var(--mono);
+    letter-spacing: 0.08em;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--line);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition:
+      background-color 0.3s var(--ease-reveal),
+      border-color 0.3s var(--ease-reveal),
+      color 0.3s var(--ease-reveal);
+  }
+
+  .section-header__action-label {
+    line-height: 1;
+  }
+
+  .section-header__action:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--panel);
+  }
+
+  .section-header__action-arrow {
+    --arrow-lift: -5px;
+    font-size: 26px;
+    line-height: 1;
+    transform: translateY(var(--arrow-lift));
+    transition: transform 0.3s var(--ease-reveal);
+  }
+
+  .section-header__action:hover .section-header__action-arrow {
+    transform: translateY(var(--arrow-lift)) translateX(8px);
+  }
+
+  /* Empty spacer when no action — keeps the hairline from collapsing */
+  .section-header__spacer {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 640px) {
+    .section-header__inner {
+      justify-content: space-between;
+    }
+
+    .section-header__hairline {
+      display: none;
+    }
+
+    .section-header__action {
+      height: 36px;
+      padding: 0 14px;
+      gap: 8px;
+      font-size: 11px;
+    }
+
+    .section-header__action-arrow {
+      --arrow-lift: -3px;
+      font-size: 17px;
+    }
   }
 </style>

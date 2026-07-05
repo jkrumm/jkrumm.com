@@ -9,10 +9,11 @@ import Grid from '@/components/primitives/Grid.astro';
 import Cell from '@/components/primitives/Cell.astro';
 import Chip from '@/components/primitives/Chip.astro';
 import { featured, rollhook, github } from '@/data/projects.ts';
+import { SOCIAL } from '@/consts';
 ---
 
 <SectionShell id="projects" name="Projects">
-  <SectionHeader number="04" title="Projects" meta="IN THE WILD" />
+  <SectionHeader number="04" title="Projects" action={{ label: 'GitHub', href: SOCIAL.github }} />
 
   <Grid>
     <Cell as="a" href={featured.href} target="_blank" rel="noopener" accent class="featured">

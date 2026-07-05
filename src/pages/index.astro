@@ -36,6 +36,9 @@ import { SITE } from '@/consts';
     scroll-behavior: smooth;
     background: var(--bg);
     font-family: var(--sans);
-    padding-inline: clamp(12px, 3vw, 24px);
+    /* Float the PageBox off every viewport edge: 10px top/bottom + side gutter.
+       The fixed CompactHeader pins to top:10px and the sticky footer resolves
+       against this padded edge, so both align with the floated box. */
+    padding: 10px clamp(12px, 3vw, 24px);
   }
 </style>

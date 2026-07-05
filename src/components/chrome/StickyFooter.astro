@@ -1,33 +1,77 @@
 ---
 /**
- * Sticky footer inside #jk-scroll — replaces the old fixed BottomBar.
- * Nav dots, social links, and live clock all sticky to the bottom of
- * the scroll container.
+ * Sticky footer inside #jk-scroll — the site's section navigator.
+ *
+ * The pill row is shown on EVERY device; interaction splits by input modality
+ * (driven by portfolio.ts), not screen size:
+ *   - Mouse / pen (hover available): each section is a dot, the ACTIVE one is
+ *     "open" (label revealed). Hovering/focusing any pill opens it and closes
+ *     the rest — one open at a time — and clicking navigates. As you scroll,
+ *     the open pill glides to the newly-active section.
+ *   - Touch (no hover): tapping the pill row opens an upward popover listing
+ *     every section as a tappable anchor — since there's no hover to preview.
+ *
+ * Progressive enhancement: without JS the pills show all labels inline (still
+ * navigable); the touch popover (a JS affordance) is simply inert. The
+ * reveal/collapse hidden state lives in CSS under `html.js`, mirroring the
+ * site's reveal system.
  */
 import { navDots } from '@/data/nav';
 import { SOCIAL } from '@/consts';
 ---
 
 <div class="sticky-footer">
-  <div class="sticky-footer__dots">
-    {
-      navDots.map((section, index) => (
-        <a
-          href={`#${section.id}`}
-          data-dot={index}
-          title={section.name}
-          class:list={['dot', index === 0 && 'is-active']}
-        />
-      ))
-    }
+  <div class="sticky-footer__nav">
+    <!-- Always-visible pill row (mouse hovers to preview, touch taps the popover) -->
+    <nav
+      class="pillnav"
+      data-pillnav
+      aria-label="Sections"
+      aria-haspopup="menu"
+      aria-expanded="false"
+      aria-controls="navpop-menu"
+    >
+      {
+        navDots.map((section, index) => (
+          <a
+            href={`#${section.id}`}
+            data-pill={index}
+            aria-label={section.name}
+            class:list={['pill', index === 0 && 'is-active']}
+          >
+            <span class="pill__dot" aria-hidden="true" />
+            <span class="pill__reveal">
+              <span class="pill__label">{section.name}</span>
+            </span>
+          </a>
+        ))
+      }
+    </nav>
+
+    <!-- Touch popover: opens upward from the pill row -->
+    <div class="navpop" id="navpop-menu" data-navpop role="menu" inert>
+      {
+        navDots.map((section, index) => (
+          <a
+            href={`#${section.id}`}
+            data-navpop-item={index}
+            role="menuitem"
+            class:list={['navpop__item', index === 0 && 'is-active']}
+          >
+            <span class="navpop__item-dot" aria-hidden="true" />
+            {section.name}
+          </a>
+        ))
+      }
+    </div>
   </div>
+
   <div class="sticky-footer__links">
     <a href="#experience" class="sticky-footer__link">RÉSUMÉ</a>
     <a href={SOCIAL.github} target="_blank" rel="noopener" class="sticky-footer__link">GITHUB ↗</a>
     <a href={SOCIAL.linkedin} target="_blank" rel="noopener" class="sticky-footer__link">LINKEDIN ↗</a>
     <a href="#contact" class="sticky-footer__link sticky-footer__link--accent">CONTACT</a>
   </div>
-  <span data-clock class="sticky-footer__clock">--:--:--</span>
 </div>
 
 <style>
@@ -43,29 +87,184 @@ import { SOCIAL } from '@/consts';
     min-height: 52px;
     padding: 9px clamp(18px, 4vw, 40px);
     background: var(--panel);
+    /* Top separator into the gap above; bottom border is the box's bottom frame
+       line, sitting just above the bg cap below. */
     box-shadow: 0 -1px 0 var(--line);
+    border-bottom: 1px solid var(--line);
     font-family: var(--mono);
   }
 
-  .sticky-footer__dots {
+  /* Opaque cap over the 10px float gap below the footer — hides page content
+     that would otherwise scroll through the box's bottom margin and reveal below
+     the pinned footer. Fixed to the viewport bottom so it lines up with the
+     footer's border-bottom (which rests at 10px above the viewport edge). */
+  .sticky-footer::after {
+    content: '';
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 10px;
+    background: var(--bg);
+    pointer-events: none;
+  }
+
+  /* Position context for the upward touch popover. */
+  .sticky-footer__nav {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
+    min-height: 34px;
   }
 
-  .dot {
+  /* ============================== Pill row =============================== */
+  .pillnav {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 2px;
+    margin-left: -6px; /* pull the first dot's padding back to the edge */
+  }
+
+  .pill {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 5px 6px;
+    border-radius: 999px;
+    color: var(--ink);
+    background: transparent;
+    transition: background-color 0.3s var(--ease-reveal);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .pill.is-open {
+    background: var(--panel-hover);
+  }
+
+  .pill__dot {
+    flex: none;
+    width: 6px;
     height: 6px;
-    width: 10px;
-    border-radius: 3px;
+    border-radius: 50%;
     background: var(--dot-idle);
-    transition: width 0.25s, background 0.25s;
+    transition:
+      background-color 0.3s var(--ease-reveal),
+      transform 0.3s var(--ease-reveal);
   }
 
-  .dot.is-active {
-    width: 22px;
+  .pill:hover .pill__dot {
+    background: var(--ink-2);
+  }
+
+  /* Active wins over hover (same specificity, later source order). */
+  .pill.is-active .pill__dot {
+    background: var(--accent);
+    transform: scale(1.2);
+  }
+
+  .pill__reveal {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    /* No-JS: labels stay inline and readable. `html.js` collapses them to 0 and
+       JS reveals the active/hovered one (Motion animates the width). */
+  }
+
+  html.js .pill__reveal {
+    width: 0;
+  }
+
+  .pill__label {
+    flex: none; /* keep intrinsic width so JS can measure it while clipped */
+    white-space: nowrap;
+    padding-left: 8px;
+    font: 12px / 1 var(--mono);
+    letter-spacing: 0.04em;
+    color: var(--ink);
+  }
+
+  html.js .pill__label {
+    opacity: 0; /* JS fades it in as the pill opens */
+  }
+
+  /* ============================ Touch popover =========================== */
+  .navpop {
+    position: absolute;
+    bottom: calc(100% + 5px);
+    left: 0;
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 200px;
+    padding: 6px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow:
+      0 14px 34px -14px rgba(28, 25, 23, 0.38),
+      0 3px 10px -6px rgba(28, 25, 23, 0.24);
+    opacity: 0; /* closed default; `inert` in markup blocks interaction + AT */
+    transform-origin: bottom left;
+  }
+
+  /* Downward caret pointing back at the pill row it opened from. A 45°-rotated
+     square: its top half blends into the panel (same --panel fill "opens" the
+     panel's bottom border), its bottom half protrudes with the two --line edges
+     forming the arrow outline. Sits over the pills near the panel's left. */
+  .navpop::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 22px;
+    width: 11px;
+    height: 11px;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    border-bottom-right-radius: 2px;
+    transform: rotate(45deg);
+  }
+
+  .navpop__item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    font: 13px var(--sans);
+    letter-spacing: 0.01em;
+    color: var(--ink-2);
+    transition:
+      background-color 0.2s var(--ease-reveal),
+      color 0.2s var(--ease-reveal);
+  }
+
+  .navpop__item:hover,
+  .navpop__item:focus-visible {
+    background: var(--panel-hover);
+    color: var(--ink);
+  }
+
+  .navpop__item-dot {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--dot-idle);
+    transition: background-color 0.2s var(--ease-reveal);
+  }
+
+  .navpop__item.is-active {
+    color: var(--ink);
+  }
+
+  .navpop__item.is-active .navpop__item-dot {
     background: var(--accent);
   }
 
+  /* ============================ Footer links ============================= */
   .sticky-footer__links {
     display: flex;
     gap: clamp(14px, 2.2vw, 26px);
@@ -85,13 +284,5 @@ import { SOCIAL } from '@/consts';
 
   .sticky-footer__link--accent {
     color: var(--accent);
-  }
-
-  .sticky-footer__clock {
-    font-family: var(--mono);
-    font-size: 12px;
-    font-variant-numeric: tabular-nums;
-    color: var(--muted);
-    letter-spacing: 0.08em;
   }
 </style>

@@ -4,7 +4,6 @@
  */
 import Cell from '@/components/primitives/Cell.astro';
 import Grid from '@/components/primitives/Grid.astro';
-import MetaLink from '@/components/primitives/MetaLink.astro';
 import SectionHeader from '@/components/primitives/SectionHeader.astro';
 import SectionShell from '@/components/primitives/SectionShell.astro';
 import { allArticlesHref, pinned, recent } from '@/data/articles.ts';
@@ -13,7 +12,7 @@ const recentDelays = [120, 170, 220, 270];
 ---
 
 <SectionShell id="writing" name="Writing">
-  <SectionHeader number="01" title="Writing" meta="RECENT & PINNED" />
+  <SectionHeader number="01" title="Writing" action={{ label: 'All Articles', href: allArticlesHref }} />
   <Grid>
     <Cell as="a" href={pinned.href} class="pinned">
       <div class="reveal" data-delay="60">
@@ -42,9 +41,6 @@ const recentDelays = [120, 170, 220, 270];
           </a>
         ))
       }
-      <div class="recent__cta">
-        <MetaLink href={allArticlesHref}>ALL ARTICLES →</MetaLink>
-      </div>
     </Cell>
   </Grid>
 </SectionShell>
@@ -140,7 +136,4 @@ const recentDelays = [120, 170, 220, 270];
     color: var(--faint);
   }
 
-  .recent__cta {
-    margin-top: 20px;
-  }
 </style>

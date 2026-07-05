@@ -402,3 +402,665 @@ Entry format:
   reveal flashes, mobile stack). This supersedes the earlier "sections-as-grid,
   no PageBox" and "natural-height" entries for the frame model — natural-height
   flow and once-only scroller-rooted reveals are unchanged.
+
+## 2026-07-05 — Hero → compact-bar scroll-driven collapse (the first real hero transform)
+
+- **Context:** First true scroll-driven transform on the hero. The big hero
+  (eyebrow + value statement) should "shorten smoothly into" the compact top bar
+  as you scroll; the bar then shows **Johannes Krumm** (left) + the **current
+  section** (right). This deliberately REVISITS the continuous-bento decision that
+  dropped hero-collapse — see the reconciliation below.
+- **The reconciliation (why this is allowed now):** the continuous-bento entry
+  killed hero-collapse because "fading a *transparent* bar in over the frame
+  leaves a line-strip above the hero and can't duplicate the name without a banned
+  height animation." Resolution that keeps BOTH constraints: the bar stays
+  **always opaque + sticky** (structural, its background never fades — no
+  line-strip), and we scroll-drive only its **content** (name/section text) plus
+  the hero's **inner content**. Opacity/transform only, no height anim, no
+  transparent bar over line. So "no hero collapse possible" is now superseded:
+  *always-opaque bar + scroll-driven content* is the pattern.
+- **Worked:**
+  - **Crossfade collapse reads as a shrink with zero height animation.** Over the
+    first hero-height of scroll: hero content `opacity 1→0` + `translateY 0→-22px`
+    (fades/lifts out), while bar name+section `opacity 0→1` + `translateY 6→0`
+    (arrive). Different text on each side (statement vs. name) — it's a *collapse*,
+    not a literal text morph, which matches the ask exactly.
+  - **Reused the already-proven Motion signature — no new/version-sensitive API.**
+    `scroll(cb, { container: scroller })` was already shipping (progress line);
+    the collapse reads `scroller.scrollTop` directly inside that same callback and
+    maps it against a measured zone. Sidesteps the version-sensitive
+    `scroll({ target, offset })` element-tracking + `info.y.current` API entirely,
+    so no `/research` round-trip was needed (reusing in-repo-proven code ≠ coding
+    from memory). **Folded into the ONE existing scroll subscription** (progress +
+    collapse in a single listener) rather than adding a second.
+  - **Fade INSIDE the opaque cell, never the cell.** `[data-hero-collapse]` is a
+    layer *inside* `.hero__content` (opaque `--panel`), wrapping the existing
+    `.reveal`. Fading it to 0 reveals the opaque panel, not line-color; the -22px
+    lift stays within the cell's `clamp(30,52)px` padding so no hairline gap is
+    exposed. Bar name/section fading is text over the opaque bar — also safe. The
+    entrance `.reveal` (load) and the collapse layer (scroll) are separate
+    elements, so their inline opacity/transform compose cleanly (product), no
+    conflict.
+  - **Flash-free start state mirrors the `.reveal` system.** `:global(html.js)
+    .compact-header__name/__section { opacity:0; transform:translateY(6px) }` hides
+    them before first paint (JS present) so the fade-in has somewhere to come from;
+    `@media (prefers-reduced-motion: reduce)` forces them visible with
+    `!important`; no-JS leaves them visible (CSS default). `init()` also calls
+    `applyCollapse()` once synchronously to set the p=0 state before the first
+    scroll event. The hero layer needs no pre-hide — at p=0 it's opacity 1 = its
+    default, so no flash.
+  - **Reduced motion = clean degrade.** `collapseActive = !prefersReducedMotion()
+    && hero elements exist`. When off, the driver never runs → hero stays visible,
+    bar name+section stay visible (CSS/`@media` override) — i.e. the *current*
+    always-visible bar. Progress line still runs (unchanged, unguarded as before).
+  - **Right-side label = revived `[data-active-label]`, now legit.** The
+    continuous-bento entry deleted `[data-active-label]` because it lived on a
+    fading bar. It's back because the bar is always opaque now. Extended the
+    existing active-section `IntersectionObserver` (which already picks `best` and
+    toggles footer dots) to also `textContent = best.dataset.name`. Every section
+    already carries `data-name` (SectionShell prop + Home's `data-name="Overview"`)
+    — no markup churn. Did NOT touch the dots/ratio logic (that observer drives
+    both — same trap noted before).
+  - **Zone measured once + on resize, never per-frame.** `zone =
+    max(heroMeasure.offsetHeight, 220)` read at init and on `resize` (both
+    teardown-registered), not inside the scroll callback — avoids a per-frame
+    reflow. Shaping: hero gone by 72% of the zone, bar fully in over 12%→72%, so
+    both settle after ~200px of scroll.
+- **Didn't / N/A:** Considered the idiomatic `scroll({ target, offset:["start
+  start","end start"] })` element-tracking — rejected in favor of `scrollTop` to
+  avoid a version-sensitive API for no benefit here. Considered a literal
+  name-scale morph (`transform: scale` on a shared name) — rejected: the hero's
+  focal H1 is the value statement, the name only lives in the bar, so there's no
+  shared element to morph; the crossfade matches the brief and is simpler.
+- **Gotcha:** the **sideclaw `check` MCP bridge was down** — every call (even bare
+  `cwd`, no `commands`) returned `SyntaxError: Failed to parse JSON` at the
+  transport layer. Fell back to `bun run build` directly (the repo's own
+  validator). Not an input problem.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0, 34 files, 4
+  pages); all five data-hooks + the collapse driver + `prefers-reduced-motion`
+  confirmed present in `dist/` HTML and the minified bundle. Visual/touch
+  validation at `https://jkrumm.test` deferred to the owner (collapse feel, the
+  brief empty-bar-at-top instant, the -22px lift staying inside cell padding,
+  mobile stack where the hero cell is shorter → 220px floor kicks in). **Pattern
+  to keep:** hero→bar collapse = always-opaque sticky bar + scroll-driven *content*
+  (never fade the bar or a cell), driven off `scrollTop` inside the existing
+  `scroll(cb,{container})` subscription, flash-free via `:global(html.js)`
+  pre-hide. This supersedes the "hero collapse dropped, name always shown" note in
+  the continuous-bento entry.
+
+## 2026-07-05 — Compact bar → fixed reveal-on-scroll overlay + 10px floated box
+
+- **Context:** Owner rejected the always-present bar: a sticky first-child bar
+  **reserves a 60px opaque row at the top on load** ("it is there in the beginning
+  which sucks"). Wanted: bar ABSENT at top (hero is the box's top edge), reveals
+  once the hero is scrolled past. Plus: float the whole bento box with ~10px
+  top/bottom margin so it doesn't touch the viewport edges.
+- **The layout insight — a sticky first-child ALWAYS reserves its box.** You can't
+  make a `position: sticky; top:0` first flex-child "not be there" at the top:
+  `transform`/`opacity` don't reclaim its 60px row, and negative-margin-into-a-flex-
+  gap is fragile. The reserved empty strip is inherent to sticky-in-flow. Fix:
+  take the bar OUT of flow.
+- **Worked — bar is now a `position: fixed` overlay:**
+  - Fixed removes it from the PageBox flex flow entirely → **zero reserved space**;
+    the hero is the box's top edge on load. `top:10px` aligns it with the floated
+    box's top gutter.
+  - **Alignment reconstruction** (fixed is viewport-relative, so being a PageBox
+    child no longer aligns it): outer positioner is `fixed; left:0; right:0;
+    padding-inline: clamp(12px,3vw,24px)` (mirrors the `#jk-scroll` side gutter);
+    inner `.compact-header__bar` is `max-width:var(--maxw); margin:0 auto`. That
+    lands the opaque bar exactly on the box at every width. The hidden webkit
+    scrollbar (`width:0`) means `right:0` == the box's right gutter — no offset.
+  - **Fixed is safe here:** verified NO ancestor of `#jk-scroll` sets
+    `transform/filter/perspective/contain/will-change` (would’ve made fixed
+    resolve against that ancestor instead of the viewport). `overflow-y:auto` on
+    `#jk-scroll` does NOT create a containing block for fixed and does NOT clip it.
+    `<body>` → `<main#jk-scroll>` directly, clean.
+  - **This RESOLVES the old "line-strip" constraint** (2026-07-05 continuous-bento
+    killed fading the bar because a transparent flex-child bar showed the 1px line
+    gap behind it). As an OVERLAY the bar isn't over the PageBox line gap — behind
+    it is the viewport margin (invisible at opacity 0) or scrolled content (when
+    opaque). So fading the whole bar (background included) as one unit is fine now;
+    the always-opaque-sticky workaround is no longer needed.
+  - **Whole-bar reveal, not per-element content fade.** Driver maps hero-zone
+    progress: hero content fades/lifts out over 0→72%, then the bar reveals over
+    50%→95% (opacity 0→1 + `translateY(-10→0)`), so it "arrives once the hero is
+    past." `pointerEvents` toggled off below ~2% so the invisible bar never eats
+    clicks on the hero beneath it.
+  - **10px floated box = `padding:10px clamp(...)` on `#jk-scroll`.** Single
+    change: `padding-block:10px` insets the box off top/bottom (side gutter kept).
+    Sticky footer `bottom:0` resolves against the padded edge → floats 10px above
+    the viewport bottom automatically; fixed bar `top:10px` matches the top. Both
+    edges align with the box with no per-element math.
+  - **Zone hook moved to the whole hero band** (`data-hero-measure` from the
+    content cell → the `.hero` Grid, which forwards `...rest`), so "scrolled past
+    the hero" maps to the full band height, not just the text cell.
+- **Reduced motion:** driver still runs, but the hero collapse is skipped (hero
+  stays visible) and the bar reveals via **opacity only** (`transform:none`) — a
+  cross-fade is vestibular-safe; the slide isn't applied.
+- **No-JS:** `.compact-header__bar` defaults to `opacity:0` (hidden) — a fixed
+  opaque bar visible-by-default would cover the hero, so unlike `.reveal` (visible
+  by default) the bar must be hidden by default and JS-revealed. The name is
+  scroll-chrome (also in `<title>`/JSON-LD), so its no-JS absence is acceptable.
+  init()'s synchronous `applyDrive()` sets the scroll-0 state before first scroll
+  → no flash; no `html.js` pre-hide needed since the CSS default already = hidden.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0, 34 files, 4
+  pages); `position:fixed;top:10px`, `padding:10px clamp(...)`, and all driver
+  hooks confirmed in `dist/`. Visual/touch validation at `https://jkrumm.test`
+  deferred to owner (bar/box alignment across widths, the 10px float, reveal
+  threshold feel, footer 10px gap, mobile). **Pattern to keep:** a reveal-on-
+  scroll top bar here is a **fixed overlay** (outer full-width gutter positioner +
+  inner max-width-centered bar), hidden-by-default, revealed as a whole via the
+  existing `scroll(cb,{container})`+`scrollTop` driver — NOT a sticky flow-child
+  (which always reserves its row). Floating the box is `padding-block` on
+  `#jk-scroll`; sticky/fixed chrome auto-aligns to the padded edges. This
+  supersedes the always-opaque-sticky-bar approach from the two entries above.
+
+## 2026-07-05 — Float-gap bg caps + frame borders on the pinned chrome
+
+- **Context:** Follow-ups on the floated box: (1) content scrolls through the
+  10px float gaps and peeks ABOVE the fixed bar / BELOW the sticky footer; (2)
+  reveal the bar earlier + faster; (3) the box lost its top/bottom frame line
+  where the opaque chrome covers it.
+- **Why content peeks in the float gap:** `#jk-scroll` has `padding-block:10px`.
+  A scroll container's padding region is INSIDE the scrollport (visible) — content
+  scrolls through it before clipping at the scrollport edge. The bar/footer only
+  cover their own 60/52px, not the 10px gap beyond, so a sliver of scrolling
+  content shows in the gap. The scroller's own `--bg` background sits BEHIND that
+  content, so it doesn't hide it — you need an opaque layer ON TOP (above content
+  z-order) in the gap band.
+- **Worked — opaque bg caps in the gap bands (always painted, read as margin):**
+  - **Top cap** = `::before` on the fixed `.compact-header` positioner. Moved the
+    positioner to `top:0` + `padding-top:10px` (bar stays at y=10, unchanged) and
+    the `::before` (absolute, `top:0; height:10px; background:var(--bg)`) fills the
+    0–10px band. It's inside the fixed, z-60 positioner → paints above content.
+    Crucially it CANNOT be the whole positioner's background (that would cover the
+    hero at y=10–70 when the bar is hidden at scroll 0) — only the 10px band.
+  - **Bottom cap** = `::after` on `.sticky-footer`, but `position:fixed;
+    bottom:0; height:10px` (NOT absolute). The footer is `position:sticky`, which
+    is a containing block for ABSOLUTE children but NOT for FIXED — so a fixed
+    pseudo resolves against the viewport (no ancestor transform), pinning the cap
+    to the viewport bottom exactly over the 10px band below the footer. An
+    absolute `::after {top:100%}` was wrong: `top:%` is padding-box-relative, so it
+    landed inside the border. Fixed-to-viewport-bottom sidesteps all that and lines
+    up with the footer (which rests at 10px above the viewport edge via the
+    scroller padding). Fixed pseudo is painted in the footer's z-60 stacking
+    context → above content, and `overflow` on `#jk-scroll` doesn't clip fixed.
+  - Both caps are `--bg` (match the margin) and ALWAYS painted — at rest they ARE
+    the 10px margin; while scrolling they hide the content passing through it.
+- **Worked — frame borders on the pinned chrome:** the floated PageBox has a 1px
+  `--line` border all round, but the opaque bar (overlay) and the bg caps cover the
+  frame's top/bottom edges → the box looked open-topped/bottomed.
+  - **Bar** (fixed OVERLAY): `box-shadow` bottom separator → full `border:1px solid
+    var(--line)`. Because the overlay is the SAME box width as PageBox, its border
+    sits exactly on PageBox's border (lines coincide, no 2px doubling — the overlay
+    is out of flow, so the flex-gap-doubling rule doesn't apply). `border-top` is
+    the line between the top bg cap and the bar; `border-left/right` keep the L/R
+    frame continuous through the top 60px the overlay covers.
+  - **Footer** (in-FLOW flex child): added `border-bottom:1px solid var(--line)`
+    only — NOT L/R (those would double against PageBox's border, since the footer
+    is inside it; PageBox already draws the L/R frame beside the footer). The
+    border-bottom rests just above the fixed bottom cap = the box's bottom frame
+    line. Kept the `box-shadow: 0 -1px 0` top separator.
+  - **Rule of thumb:** an OVERLAY (fixed/absolute, out of flow) at box width can
+    carry a full border — it coincides with PageBox's. An IN-FLOW child inside the
+    PageBox border must only add the ONE edge PageBox doesn't already cover
+    (here: bottom), or it doubles.
+- **Worked — earlier/faster reveal:** bar reveal window `(p-0.5)/0.45`
+  (50%→95%) → `(p-0.3)/0.3` (30%→60%). Hero fade left at `/0.72`. Minifier drops
+  the leading zero, so verify built JS as `(t-.3)/.3`, not `0.3`.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0, 34 files);
+  built CSS confirms `border:1px solid var(--line)` (bar), `border-bottom:1px solid
+  var(--line)` (footer), two `height:10px` `--bg` caps, two `position:fixed`; built
+  JS confirms `(t-.3)/.3`. Visual validation at `https://jkrumm.test` deferred to
+  owner. **Patterns to keep:** to hide content in a scroll-container padding/float
+  gap, paint an opaque cap ABOVE content in that band (scroller bg behind content
+  won't do it); a fixed-to-viewport pseudo is the clean way to pin a cap under a
+  STICKY bar. Frame borders: full border on out-of-flow overlays (coincides with
+  the frame), single-edge only on in-flow children inside the frame border.
+
+## 2026-07-05 — Footer nav: expanding pill nav (desktop) + upward popover (mobile)
+
+- **Context:** Rebuilt `StickyFooter` from a static dot row into the site's real
+  section navigator. Desktop: a `pill nav` — each section is a dot; the ACTIVE
+  one is "open" (label revealed); hovering/focusing any pill opens it and closes
+  the others (one open at a time); the open pill glides to the newly-active
+  section on scroll. Mobile (≤640px): a single current-section button opens a
+  small popover UPWARD listing every section as a tappable anchor. One
+  IntersectionObserver drives all three surfaces (pills, popover trigger label,
+  compact top-bar label); all "soft-refresh" on scroll. In `portfolio.ts` +
+  `StickyFooter.astro`; no new deps (Motion `animate` only).
+- **The one real tension — collapse-to-dots needs a SIZE animation.** A tight
+  dot row that expands one label and reflows the others *cannot* be done on the
+  compositor alone: `clip-path`/`scaleX` hide/show visually but don't reflow
+  siblings, so the row can't stay tight. `translateX`-only FLIP repositions
+  siblings but each item revealing its own label is still a per-element size
+  change. **Confirmed there is NO pure transform/opacity way to do
+  collapse+reflow+resize.** Owner approved a **scoped `width` exception for the
+  footer pills only** (negligible cost for a 7-item nav); every other property
+  (label fade, dot morph, popover, soft-swap) stays strictly transform+opacity,
+  so the invariant is intact for all scroll work. Documented at the call site.
+- **Worked:**
+  - **Measure the label while it's clipped.** `.pill__reveal { overflow:hidden;
+    width:0 }` (under `html.js`) clips the label; the label is `flex:none;
+    white-space:nowrap` so its `offsetWidth` is the FULL intrinsic width even
+    while the parent is 0-wide. `animate(reveal, { width: `${offsetWidth}px` })`
+    → open; `animate(reveal, { width: 0 })` → close. `flex:none` is load-bearing:
+    without it a flex child squishes to 0 and `offsetWidth` reads 0.
+  - **Back-out ease = spring-like pop with no spring API.** Width opens on
+    `ease:[0.34,1.35,0.5,1]` (overshoot), closes on `[0.4,0,0.2,1]`. Reused ONLY
+    the repo-proven `animate(el, target, {duration, ease})` signature (no
+    `type:'spring'`, no `stagger()`, no `.finished`/`onComplete`) — so nothing
+    version-sensitive to research.
+  - **Label fade from CURRENT value, no CSS `is-open` opacity rule.** First
+    instinct — `.pill.is-open .pill__label { opacity:1 }` + `animate(label,
+    {opacity:1})` — BREAKS the fade: adding the class sets computed opacity to 1
+    *before* Motion reads the start value, so it animates 1→1 (no fade). Fix:
+    JS owns the label opacity entirely (`html.js .pill__label {opacity:0}`,
+    Motion animates from the current 0); no `.is-open` opacity rule. No-JS shows
+    labels via the base rule (visible-by-default, mirrors `.reveal`).
+  - **`hoverIndex ?? activeIndex` (nullish, not `||`).** `openIndex` follows the
+    hovered pill, falling back to the active section. Must be `??` — index 0
+    (Home) is falsy and `||` would wrongly skip it. `setActive` only calls
+    `resolveOpen` when `hoverIndex === null`, so a scroll-driven active change
+    never fights an in-progress hover.
+  - **Popover = `inert` + opacity, not `hidden`/`display:none`.** The panel is
+    always rendered; closed = `inert` attribute (blocks interaction + hides from
+    AT) + CSS `opacity:0`. Open removes `inert` and animates `opacity/y/scale`;
+    close re-adds `inert` synchronously (interaction dead immediately) while the
+    fade-out plays. No `display:none` dance → no completion callback needed to
+    hide, so no version-sensitive `.finished`. Staggered item entrance via
+    per-item `delay: 0.05 + i*0.03`.
+  - **Full a11y on the popover:** `aria-haspopup`/`aria-expanded`/`aria-controls`
+    on the trigger, `role=menu`/`role=menuitem`, Escape closes + returns focus to
+    trigger, outside `pointerdown` closes, ArrowUp/Down/Home/End roving focus,
+    focus first item on open. Pills carry `aria-label` (collapsed dots still
+    announce their section) + `aria-current` toggled in `setActive`.
+  - **Soft label refresh works on inline-ish elements because they're flex
+    items.** `softSwap` sets `textContent` then `animate(el, {opacity:[0,1],
+    y:[-4,0]})`. `[data-active-label]` and `[data-secnav-current]` are children
+    of `display:flex` parents → blockified → `translateY` applies (a bare inline
+    `<span>` would ignore transform). Guarded on `textContent` change so it only
+    fires on real section changes (observer already gates on index change).
+  - **Progressive enhancement / breakpoint:** `.pillnav` visible >640px (labels
+    inline & navigable even with no JS); `.secnav` is `display:none` by default
+    and only `html.js` + `≤640px` shows it (a no-JS popover button would be a dead
+    control — mobile no-JS falls back to the footer links + hero nav bento).
+    Reduced motion: every open/close/popover path sets final width/opacity/
+    transform INSTANTLY (no tween) — the interaction still works, just un-animated.
+  - **Resize re-measure:** `onNavResize` re-reads the open pill's label width, so
+    a mobile→desktop resize (where the pill row was `display:none`, `offsetWidth`
+    0) corrects the open pill's width when it becomes visible.
+- **Gotcha:** measuring `offsetWidth` on a `display:none` ancestor (mobile, where
+  `.pillnav` is hidden) returns 0 — harmless (pillnav not shown), and the resize
+  handler fixes it on the way back to desktop. Don't measure eagerly assuming the
+  element is laid out.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0, 34 files, 4
+  pages); `dist/` confirms the 7 pills + 7 popover items + `inert` panel (HTML),
+  the driver (`offsetWidth`×3, `pointerleave`, `inert`, `aria-current` in JS), and
+  the pill/popover/`rotate(180deg)` rules (CSS). Visual/touch validation at
+  `https://jkrumm.test` deferred to the owner (open/close feel + back-out pop,
+  the width exception's smoothness, popover upward reveal + stagger, outside-tap /
+  Escape, mobile↔desktop resize, reduced-motion instant paths). **Patterns to
+  keep:** an expanding-label nav needs a scoped `width` animation (no
+  transform-only path exists) — measure the clipped label via `flex:none`
+  `offsetWidth`, animate width with a back-out cubic-bezier (no spring API), and
+  let JS own the label opacity (never a CSS `is-open` opacity rule, which zeroes
+  the fade). A popover is `inert`+opacity, never `display:none`, so no completion
+  callback is needed to hide it.
+
+## 2026-07-05 — Footer nav follow-ups: single-handoff timing + modality (not size) split
+
+- **Context:** Two owner follow-ups on the pill nav. (1) "Smoother, more like a
+  transition from one to the other." (2) "On mobile show all the pills same as
+  desktop, but open the popover — on mouse devices we hover-preview the pill, on
+  touch we open the popover." So the desktop/mobile split became a **mouse/touch**
+  split, and the pills are now shown on every device.
+- **Smoothness — unify the timing, kill the overshoot.** The first cut used
+  DIFFERENT durations/eases for open (0.42s, back-out `[0.34,1.35,0.5,1]`) vs
+  close (0.32s, `[0.4,0,0.2,1]`), so a change of the open pill read as two
+  separate motions + a pop. Fix: ONE duration + ONE symmetric ease for both open
+  AND close (`NAV_DUR=0.4`, `NAV_EASE=[0.4,0,0.2,1]`). Because `resolveOpen` fires
+  `closePill(prev)` and `openPill(next)` on the same tick, identical timing makes
+  the closing label collapse in exact lockstep with the opening one expanding —
+  it reads as the open state *travelling* between pills, not a close-then-open.
+  **Supersedes** the prior entry's "back-out pop" pattern: a pop reads as a
+  discrete event; a handoff wants symmetric ease-in-out, no overshoot.
+- **Modality split by per-interaction `pointerType`, not a media query.** A static
+  `matchMedia('(hover:hover)')` mislabels hybrid devices (touchscreen laptops).
+  Instead: a capture-phase `document` `pointerdown` listener records
+  `lastPointerType`; then per interaction —
+  - **hover-preview** (`pointerover`): early-return when `e.pointerType ===
+    'touch'` (pointer events carry the type) so a tap never triggers a preview;
+  - **focus-preview** (`focusin`): early-return when `lastPointerType === 'touch'`
+    (focus events DON'T carry the type — read the tracked one) so a tap that
+    incidentally focuses the `<a>` doesn't flash a preview before the popover;
+  - **tap → popover** (pill-row `click`): open the popover only when
+    `e.detail !== 0 && lastPointerType === 'touch'`. `click.detail === 0` is the
+    tell for KEYBOARD activation (Enter) — those, and mouse clicks, fall through
+    so the anchor navigates. This is the robust way to keep keyboard = navigate,
+    touch = popover, mouse = navigate, without a media query.
+- **Popover is now a sibling of the pill row, not a separate trigger.** Dropped
+  the `.secnav` current-section button entirely; the pills ARE the trigger. The
+  `.navpop` panel is `position:absolute; bottom:calc(100% + 12px); left:0` inside
+  a `position:relative` `.sticky-footer__nav`, opening upward over page content
+  (`z-index:70` inside the footer's `z-60` sticky stacking context clears the
+  page). `aria-haspopup="menu"`/`aria-expanded`/`aria-controls` moved onto the
+  `<nav>`; Escape / arrow-focus return to `pillParts[activeIndex].pill`.
+- **Gotcha — the outside-close listener must exclude the trigger.** `onDocPointer`
+  (document `pointerdown`) closes the menu when the tap is outside the panel — but
+  it must ALSO exclude `pillNav`, else tapping a pill while open runs
+  close-on-pointerdown → then the pill `click` toggles it back open (flicker /
+  won't close). Guard: `!panel.contains(t) && !pillNav.contains(t)`. The pill
+  `click` handler owns the toggle; the doc handler owns only true outside taps.
+- **Layout consequence:** pills are shown at every width now (removed the
+  `@media (max-width:640px)` display swap), so on a phone the row is dots + one
+  open label (~200px) and the footer text links wrap below it. Acceptable; one
+  open at a time keeps the row from overflowing. No separate mobile trigger.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0, 34 files, 4
+  pages); `dist/` confirms `data-navpop` + `inert` + `aria-haspopup` (HTML), the
+  unified ease `[.4,0,.2,1]` with the `1.35` overshoot GONE, and `pointerType` +
+  `detail` modality logic (JS); zero stale `secnav` in HTML/JS/CSS. Visual/touch
+  validation deferred to owner (the single-handoff glide, mouse-hover vs
+  touch-tap on a hybrid device, popover upward reveal + outside-tap/Escape, the
+  taller phone footer). **Patterns to keep:** for a "handoff" between two elements,
+  give the outgoing and incoming the SAME duration+ease (symmetry = one motion);
+  split interaction by `pointerType` (+ `click.detail` for keyboard), not a hover
+  media query, to handle hybrids; an outside-click closer must exclude its own
+  trigger or the trigger's click re-opens it.
+
+## 2026-07-05 — Experience sticky rail + detail pane
+
+- **Context:** Replaced the plain single-column role list with a two-column sticky
+  scroll-reveal: a left rail lists roles compactly; as the user scrolls, the
+  active role highlights and a sticky right pane crossfades in that role's
+  detail. Aceternity-style pattern — `position: sticky` + IntersectionObserver,
+  zero scroll-jacking.
+- **Worked:**
+  - **Rail taller than pane via `min-height: clamp(180px, 26vh, 280px)`** on
+    each `.role-row`. Three rows ≈ 540–840px total vs. a compact detail card
+    (~220–320px) → ~300–550px of scroll runway. Reads as intentional
+    pin-then-release. NOT a repeat of the killed 200svh wrapper — this is real
+    content, generously spaced.
+  - **Overlapping detail cards via CSS grid.** `.role-pane` is `display: grid;
+    grid-template: 1fr / 1fr;` with every `.role-detail` on `grid-area: 1/1` —
+    container height = tallest single card, no manual height math.
+  - **`IntersectionObserver` with `rootMargin: '-45% 0px'`** (center-band
+    scrollspy) and best-ratio scan matches the existing `sectionObserver`
+    pattern in `portfolio.ts` exactly.
+  - **Progressive enhancement:** mobile (<900px) and no-JS get a plain stacked
+    column — all details visible, zero interactivity needed. At >=900px + JS:
+    sticky pane + overlapping cards + crossfade.
+- **Gotcha — opacity ownership (same trap as the pill nav):** JS must own
+  `.role-detail` opacity entirely via inline styles. A CSS `.role-detail.is-active
+  { opacity: 1 }` rule would set the value before Motion reads its start point,
+  making the tween a no-op 1->1. Only the non-Motion accent indicator bar on
+  `.role-row` uses the `.is-active` class for styling.
+- **Gotcha — `align-items: flex-start` on `.role-split` is load-bearing.**
+  Default `stretch` would force `.role-pane` to the rail's height, leaving zero
+  internal slack for the sticky pin to hold against.
+- **Gotcha — sizing comes from `min-height`, not padding.** Padding alone on
+  `.role-row` gives ~0–80px of scroll runway — not enough to read as intentional.
+  `min-height` with vertically-centered content (flex centering) gives the real
+  runway.
+- **Verdict / decision:** Ships. `bun run build` green. Visual QA deferred to
+  owner (sticky pin feel, crossfade dissolve, `rootMargin` tuning,
+  reduced-motion instant swap, mobile stack, no-JS readability). `highlights`/
+  `stack` content in `experience.ts` is placeholder copy — owner must review
+  for accuracy.
+
+## 2026-07-05 — Experience pin+runway FIXED: the runway must exceed the sticky, not the viewport
+
+- **Context:** The sticky-scroll Experience section had "literally failed" across
+  ~3 prior attempts — the rail was supposed to pin under the top bar while the
+  page appears to "pause", scrubbing 3 roles + a side beam slower than normal
+  scroll, then release. The owner's mental model (page pauses, beam creeps, roles
+  crossfade, then unlock) is exactly the Aceternity **pin + runway** illusion —
+  NOT literal scroll-lock (which the house rules forbid and which is unnecessary:
+  the sticky pin *fakes* the pause while native scroll keeps working, so
+  keyboard/touch/reduced-motion all stay intact). Right library the whole time —
+  Motion `scroll(cb,{container})`, already proven twice in this file.
+- **The actual bug (why every attempt died):**
+  - **Negative scroll distance.** Wrapper was `height: max(480px, 3*30vh)` = 90vh,
+    but the JS computed `roleTrack = wrapper.height − VIEWPORT.height` = 90vh −
+    100vh = **negative**, and the very next line `if (roleTrack <= 0) return;`
+    short-circuited the entire beam/role engine on any normal laptop. Dead on
+    arrival. The doc-comment's "runway = height − viewport" model was simply wrong.
+  - **Wrong reference frame even if positive.** The pinned travel of a sticky
+    child is `wrapperHeight − STICKYHEIGHT`, not `wrapperHeight − viewportHeight`.
+    Progress must also start when the element *pins* (offset by the bar clearance),
+    which the old math ignored (`roleSplitTop = wrapperOffset`, no `− pinTop`).
+  - **Sticky overlapped the footer.** Old sticky height `100svh − 110px` left only
+    ~24px for the bottom, but the sticky footer is ~62px (56 + 10 gap) → the last
+    role detail hid behind the pinned footer.
+- **Worked — the corrected geometry:**
+  - **Wrapper taller than the sticky child by an explicit surplus.** CSS:
+    `--stage-h: calc(100svh − --pin-top − --pin-bottom)` (sticky height),
+    `height: calc(--stage-h + --role-count * --per-role)`. The surplus
+    (`--role-count * --per-role`) IS the pinned scroll distance. `--per-role`
+    (50svh) is the ONE tunable knob for how long Experience "holds" the page.
+  - **Pin cleanly between the two chrome bars.** `--pin-top: 10px + --bar-top(60)
+    + 16` (clears the fixed CompactHeader), `--pin-bottom: --bar-bottom(56) + 10 +
+    16` (clears the sticky footer). Custom props declared on `.role-split` and
+    **inherited** by the child `.role-sticky` — single source, no repetition.
+  - **Correct progress math (reused the proven `scroll(cb,{container})` sig — no
+    version-sensitive API):** `pinStart = wrapperOffset − pinTop` where
+    `pinTop = parseFloat(getComputedStyle(roleSticky).top)` (getComputedStyle
+    returns the RESOLVED calc length for a sticky element's `top`, NOT the sticky
+    shift — reliable). `track = roleSplit.offsetHeight − roleSticky.offsetHeight`.
+    `p = clamp01((scrollTop − pinStart) / track)` → `floor(p*STEPS)` role index +
+    `beam.scaleY(p)`. The scroller's 10px padding is already baked into
+    `wrapperOffset` (it's `rect.top − scrollerRect.top + scrollTop`, invariant), so
+    no padding correction is needed — verified by derivation.
+  - **JS sets `--role-count` from the real data length** (`roleSplit.style
+    .setProperty('--role-count', String(roleRows.length))`) so adding/removing a
+    role in `experience.ts` auto-sizes the runway; CSS default `3` is just a
+    fallback. Setting a layout var ONCE at init (not animating it) is fine.
+  - **Reduced-motion / <900px / no-JS → plain stacked column, no pin.** Gated the
+    ENTIRE desktop sticky CSS block with `@media (min-width:900px) and
+    (prefers-reduced-motion: no-preference)` AND the JS with the matching
+    `!prefersReducedMotion()` — so reduced-motion desktop falls all the way through
+    to the mobile stacked layout (details visible, beam `display:none`), never a
+    tall pinned runway they must scrub. This is the narrative-ref mandate ("fully
+    readable, no hijack") applied correctly.
+  - **`align-items: stretch` + `justify-content: center` on the rail** fills the
+    tall pinned stage and vertically centers the 3 rows next to the centered detail
+    card. (Supersedes the earlier entry's `align-items: flex-start` "load-bearing"
+    note — that was for the OLD approach where rail/pane height DIFFERENCE created
+    the sticky slack; now the WRAPPER supplies the runway, so both children stretch
+    to `--stage-h`.)
+- **Gotcha:** `getComputedStyle(el).top` on a sticky element is safe to read for
+  the pin inset — it's the computed (resolved) length, independent of whether the
+  element is currently stuck. Don't confuse it with `getBoundingClientRect().top`
+  (which DOES move with the stick). Use offsetHeight for both wrapper and sticky
+  heights (layout height, unaffected by stickiness/transforms).
+- **Gotcha:** file was touched by a linter mid-edit ("modified since read") — had
+  to re-Read `portfolio.ts` before the Edit re-applied. Content was identical, only
+  line numbers shifted.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0, 34 files, 4
+  pages); `dist/` confirms the built JS (`getComputedStyle(w).top`, `track =
+  C.offsetHeight − w.offsetHeight`, `--role-count` set) and CSS
+  (`prefers-reduced-motion:no-preference`, `--per-role:50svh`, `--stage-h` calc).
+  Visual/feel validation at `https://jkrumm.test` deferred to owner — the ONE knob
+  to tune is `--per-role` (50svh/role → 150svh total pinned scroll; lower = snappier,
+  higher = slower "hold"). **Pattern to keep:** a sticky pin+runway's scrub distance
+  is `wrapperHeight − stickyHeight` (NOT − viewport); build the wrapper as
+  `stickyHeight + N*per-item`; read the pin inset via `getComputedStyle().top`;
+  gate the whole thing (CSS + JS) on `prefers-reduced-motion: no-preference` so the
+  degrade is the plain stacked fallback, not a tall runway. **Still open:** the
+  `highlights`/`stack` copy in `experience.ts` is placeholder (owner must review),
+  and the mobile stacked layout shows rail headers detached from their details
+  (pre-existing, out of scope) — revisit if the owner wants the mobile fallback
+  tightened.
+
+## 2026-07-05 — Experience follow-up: content-height card, not viewport-height
+
+- **Context:** First fix worked, but the owner: "the view is way too high, almost
+  full screen — why not responsive?" I'd sized the pinned card to the VIEWPORT
+  (`--stage-h = 100svh − pins`) with `align-items: stretch`, so the compact detail
+  card floated in a near-full-screen box of dead space, and it never adapted to the
+  actual content.
+- **Fix — size the card to its CONTENT, derive the runway from that:**
+  - Dropped the fixed `--stage-h` height on `.role-sticky`. It's now natural
+    (content) height, `min-height: 300px` for a floor, `max-height: calc(100svh −
+    --pin-top − --pin-bottom)` as a *cap only* so a tall detail never collides with
+    the two chrome bars. `align-items: stretch` still makes rail == pane so the
+    rail's border-right spans the card cleanly.
+  - The wrapper height can no longer be pure CSS (CSS can't read a child's natural
+    height), so **portfolio.ts sets it**: `roleSplit.style.height =
+    roleSticky.offsetHeight + surplus`, where `surplus = STEPS · PER_ROLE_VH ·
+    scroller.clientHeight` (0.5 = half a viewport of scroll per role). Responsive to
+    BOTH content (measured sticky height) and viewport (surplus scales to
+    clientHeight). `track = surplus` by construction — no `wrapper − sticky`
+    subtraction needed anymore. `PER_ROLE_VH` is now the single knob (moved from the
+    CSS `--per-role`).
+  - CSS keeps a plain `height: calc(100svh + 50vh)` as a pre-JS fallback runway;
+    the inline JS height overrides it (inline beats stylesheet).
+- **Gotcha — desktop→mobile resize must hand layout back to CSS.** Because the
+  wrapper height and detail opacities are now JS-owned *inline* styles, a resize
+  below 900px would leave the wrapper stuck at a pixel height and details stuck at
+  `opacity:0`. Guarded `measureRole`: when `!matchMedia('(min-width:900px)')`,
+  clear `roleSplit.style.height`, clear every `roleDetail.style.opacity`, reset the
+  beam transform, set `track=0` (so `updateRole` no-ops) and `activeRole=-1`. The
+  original viewport-height version had this same latent bug for opacities; now
+  handled. On resize back to desktop, `measureRole` re-measures and calls
+  `updateRole()` to re-sync.
+- **Gotcha — init ordering to stay flash-free.** `measureRole()` now calls
+  `updateRole()` at its end, which can fire `setActiveRole`. Call
+  `setActiveRole(0, false)` BEFORE `measureRole()` so `activeRole` is already 0 when
+  the init `updateRole` runs at scroll-top → index 0 === activeRole → no load-time
+  crossfade.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0, 34 files, 4
+  pages); `dist/` confirms JS `roleSplit height = sticky.offsetHeight + surplus`
+  (`offsetHeight+a`) + `clientHeight` scaling, CSS `min-height:300px` +
+  `max-height:calc(100svh − pins)` (no fixed stage height). Owner validates feel at
+  `https://jkrumm.test`. **Pattern to keep:** for a pin+runway whose card should be
+  CONTENT-sized (not viewport-sized), measure the sticky's natural `offsetHeight` in
+  JS and set the wrapper to `stickyHeight + surplus` (surplus = the scrub distance,
+  scaled to `clientHeight` for responsiveness) — a fixed viewport-fraction stage
+  height is what makes it look oversized. Cap the sticky with `max-height`, never a
+  fixed `height`. When JS owns inline height/opacity, always reset them in the
+  sub-breakpoint branch so the stacked CSS fallback isn't overridden.
+
+## 2026-07-05 — Footer nav fix: `click.detail` is NOT a touch signal (real-phone bug)
+
+- **Context:** Owner tested the touch popover on a real phone: tapping a pill
+  **navigated straight to that section** (couldn't even see which pill was
+  active) instead of opening the popover. Corrects the previous entry, which
+  gated the popover on `e.detail !== 0 && lastPointerType === 'touch'`.
+- **Root cause:** `click.detail` is unreliable as a touch discriminator — a
+  touch-synthesized click reports `detail === 0` on some mobile browsers (not
+  the `1` I assumed). So `e.detail !== 0` was FALSE on the phone → the condition
+  failed → the `<a>` navigated. `detail === 0` is only a dependable tell for
+  KEYBOARD activation on *desktop*; it does NOT separate touch from keyboard on
+  mobile. Headless/desktop testing never surfaces this — needs a real device.
+- **Fix:** decide by the tracked `pointerType` ALONE (`pointerdown` fires
+  `pointerType:'touch'` before the click, so `lastPointerType==='touch'` at click
+  time is solid on every mobile browser), and handle keyboard with an EXPLICIT
+  flag instead of `detail`: a `keydown` listener on the pill row sets
+  `keyActivating` on Enter/Space; `onPointerType` (the capture `pointerdown`)
+  clears it on any real pointer input. Popover opens when
+  `!keyActivating && lastPointerType === 'touch'`. Keeps touch=popover,
+  mouse=navigate, keyboard=navigate — without the flaky `detail` heuristic.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0); built JS no
+  longer references `.detail` for this. **Pattern / correction:** never use
+  `click.detail` to detect touch — it's `0` for touch clicks on some mobile
+  browsers. Use `pointerType` (tracked from `pointerdown`) for touch-vs-mouse and
+  a dedicated Enter/Space keydown flag for keyboard. And validate tap behavior on
+  a REAL phone — desktop devtools touch emulation reported `detail` differently
+  and hid the bug. Supersedes the `detail`-based note in the prior entry.
+
+## 2026-07-05 — Footer nav fix: no auto-focus on a touch-only popover
+
+- **Context:** Owner: after the touch popover opened, "Overview" always looked
+  focused/highlighted — ugly. `openMenu()` ended with `popItems[0].focus()`
+  (standard menu-a11y: focus the first item on open).
+- **Root cause:** this popover is **touch-only** — it can only be opened by a
+  touch tap (`onNavTap` requires `lastPointerType === 'touch'`); keyboard Enter on
+  a pill navigates and never opens it. So focusing the first item runs only ever
+  after a *touch* interaction, where a programmatic `.focus()` paints a
+  ring/`:focus-visible` highlight on the first item (Overview) that touch users
+  neither expect nor want. The classic "focus the first menu item" rule assumes a
+  keyboard-reachable menu; it's actively wrong for a touch-only affordance.
+- **Fix:** delete the `popItems[0].focus()` in `openMenu`. The panel stays
+  non-`inert` while open, so a screen-reader-on-touch user still swipes to the
+  items; keyboard users navigate the pills directly (full keyboard path already).
+  Kept Escape-to-close returning focus to the active pill (a keyboard action → a
+  ring is appropriate there) and the arrow-key roving-focus (only fires if a
+  keyboard user tabs into the open panel).
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0). **Pattern:**
+  don't apply keyboard-menu focus management (focus-first-item) to a **touch-only**
+  disclosure — programmatic focus after touch shows an unwanted ring/highlight.
+  Move focus only for the modality that actually opened it; here that's never
+  keyboard, so move none.
+
+## 2026-07-05 — Footer nav polish: popover caret pointing at the pill row
+
+- **Context:** Owner wanted an arrow on the popover so it's obvious where it
+  opens from.
+- **Done:** a pure-CSS `.navpop::after` bordered caret — an 11px square,
+  `background: var(--panel)` + `border-right`/`border-bottom: 1px var(--line)`,
+  `transform: rotate(45deg)`, `bottom:-6px; left:22px`. After the 45° rotate the
+  right+bottom edges become the two downward-facing sides of the arrow; the top
+  half overlaps the panel (same `--panel` fill blends in and "opens" the panel's
+  bottom border into the caret mouth), the bottom half protrudes ~6px toward the
+  pills with the `--line` outline. `border-bottom-right-radius:2px` softens the
+  tip. It's a child of the panel, so it inherits the open/close scale+opacity
+  animation and shows/hides with the panel — no extra JS.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0); caret in
+  built CSS. **Pattern:** bordered speech-bubble caret = a rotated square with
+  the two *outward* borders set, same bg as the panel so the top half merges and
+  the panel's own border opens around it; parent it to the animated panel so it
+  transforms along for free. Owner to eyeball the tip protrusion / left offset on
+  a real phone.
+
+## 2026-07-05 — Experience follow-up 2: center the pinned card (kill the void below it)
+
+- **Context:** Content-sizing fixed "too tall", but the owner's screenshots showed
+  the real problem: a small (~300px) card **pinned at the top** (`top: --pin-top`)
+  sitting inside a tall runway wrapper (opaque `--panel`), so the whole viewport
+  BELOW the card was empty panel for the entire scrub — a huge void — and the next
+  section only slid in at the very end. "Get around this huge empty space while
+  preserving the same awesome scrolling experience."
+- **The insight:** the void is SPATIAL, not temporal. The card must live in a tall
+  element (runway) to have scroll distance — unavoidable — but it does NOT have to
+  pin at the TOP of the viewport. Pinning a small card at `top` leaves all the
+  slack below it. **Center the card in the stage** and the same whitespace becomes
+  balanced top+bottom margin that reads as an intentional centered presentation
+  (matches this site's whitespace-heavy aesthetic), not a void.
+- **Worked:**
+  - **JS-computed centered `top`.** `topOffset = max(pinTopBase, pinTopBase +
+    (stage − cardH) / 2)` where `stage = scroller.clientHeight − pinTopBase −
+    pinBottom`; `roleSticky.style.top = topOffset`. The `max()` guards short
+    viewports (never pin above the bar). Pin math then uses `topOffset`:
+    `pinStart = wrapperOffset − topOffset` (re-derived: card pins when its top
+    reaches `topOffset`; unpins when wrapper bottom reaches `topOffset + cardH`;
+    travel = `wrapperH − cardH` = surplus — so `track = surplus` STILL holds no
+    matter where in the stage the card sits).
+  - **Read chrome insets from the SIMPLE tokens, not the calc() customs.**
+    `getComputedStyle(root).getPropertyValue('--bar-top'|'--bar-bottom')` → clean
+    "60px"/"56px" (parseFloat works). Do NOT parse `--pin-top` — it's a `calc(10px
+    + var(--bar-top) + 16px)` custom whose computed value is the unresolved
+    substituted string, not a px number. Rebuilt `pinTopBase`/`pinBottom` in JS
+    from the raw tokens (mirrors the CSS calc).
+  - **Substantial-but-not-full band.** `.role-sticky { min-height: clamp(320px,
+    48svh, 480px) }` (capped by `max-height: 100svh − pins`) → card fills ~60% of
+    the stage, centered — clearly not "almost full screen" (the earlier reject) yet
+    not a lost little block. `offsetHeight` reads the resolved clamp, so centering +
+    wrapper math use the real card height.
+  - **Rail as a timeline.** Desktop `.role-rail { justify-content: space-between;
+    padding-block: clamp(6px,3vh,26px) }` spreads the 3 roles down the card. The
+    active-role highlight now travels top→bottom in lockstep with the left beam
+    filling top→bottom — one coherent "progress" gesture instead of a highlight
+    jumping around a centered clump.
+  - **Mobile-branch reset now also clears `roleSticky.style.top`** (added to the
+    height/opacity/beam resets) so a resize below 900px fully hands back to CSS.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0, 34 files, 4
+  pages); `dist/` confirms `min-height:clamp(320px,48svh,480px)`, rail
+  `space-between`, JS `--bar-top||60`/`--bar-bottom||56` + `style.top=`. Owner
+  validates feel at `https://jkrumm.test`. **Pattern to keep:** for a pin+runway
+  where the card is smaller than the viewport, DON'T pin it at `top` (leaves a void
+  below) — compute a centered `top = pinTopBase + (stage − cardH)/2` so the slack
+  splits into balanced margins; `track` stays `= surplus` regardless. Give the card
+  a `clamp()` min-height for presence, spread the rail so its highlight travels with
+  the beam. Two knobs now: `PER_ROLE_VH` (scrub length) + `.role-sticky` `min-height`
+  clamp (card presence).

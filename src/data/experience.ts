@@ -14,6 +14,8 @@ export interface Role {
   title: string;
   company: string;
   scope: string;
+  highlights: string[];
+  stack: string[];
 }
 
 export const roles: Role[] = [
@@ -24,6 +26,12 @@ export const roles: Role[] = [
     company: '· Product company, Munich',
     scope:
       'Own the architecture of a full-stack platform. Lead a cross-functional team, set engineering standards, and keep releases boring.',
+    highlights: [
+      'Own end-to-end architecture decisions',
+      'Lead a cross-functional team and set engineering standards',
+      'Mentor engineers',
+    ],
+    stack: ['TypeScript', 'Node', 'Cloud', 'Architecture'],
   },
   {
     period: '2019 — 2022',
@@ -31,6 +39,12 @@ export const roles: Role[] = [
     company: '· SaaS scale-up',
     scope:
       'Built and scaled core product features end-to-end, from data model to UI, and introduced type-safe APIs across the stack.',
+    highlights: [
+      'Built and scaled core product features end-to-end',
+      'Introduced type-safe APIs across the stack',
+      'Owned features from data model to UI',
+    ],
+    stack: ['TypeScript', 'React', 'Node', 'Postgres', 'API Design'],
   },
   {
     period: '2016 — 2019',
@@ -38,6 +52,12 @@ export const roles: Role[] = [
     company: '· Digital agency',
     scope:
       'Delivered web products for a range of clients — the foundation for a systems-first way of building.',
+    highlights: [
+      'Delivered web products for a diverse client base',
+      'Built a systems-first approach to development',
+      'Full-stack delivery from concept to launch',
+    ],
+    stack: ['TypeScript', 'React', 'Node', 'CSS', 'Testing'],
   },
 ];
 
