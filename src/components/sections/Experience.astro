@@ -1,0 +1,237 @@
+---
+/**
+ * Experience section — overview lede + role timeline.
+ * Phase 2 narrative POC: CSS scroll-driven expand/collapse of role detail.
+ * The tall wrapper (SectionShell narrative mode) supplies scroll distance;
+ * the sticky child stays a 100svh snap target. Role scope text fades in/out
+ * as the user scrolls through the section, driven by the named view-timeline.
+ */
+import SectionShell from '@/components/primitives/SectionShell.astro';
+import SectionHeader from '@/components/primitives/SectionHeader.astro';
+import MetaLink from '@/components/primitives/MetaLink.astro';
+import { overview, roles, resumeHref } from '@/data/experience.ts';
+---
+
+<SectionShell id="experience" name="Experience" narrative>
+  <SectionHeader number="02" title="Experience" meta="OVERVIEW → ROLES" />
+
+  <div class="overview reveal" data-delay="60">
+    <p class="overview__summary">{overview.summary}</p>
+    <div class="overview__facts">
+      <span class="overview__fact">
+        <span class="overview__fact-label">FOCUS</span>{overview.focus}
+      </span>
+      <span class="overview__fact">
+        <span class="overview__fact-label">CORE STACK</span>{overview.coreStack}
+      </span>
+    </div>
+  </div>
+
+  <div class="timeline">
+    {
+      roles.map((role, index) => (
+        <div
+          class="role reveal"
+          data-delay={120 + index * 50}
+        >
+          <span class="role__period" data-current={role.current}>
+            {role.period}
+          </span>
+          <div>
+            <div class="role__heading">
+              <h3 class="role__title">{role.title}</h3>
+              <span class="role__company">{role.company}</span>
+            </div>
+            <!-- Scope text is the narrative detail — hidden at rest, revealed
+                 mid-scroll via CSS scroll-driven animation. The @supports +
+                 reduced-motion fallback shows it fully visible / static. -->
+            <p class="role__scope narrative-detail">{role.scope}</p>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  <MetaLink href={resumeHref}>FULL RÉSUMÉ →</MetaLink>
+</SectionShell>
+
+<style>
+  .overview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px 48px;
+    align-items: flex-end;
+    padding-bottom: clamp(18px, 2.6vh, 34px);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: clamp(20px, 2.8vh, 36px);
+  }
+
+  .overview__summary {
+    font-size: clamp(17px, 1.8vw, 21px);
+    line-height: 1.55;
+    color: #292524;
+    max-width: 560px;
+    margin: 0;
+  }
+
+  .overview__facts {
+    display: flex;
+    gap: 36px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .overview__fact-label {
+    display: block;
+    color: var(--faint);
+    letter-spacing: 0.1em;
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+
+  .timeline {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .role {
+    display: grid;
+    grid-template-columns: 118px 1fr;
+    gap: clamp(20px, 3vw, 44px);
+    padding: clamp(14px, 2.2vh, 22px) 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .role:last-child {
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .role__period {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    letter-spacing: 0.04em;
+  }
+
+  .role__period[data-current='true'] {
+    color: var(--accent);
+  }
+
+  .role__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .role__title {
+    font-family: var(--mono);
+    font-size: clamp(17px, 1.7vw, 20px);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .role__company {
+    font-size: 14px;
+    color: var(--faint);
+  }
+
+  .role__scope {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--muted);
+    margin: 8px 0 0;
+    max-width: 640px;
+  }
+
+  /* ==========================================================================
+     Narrative scroll-driven animation.
+     Detail is hidden by default; the animation reveals it mid-scroll via the
+     named view-timeline (--narrative, scoped on .narrative-wrap).
+     ========================================================================== */
+
+  .narrative-detail {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  /* ---- Primary: CSS scroll-driven animation (Chrome/Edge 115+, Safari 26+) -- */
+  @supports (animation-timeline: view()) {
+    @media not (prefers-reduced-motion: reduce) {
+      /* Base: timeline + range on all detail elements; name defaults to
+         role-1's keyframe (roles 2 & 3 override below). */
+      .narrative-detail {
+        animation-name: expand-detail-1;
+        animation-duration: 1ms;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        animation-timeline: --narrative;
+        /* The wrapper is 200svh; full entry→exit spans ~300svh of scroll.
+           Expand at ~25 %, hold visible through ~55 %, collapse through ~65 %. */
+        animation-range: entry 0% exit 100%;
+      }
+
+      /* Stagger: each role's detail peaks at a slightly different scroll point
+         so they cascade as the user scrolls through. */
+      .role:nth-child(1) .narrative-detail {
+        animation-name: expand-detail-1;
+      }
+      .role:nth-child(2) .narrative-detail {
+        animation-name: expand-detail-2;
+      }
+      .role:nth-child(3) .narrative-detail {
+        animation-name: expand-detail-3;
+      }
+    }
+  }
+
+  /* ---- Static fallback (Firefox, reduced-motion, keyboard, no-JS) -----------
+     Detail is always visible and readable — the same degrade every
+     non-Chromium / non-Safari-26+ browser rides. */
+  @supports not (animation-timeline: view()) {
+    .narrative-detail {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .narrative-detail {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+  }
+
+  /* Keyframes: expand → visible → collapse.
+     The wrapper is 200svh; with animation-range entry 0%→exit 100% the
+     scroll distance is ~300svh. Each keyframe set staggers the peak so
+     roles cascade visually. */
+  @keyframes expand-detail-1 {
+    0%   { opacity: 0; transform: translateY(14px); }
+    18%  { opacity: 0; transform: translateY(14px); }
+    28%  { opacity: 1; transform: translateY(0); }
+    50%  { opacity: 1; transform: translateY(0); }
+    60%  { opacity: 0; transform: translateY(-10px); }
+    100% { opacity: 0; transform: translateY(-10px); }
+  }
+
+  @keyframes expand-detail-2 {
+    0%   { opacity: 0; transform: translateY(14px); }
+    28%  { opacity: 0; transform: translateY(14px); }
+    38%  { opacity: 1; transform: translateY(0); }
+    55%  { opacity: 1; transform: translateY(0); }
+    65%  { opacity: 0; transform: translateY(-10px); }
+    100% { opacity: 0; transform: translateY(-10px); }
+  }
+
+  @keyframes expand-detail-3 {
+    0%   { opacity: 0; transform: translateY(14px); }
+    38%  { opacity: 0; transform: translateY(14px); }
+    48%  { opacity: 1; transform: translateY(0); }
+    62%  { opacity: 1; transform: translateY(0); }
+    72%  { opacity: 0; transform: translateY(-10px); }
+    100% { opacity: 0; transform: translateY(-10px); }
+  }
+</style>

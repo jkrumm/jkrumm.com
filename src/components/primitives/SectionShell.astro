@@ -1,0 +1,82 @@
+---
+/**
+ * Full-viewport section shell shared by every scroll-snapped section.
+ *
+ * Set `narrative` to wrap the section in a tall scroll-distance wrapper
+ * (position:sticky pinning) for CSS scroll-driven animations.
+ */
+interface Props {
+  id: string;
+  name: string;
+  class?: string;
+  narrative?: boolean;
+}
+
+const { id, name, class: className, narrative = false } = Astro.props;
+---
+
+{
+  narrative ? (
+    <div class="narrative-wrap">
+      <section
+        id={id}
+        data-section
+        data-name={name}
+        class:list={['section', 'narrative-stage', className]}
+      >
+        <div class="section__inner">
+          <slot />
+        </div>
+      </section>
+    </div>
+  ) : (
+    <section id={id} data-section data-name={name} class:list={['section', className]}>
+      <div class="section__inner">
+        <slot />
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .section {
+    /* svh keeps sections stable on mobile (100vh would jump as the URL bar
+       shows/hides). Padding clears the fixed bars (--bar-top / --bar-bottom)
+       plus a gap that scales down on short viewports, so more sections fit the
+       usable band between the bars before content starts to scroll under them.
+       At a 900px viewport this resolves to the original 104px / 96px. */
+    min-height: 100svh;
+    box-sizing: border-box;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: calc(var(--bar-top) + clamp(16px, 5vh, 44px));
+    padding-bottom: calc(var(--bar-bottom) + clamp(16px, 4.5vh, 40px));
+    padding-inline: clamp(20px, 5vw, 72px);
+  }
+
+  .section__inner {
+    width: 100%;
+    max-width: var(--maxw);
+    margin: 0 auto;
+  }
+
+  /* ---- Narrative stage (pinned / scroll-scrubbed) ---------------------------
+     A tall wrapper supplies scroll distance; its sticky child stays a clean
+     100svh snap target. The named view-timeline is scoped here so descendants
+     can reference it for CSS scroll-driven animations. */
+  .narrative-wrap {
+    view-timeline: --narrative;
+    height: 200svh;
+  }
+
+  .narrative-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    /* Snap to center so the overview (start of narrative) is visible at rest,
+       not the mid-collapse state that start-alignment would land on. */
+    scroll-snap-align: center;
+  }
+</style>
