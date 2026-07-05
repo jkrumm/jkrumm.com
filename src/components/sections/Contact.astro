@@ -1,0 +1,107 @@
+---
+/**
+ * Contact section — closing statement + GitHub/LinkedIn link cells + an
+ * intentional "prefer email?" fill-in slot.
+ */
+import Cell from '@/components/primitives/Cell.astro';
+import Grid from '@/components/primitives/Grid.astro';
+import SectionHeader from '@/components/primitives/SectionHeader.astro';
+import SectionShell from '@/components/primitives/SectionShell.astro';
+import { SOCIAL } from '@/consts';
+---
+
+<SectionShell id="contact" name="Contact">
+  <SectionHeader number="06" title="Contact" meta="MUNICH, DE" />
+
+  <div class="contact__statement-cell">
+    <p class="contact__statement reveal" data-delay="60">
+      Open to select opportunities and thoughtful collaborations.
+    </p>
+  </div>
+
+  <Grid>
+    <Cell as="a" href={SOCIAL.github} target="_blank" rel="noopener" class="contact__link">
+      <div class="reveal" data-delay="100">
+        <div>
+          <div class="contact__link-label">GITHUB</div>
+          <div class="contact__link-value">{SOCIAL.githubHandle}</div>
+        </div>
+        <span class="contact__link-arrow" aria-hidden="true">&nearr;</span>
+      </div>
+    </Cell>
+    <Cell as="a" href={SOCIAL.linkedin} target="_blank" rel="noopener" class="contact__link">
+      <div class="reveal" data-delay="140">
+        <div>
+          <div class="contact__link-label">LINKEDIN</div>
+          <div class="contact__link-value">Johannes Krumm</div>
+        </div>
+        <span class="contact__link-arrow" aria-hidden="true">&nearr;</span>
+      </div>
+    </Cell>
+  </Grid>
+
+  <div class="contact__email-cell">
+    <p class="contact__email reveal" data-delay="180">
+      PREFER EMAIL? &nbsp;&mdash;&nbsp; <span class="contact__email-slot">[ add your address ]</span>
+    </p>
+  </div>
+</SectionShell>
+
+<style>
+  .contact__statement-cell {
+    background: var(--panel);
+    padding: clamp(20px, 3vw, 34px) clamp(20px, 3vw, 40px);
+  }
+
+  .contact__statement {
+    font: 600 clamp(24px, 3.4vw, 42px) / 1.15 var(--mono);
+    letter-spacing: -0.02em;
+    max-width: 760px;
+    margin: 0;
+    color: var(--ink);
+  }
+
+  .contact__link {
+    flex: 1 1 300px;
+    padding: clamp(26px, 2.6vw, 34px);
+  }
+
+  .contact__link > .reveal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .contact__link-label {
+    font: 11px var(--mono);
+    letter-spacing: 0.1em;
+    color: var(--faint);
+    margin-bottom: 8px;
+  }
+
+  .contact__link-value {
+    font: 600 clamp(18px, 1.8vw, 22px) var(--mono);
+  }
+
+  .contact__link-arrow {
+    font-size: 18px;
+    font-family: var(--mono);
+    color: var(--accent);
+  }
+
+  .contact__email-cell {
+    background: var(--panel);
+    padding: clamp(20px, 3vw, 34px) clamp(20px, 3vw, 40px);
+  }
+
+  .contact__email {
+    font: 12px var(--mono);
+    letter-spacing: 0.06em;
+    color: var(--faint);
+    margin: 0;
+  }
+
+  .contact__email-slot {
+    color: var(--muted);
+  }
+</style>

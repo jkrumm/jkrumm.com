@@ -1,0 +1,124 @@
+---
+/**
+ * The landing view: hero + section-nav bento, no SectionHeader.
+ * Now a direct child of PageBox — no SectionShell wrapper.
+ */
+import Grid from '@/components/primitives/Grid.astro';
+import Cell from '@/components/primitives/Cell.astro';
+import { SITE } from '@/consts';
+import { navSections } from '@/data/nav';
+---
+
+<section id="home" data-section data-name="Overview" class="home-section">
+  <Grid class="hero">
+    <Cell class="hero__content">
+      <div class="reveal">
+        <p class="hero__eyebrow">{SITE.tagline}</p>
+        <h1 class="hero__statement">
+          I build resilient systems and lead teams that ship — with a bias for clean
+          architecture and software that lasts. Based in Munich.
+        </h1>
+      </div>
+    </Cell>
+    <Cell class="hero__portrait">
+      <span class="hero__portrait-caption">PORTRAIT &middot; DROP PHOTO</span>
+    </Cell>
+  </Grid>
+
+  <Grid class="nav-bento">
+    {
+      navSections.map((item, index) => (
+        <Cell as="a" href={`#${item.id}`} accent={item.accent} class="nav-cell">
+          <div class="reveal" data-delay={Math.min(140 + index * 25, 220)}>
+            <div class:list={['nav-cell__top', item.accent && 'nav-cell__top--accent']}>
+              <span>{item.number}</span>
+              <span aria-hidden="true">&darr;</span>
+            </div>
+            <span class="nav-cell__title">{item.title}</span>
+          </div>
+        </Cell>
+      ))
+    }
+  </Grid>
+</section>
+
+<style>
+  .home-section {
+    background: var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .hero__content {
+    flex: 2 1 460px;
+    padding: clamp(30px, 4vw, 52px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .hero__eyebrow {
+    font: clamp(11px, 1.1vw, 12px) var(--mono);
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    margin: 0 0 18px;
+    text-transform: uppercase;
+  }
+
+  .hero__statement {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: clamp(24px, 3.4vw, 40px);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--ink);
+  }
+
+  .hero__portrait {
+    background: var(--stripe-portrait);
+    flex: 1 1 260px;
+    min-height: clamp(280px, 38vh, 400px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .hero__portrait-caption {
+    font: 11px var(--mono);
+    color: var(--faint-2);
+    letter-spacing: 0.08em;
+    padding: 14px;
+  }
+
+  .nav-cell {
+    flex: 1 1 170px;
+    min-height: 100px;
+    padding: 18px 20px;
+  }
+
+  .nav-cell > .reveal {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+  }
+
+  .nav-cell__top {
+    display: flex;
+    justify-content: space-between;
+    font: 11px var(--mono);
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+
+  .nav-cell__top--accent {
+    color: inherit;
+    opacity: 0.85;
+  }
+
+  .nav-cell__title {
+    font: 500 clamp(15px, 1.5vw, 18px) var(--mono);
+  }
+</style>

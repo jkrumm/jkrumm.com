@@ -1,0 +1,52 @@
+---
+import { Font } from 'astro:assets';
+import { ClientRouter } from 'astro:transitions';
+import BaseHead from '@/components/seo/BaseHead.astro';
+import JsonLd from '@/components/seo/JsonLd.astro';
+import { SITE } from '@/consts';
+import '@/styles/global.css';
+
+interface Props {
+  /** Full <title>. Falls back to the site title. */
+  title?: string;
+  /** Meta description. Falls back to the site description. */
+  description?: string;
+  /** Open Graph type for this page. */
+  ogType?: 'website' | 'profile' | 'article';
+  /** Which JSON-LD graph to emit, if any. */
+  jsonLd?: 'home' | 'page';
+}
+
+const { title = SITE.title, description = SITE.description, ogType = 'website', jsonLd } =
+  Astro.props;
+---
+
+<!doctype html>
+<html lang={SITE.locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Add `.js` before first paint so scroll-reveals never flash unhidden. -->
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
+
+    <Font cssVariable="--font-mono" preload />
+    <Font cssVariable="--font-sans" preload />
+
+    <BaseHead title={title} description={description} ogType={ogType} />
+    {jsonLd && <JsonLd type={jsonLd} />}
+
+    <ClientRouter />
+  </head>
+  <body>
+    <slot />
+
+    <script>
+      import '../scripts/portfolio.ts';
+    </script>
+  </body>
+</html>

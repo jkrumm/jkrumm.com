@@ -1,0 +1,28 @@
+---
+/**
+ * The 1px-line grid technique: a flex-wrap container with a 1px background
+ * gap, drawing hairlines between cells and around the outer border.
+ */
+interface Props {
+  mergeTop?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { mergeTop = false, class: className, ...rest } = Astro.props;
+---
+
+<div class:list={['grid', mergeTop && 'grid--merge-top', className]} {...rest}>
+  <slot />
+</div>
+
+<style>
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    background: var(--line);
+  }
+
+  /* mergeTop is now a no-op — the border it used to strip no longer exists. */
+</style>

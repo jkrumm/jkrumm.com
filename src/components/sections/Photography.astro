@@ -1,0 +1,74 @@
+---
+/**
+ * Photography section (#photography) — striped gallery-preview tiles with
+ * EXIF-style mono captions, ending in a "view gallery" meta link.
+ */
+import SectionShell from '@/components/primitives/SectionShell.astro';
+import SectionHeader from '@/components/primitives/SectionHeader.astro';
+import Grid from '@/components/primitives/Grid.astro';
+import Cell from '@/components/primitives/Cell.astro';
+import MetaLink from '@/components/primitives/MetaLink.astro';
+import { tiles, galleryHref } from '@/data/photos.ts';
+---
+
+<SectionShell id="photography" name="Photography">
+  <SectionHeader number="05" title="Photography" meta="MUNICH & THE ROAD" />
+  <Grid>
+    {
+      tiles.map((tile, index) => (
+        <Cell
+          as="div"
+          interactive={false}
+          class="tile"
+          data-span={tile.span}
+          data-row={index < 2 ? 'tall' : 'short'}
+        >
+          <span class="tile__caption reveal" data-delay={Math.min(60 + index * 40, 220)}>
+            {tile.caption}
+          </span>
+        </Cell>
+      ))
+    }
+  </Grid>
+  <div class="gallery-link">
+    <div class="reveal" data-delay="60">
+      <MetaLink href={galleryHref}>VIEW GALLERY &rarr;</MetaLink>
+    </div>
+  </div>
+</SectionShell>
+
+<style>
+  .tile {
+    display: flex;
+    align-items: flex-end;
+    background: var(--stripe-photo);
+  }
+
+  .tile[data-span='wide'] {
+    flex: 2 1 300px;
+  }
+
+  .tile[data-span='narrow'] {
+    flex: 1 1 200px;
+  }
+
+  .tile[data-row='tall'] {
+    min-height: clamp(180px, 26vh, 260px);
+  }
+
+  .tile[data-row='short'] {
+    min-height: clamp(160px, 22vh, 220px);
+  }
+
+  .tile__caption {
+    font: 10px var(--mono);
+    letter-spacing: 0.08em;
+    color: var(--faint-2);
+    padding: 12px;
+  }
+
+  .gallery-link {
+    background: var(--panel);
+    padding: clamp(20px, 3vw, 34px) clamp(20px, 3vw, 40px);
+  }
+</style>

@@ -1,0 +1,110 @@
+/* ============================================================================
+   Design tokens — single source of truth for the portfolio.
+   Values mirror design_handoff_portfolio/README.md § Design Tokens.
+   ========================================================================== */
+:root {
+  /* Surfaces */
+  --bg: #efeeeb;
+  --panel: #f4f2ef;
+  --panel-hover: #fbfaf8;
+
+  /* Lines */
+  --line: #d6d3d1;
+  --hairline: #e4e0db;
+
+  /* Ink / text */
+  --ink: #1c1917;
+  --ink-2: #57534e;
+  --muted: #78716c;
+  --faint: #a8a29e;
+  --faint-2: #8a827a;
+
+  /* Accent */
+  --accent: #2f5bff;
+  --accent-hover: #244cf0;
+  --accent-glow: rgba(47, 91, 255, 0.16);
+  --dot-idle: #cfcac4;
+
+  /* Chrome */
+  --bar-bg: rgba(240, 239, 236, 0.82);
+
+  /* Typography — the CSS variables come from Astro's font pipeline
+     (astro.config.mjs → fonts[].cssVariable). */
+  --mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+  --sans: var(--font-sans), system-ui, sans-serif;
+
+  /* Layout */
+  --maxw: 1180px;
+  --bar-top: 60px;
+  --bar-bottom: 56px;
+
+  /* Placeholder fills (replaced by real imagery later) */
+  --stripe-portrait: repeating-linear-gradient(135deg, #eae7e3 0 9px, #f4f2ef 9px 18px);
+  --stripe-photo: repeating-linear-gradient(135deg, #e7e3de 0 10px, #f1eeea 10px 20px);
+
+  /* Motion */
+  --ease-reveal: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Hide the scroll stage's scrollbar while keeping it scrollable */
+#jk-scroll {
+  scrollbar-width: none;
+}
+#jk-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* ============================================================================
+   Scroll-reveal — progressive enhancement.
+   Content is visible by default. An inline <head> script adds `.js` to <html>
+   before first paint, which hides `.reveal` elements so Motion can animate
+   them in on scroll. If JS never runs, nothing is ever hidden.
+   Motion writes inline opacity/transform, which overrides the hidden state.
+   ========================================================================== */
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+html.js .reveal {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Keyboard focus ring */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}

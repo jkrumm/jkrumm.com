@@ -1,0 +1,60 @@
+---
+import { AUTHOR, LOCATION, SITE, SOCIAL } from '@/consts';
+
+interface Props {
+  /** Which schema.org graph to emit for this page. */
+  type: 'home' | 'page';
+}
+
+const { type } = Astro.props;
+
+type JsonLdNode = Record<string, unknown>;
+
+const person: JsonLdNode = {
+  '@type': 'Person',
+  '@id': '#person',
+  name: SITE.name,
+  givenName: AUTHOR.firstName,
+  familyName: AUTHOR.lastName,
+  jobTitle: AUTHOR.jobTitle,
+  url: SITE.url,
+  sameAs: [SOCIAL.github, SOCIAL.linkedin],
+  knowsAbout: AUTHOR.knowsAbout,
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: LOCATION.city,
+    addressCountry: LOCATION.countryCode,
+  },
+};
+
+const website: JsonLdNode = {
+  '@type': 'WebSite',
+  '@id': '#website',
+  name: SITE.title,
+  url: SITE.url,
+  description: SITE.description,
+  publisher: { '@id': '#person' },
+};
+
+const graph: JsonLdNode[] = [person, website];
+
+if (type === 'home') {
+  const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+  graph.push({
+    '@type': 'ProfilePage',
+    '@id': '#profilepage',
+    url: canonicalURL,
+    name: SITE.title,
+    description: SITE.description,
+    mainEntity: { '@id': '#person' },
+    isPartOf: { '@id': '#website' },
+  });
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': graph,
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} is:inline />

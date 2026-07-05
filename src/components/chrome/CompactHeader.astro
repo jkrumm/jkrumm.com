@@ -1,0 +1,44 @@
+---
+/**
+ * Sticky name-bar — always-opaque, pinned to the top of #jk-scroll.
+ * Shows the name and the scroll-linked accent progress line.
+ */
+---
+
+<div class="compact-header">
+  <div data-progress class="compact-header__progress"></div>
+  <span class="compact-header__name">Johannes Krumm</span>
+</div>
+
+<style>
+  .compact-header {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--bar-top);
+    padding: 0 clamp(18px, 4vw, 40px);
+    background: var(--panel);
+    box-shadow: 0 1px 0 var(--line);
+    font-family: var(--mono);
+  }
+
+  .compact-header__progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 2px;
+    width: 100%;
+    background: var(--accent);
+    transform-origin: left;
+    transform: scaleX(0);
+  }
+
+  .compact-header__name {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--ink);
+  }
+</style>

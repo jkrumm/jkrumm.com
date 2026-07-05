@@ -1,0 +1,44 @@
+---
+/**
+ * A bordered mono chip used for stack tags, project tags, etc.
+ */
+interface Props {
+  variant?: 'default' | 'accent' | 'on-accent';
+  href?: string;
+}
+
+const { variant = 'default', href } = Astro.props;
+const Tag = href ? 'a' : 'span';
+---
+
+<Tag
+  href={href}
+  class:list={[
+    'chip',
+    variant === 'accent' && 'chip--accent',
+    variant === 'on-accent' && 'chip--on-accent',
+  ]}
+>
+  <slot />
+</Tag>
+
+<style>
+  .chip {
+    display: inline-block;
+    border: 1px solid var(--line);
+    padding: 6px 10px;
+    font: 11px var(--mono);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  .chip--accent {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .chip--on-accent {
+    border-color: rgba(255, 255, 255, 0.4);
+    color: inherit;
+  }
+</style>

@@ -2,75 +2,28 @@
 /**
  * Section shell shared by every section on the homepage.
  *
- * Set `narrative` to wrap the section in a tall scroll-distance wrapper
- * (position:sticky pinning) for CSS scroll-driven animations.
+ * Borderless flex-column "rail band" inside PageBox: full-width, no border and
+ * no max-width. Its rows (header cell, Grid rows, full-width cells) separate via
+ * this band's own 1px flex gap; the band butts the PageBox gap top and bottom.
  */
 interface Props {
   id: string;
   name: string;
   class?: string;
-  narrative?: boolean;
 }
 
-const { id, name, class: className, narrative = false } = Astro.props;
+const { id, name, class: className } = Astro.props;
 ---
 
-{
-  narrative ? (
-    <div class="narrative-wrap">
-      <section
-        id={id}
-        data-section
-        data-name={name}
-        class:list={['section', 'narrative-stage', className]}
-      >
-        <div class="section__inner">
-          <slot />
-        </div>
-      </section>
-    </div>
-  ) : (
-    <section id={id} data-section data-name={name} class:list={['section', className]}>
-      <div class="section__inner">
-        <slot />
-      </div>
-    </section>
-  )
-}
+<section id={id} data-section data-name={name} class:list={['section', className]}>
+  <slot />
+</section>
 
 <style>
   .section {
-    /* Natural-height sections — no snap, no forced viewport fill.
-       Every section clears the fixed top bar so content never hides
-       behind it; the first section gets extra breathing room. */
-    box-sizing: border-box;
-    padding-block: 2.5rem;
-    padding-inline: clamp(20px, 5vw, 72px);
-  }
-
-  .section:first-of-type {
-    padding-top: calc(var(--bar-top) + 2.5rem);
-  }
-
-  .section__inner {
-    width: 100%;
-    max-width: var(--maxw);
-    margin: 0 auto;
-  }
-
-  /* ---- Narrative stage (pinned / scroll-scrubbed) ---------------------------
-     A tall wrapper supplies scroll distance; its sticky child stays a clean
-     100svh stage. The named view-timeline is scoped here so descendants
-     can reference it for CSS scroll-driven animations. */
-  .narrative-wrap {
-    view-timeline: --narrative;
-    height: 200svh;
-    padding-block: 2.5rem;
-  }
-
-  .narrative-stage {
-    position: sticky;
-    top: 0;
-    height: 100svh;
+    background: var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
   }
 </style>

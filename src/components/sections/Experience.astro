@@ -1,10 +1,9 @@
 ---
 /**
- * Experience section — overview lede + role timeline.
- * Scope text is shown inline (the CSS scroll-driven narrative POC was removed
- * in July 2026 — the sticky + view-timeline interaction didn't animate
- * reliably in natural flow, and the 200svh wrapper created a jarring gap).
- * The SectionShell narrative prop stays available for future use.
+ * Experience section — overview lede + role timeline, rendered as opaque
+ * panel rows in the continuous bento grid: the overview, each role, and the
+ * résumé link are each their own rail row separated by the frame's 1px
+ * hairline (the CSS scroll-driven narrative POC was removed in July 2026).
  */
 import SectionShell from '@/components/primitives/SectionShell.astro';
 import SectionHeader from '@/components/primitives/SectionHeader.astro';
@@ -15,25 +14,24 @@ import { overview, roles, resumeHref } from '@/data/experience.ts';
 <SectionShell id="experience" name="Experience">
   <SectionHeader number="02" title="Experience" meta="OVERVIEW → ROLES" />
 
-  <div class="overview reveal" data-delay="60">
-    <p class="overview__summary">{overview.summary}</p>
-    <div class="overview__facts">
-      <span class="overview__fact">
-        <span class="overview__fact-label">FOCUS</span>{overview.focus}
-      </span>
-      <span class="overview__fact">
-        <span class="overview__fact-label">CORE STACK</span>{overview.coreStack}
-      </span>
+  <div class="overview">
+    <div class="overview__inner reveal" data-delay="60">
+      <p class="overview__summary">{overview.summary}</p>
+      <div class="overview__facts">
+        <span class="overview__fact">
+          <span class="overview__fact-label">FOCUS</span>{overview.focus}
+        </span>
+        <span class="overview__fact">
+          <span class="overview__fact-label">CORE STACK</span>{overview.coreStack}
+        </span>
+      </div>
     </div>
   </div>
 
-  <div class="timeline">
-    {
-      roles.map((role, index) => (
-        <div
-          class="role reveal"
-          data-delay={120 + index * 50}
-        >
+  {
+    roles.map((role, index) => (
+      <div class="role">
+        <div class="role__inner reveal" data-delay={Math.min(120 + index * 50, 220)}>
           <span class="role__period" data-current={role.current}>
             {role.period}
           </span>
@@ -45,22 +43,28 @@ import { overview, roles, resumeHref } from '@/data/experience.ts';
             <p class="role__scope">{role.scope}</p>
           </div>
         </div>
-      ))
-    }
-  </div>
+      </div>
+    ))
+  }
 
-  <MetaLink href={resumeHref}>FULL RÉSUMÉ →</MetaLink>
+  <div class="experience-link">
+    <div class="reveal">
+      <MetaLink href={resumeHref}>FULL RÉSUMÉ →</MetaLink>
+    </div>
+  </div>
 </SectionShell>
 
 <style>
   .overview {
+    background: var(--panel);
+    padding: clamp(20px, 3vw, 34px) clamp(20px, 3vw, 40px);
+  }
+
+  .overview__inner {
     display: flex;
     flex-wrap: wrap;
     gap: 24px 48px;
     align-items: flex-end;
-    padding-bottom: clamp(18px, 2.6vh, 34px);
-    border-bottom: 1px solid var(--line);
-    margin-bottom: clamp(20px, 2.8vh, 36px);
   }
 
   .overview__summary {
@@ -87,21 +91,15 @@ import { overview, roles, resumeHref } from '@/data/experience.ts';
     margin-bottom: 6px;
   }
 
-  .timeline {
-    display: flex;
-    flex-direction: column;
+  .role {
+    background: var(--panel);
+    padding: clamp(14px, 2.2vh, 22px) clamp(20px, 3vw, 40px);
   }
 
-  .role {
+  .role__inner {
     display: grid;
     grid-template-columns: 118px 1fr;
     gap: clamp(20px, 3vw, 44px);
-    padding: clamp(14px, 2.2vh, 22px) 0;
-    border-top: 1px solid var(--hairline);
-  }
-
-  .role:last-child {
-    border-bottom: 1px solid var(--hairline);
   }
 
   .role__period {
@@ -140,5 +138,10 @@ import { overview, roles, resumeHref } from '@/data/experience.ts';
     color: var(--muted);
     margin: 8px 0 0;
     max-width: 640px;
+  }
+
+  .experience-link {
+    background: var(--panel);
+    padding: clamp(20px, 3vw, 34px) clamp(20px, 3vw, 40px);
   }
 </style>

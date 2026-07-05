@@ -1,0 +1,63 @@
+---
+/**
+ * The shared section header row: an opaque `--panel` cell holding
+ * number · title · hairline · meta. Its inner content is the section's first
+ * reveal (no delay); the cell itself stays fixed on the rail band.
+ */
+interface Props {
+  number: string;
+  title: string;
+  meta: string;
+}
+
+const { number, title, meta } = Astro.props;
+---
+
+<div class="section-header">
+  <div class="section-header__inner reveal">
+    <span class="section-header__number">{number}</span>
+    <h2 class="section-header__title">{title}</h2>
+    <span class="section-header__hairline" aria-hidden="true"></span>
+    <span class="section-header__meta">{meta}</span>
+  </div>
+</div>
+
+<style>
+  .section-header {
+    background: var(--panel);
+    padding: clamp(20px, 3vw, 34px) clamp(20px, 3vw, 40px);
+  }
+
+  .section-header__inner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-family: var(--mono);
+  }
+
+  .section-header__number {
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.14em;
+  }
+
+  .section-header__title {
+    font-size: clamp(21px, 2.5vw, 30px);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .section-header__hairline {
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+    min-width: 20px;
+  }
+
+  .section-header__meta {
+    font-size: 11px;
+    color: var(--faint);
+    letter-spacing: 0.14em;
+  }
+</style>

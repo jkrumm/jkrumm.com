@@ -1,0 +1,61 @@
+---
+/**
+ * The bento cell wrapper. Owns background/position/color/hover only —
+ * flex, padding and min-height arrive via the passed `class`.
+ */
+interface Props {
+  as?: 'div' | 'a';
+  href?: string;
+  target?: string;
+  rel?: string;
+  accent?: boolean;
+  interactive?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const {
+  as = 'div',
+  href,
+  target,
+  rel,
+  accent = false,
+  interactive = as === 'a',
+  class: className,
+  ...rest
+}: Props = Astro.props;
+
+const Tag = as;
+---
+
+<Tag
+  href={as === 'a' ? href : undefined}
+  target={as === 'a' ? target : undefined}
+  rel={as === 'a' ? rel : undefined}
+  class:list={['cell', accent && 'cell--accent', interactive && 'cell--interactive', className]}
+  {...rest}
+>
+  <slot />
+</Tag>
+
+<style>
+  .cell {
+    position: relative;
+    background: var(--panel);
+    color: var(--ink);
+    transition: background 0.25s;
+  }
+
+  .cell--accent {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .cell--interactive:hover {
+    background: var(--panel-hover);
+  }
+
+  .cell--interactive.cell--accent:hover {
+    background: var(--accent-hover);
+  }
+</style>

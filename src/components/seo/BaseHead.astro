@@ -1,0 +1,51 @@
+---
+import { SITE } from '@/consts';
+
+interface Props {
+  /** Full <title>. */
+  title: string;
+  /** Meta description. */
+  description: string;
+  /** Open Graph type for this page. */
+  ogType?: 'website' | 'profile' | 'article';
+  /** Open Graph / Twitter image, resolved against `Astro.site`. Falls back to `SITE.ogImage`. */
+  image?: string;
+  /** Canonical path or URL. Falls back to the current pathname. */
+  canonical?: string;
+  /** Mark the page as noindex (still followed). */
+  noindex?: boolean;
+}
+
+const { title, description, ogType = 'website', image, canonical, noindex = false } =
+  Astro.props;
+
+const canonicalURL = new URL(canonical ?? Astro.url.pathname, Astro.site);
+const ogImage = new URL(image ?? SITE.ogImage, Astro.site).toString();
+
+const robotsContent = [
+  noindex ? 'noindex, follow' : 'index, follow',
+  'max-snippet:-1',
+  'max-image-preview:large',
+  'max-video-preview:-1',
+].join(', ');
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL} />
+<meta name="robots" content={robotsContent} />
+
+<meta property="og:type" content={ogType} />
+<meta property="og:site_name" content={SITE.name} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:locale" content={SITE.locale} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />

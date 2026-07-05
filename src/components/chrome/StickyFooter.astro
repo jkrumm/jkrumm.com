@@ -1,0 +1,97 @@
+---
+/**
+ * Sticky footer inside #jk-scroll — replaces the old fixed BottomBar.
+ * Nav dots, social links, and live clock all sticky to the bottom of
+ * the scroll container.
+ */
+import { navDots } from '@/data/nav';
+import { SOCIAL } from '@/consts';
+---
+
+<div class="sticky-footer">
+  <div class="sticky-footer__dots">
+    {
+      navDots.map((section, index) => (
+        <a
+          href={`#${section.id}`}
+          data-dot={index}
+          title={section.name}
+          class:list={['dot', index === 0 && 'is-active']}
+        />
+      ))
+    }
+  </div>
+  <div class="sticky-footer__links">
+    <a href="#experience" class="sticky-footer__link">RÉSUMÉ</a>
+    <a href={SOCIAL.github} target="_blank" rel="noopener" class="sticky-footer__link">GITHUB ↗</a>
+    <a href={SOCIAL.linkedin} target="_blank" rel="noopener" class="sticky-footer__link">LINKEDIN ↗</a>
+    <a href="#contact" class="sticky-footer__link sticky-footer__link--accent">CONTACT</a>
+  </div>
+  <span data-clock class="sticky-footer__clock">--:--:--</span>
+</div>
+
+<style>
+  .sticky-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    min-height: 52px;
+    padding: 9px clamp(18px, 4vw, 40px);
+    background: var(--panel);
+    box-shadow: 0 -1px 0 var(--line);
+    font-family: var(--mono);
+  }
+
+  .sticky-footer__dots {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot {
+    height: 6px;
+    width: 10px;
+    border-radius: 3px;
+    background: var(--dot-idle);
+    transition: width 0.25s, background 0.25s;
+  }
+
+  .dot.is-active {
+    width: 22px;
+    background: var(--accent);
+  }
+
+  .sticky-footer__links {
+    display: flex;
+    gap: clamp(14px, 2.2vw, 26px);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--ink-2);
+  }
+
+  .sticky-footer__link {
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .sticky-footer__link:hover {
+    color: var(--accent);
+  }
+
+  .sticky-footer__link--accent {
+    color: var(--accent);
+  }
+
+  .sticky-footer__clock {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+</style>

@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import TopBar from '@/components/chrome/TopBar.astro';
-import BottomBar from '@/components/chrome/BottomBar.astro';
+import PageBox from '@/components/primitives/PageBox.astro';
+import CompactHeader from '@/components/chrome/CompactHeader.astro';
+import StickyFooter from '@/components/chrome/StickyFooter.astro';
 import Home from '@/components/sections/Home.astro';
 import Writing from '@/components/sections/Writing.astro';
 import Experience from '@/components/sections/Experience.astro';
@@ -13,26 +14,28 @@ import { SITE } from '@/consts';
 ---
 
 <BaseLayout title={SITE.title} ogType="profile" jsonLd="home">
-  <TopBar />
   <main id="jk-scroll">
-    <Home />
-    <Writing />
-    <Experience />
-    <Stack />
-    <Projects />
-    <Photography />
-    <Contact />
+    <PageBox>
+      <CompactHeader />
+      <Home />
+      <Writing />
+      <Experience />
+      <Stack />
+      <Projects />
+      <Photography />
+      <Contact />
+      <StickyFooter />
+    </PageBox>
   </main>
-  <BottomBar />
 </BaseLayout>
 
 <style>
-  /* The scroll stage. Scrollbar hiding lives in global.css. */
   #jk-scroll {
     height: 100svh;
     overflow-y: auto;
     scroll-behavior: smooth;
     background: var(--bg);
     font-family: var(--sans);
+    padding-inline: clamp(12px, 3vw, 24px);
   }
 </style>

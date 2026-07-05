@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Johannes Krumm">
+  <rect width="32" height="32" rx="5" fill="#EFEEEB"/>
+  <rect x="0.5" y="0.5" width="31" height="31" rx="4.5" fill="none" stroke="#D6D3D1"/>
+  <text x="5" y="22" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, monospace" font-size="16" font-weight="700" fill="#1c1917">JK</text>
+  <text x="23" y="14" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="13" font-weight="700" fill="#2F5BFF">+</text>
+</svg>

@@ -1,0 +1,62 @@
+---
+/**
+ * The "Stack" section — personal tool groups (AI coding, homelab, VPS/infra)
+ * rendered as a bento grid of cells with mono labels, descriptions and chips.
+ */
+import SectionShell from '@/components/primitives/SectionShell.astro';
+import SectionHeader from '@/components/primitives/SectionHeader.astro';
+import Grid from '@/components/primitives/Grid.astro';
+import Cell from '@/components/primitives/Cell.astro';
+import Chip from '@/components/primitives/Chip.astro';
+import { groups } from '@/data/stack.ts';
+---
+
+<SectionShell id="stack" name="Stack">
+  <SectionHeader number="03" title="Personal Stack" meta="AI · HOMELAB · INFRA" />
+  <Grid>
+    {
+      groups.map((group, index) => (
+        <Cell class="stack-cell">
+          <div class="reveal" data-delay={Math.min(60 + index * 40, 220)}>
+            <h3 class="stack-cell__label">{group.label}</h3>
+            <p class="stack-cell__description">{group.description}</p>
+            <div class="stack-cell__chips">
+              {group.chips.map((chip) => (
+                <Chip variant={chip.accent ? 'accent' : 'default'}>{chip.label}</Chip>
+              ))}
+            </div>
+          </div>
+        </Cell>
+      ))
+    }
+  </Grid>
+</SectionShell>
+
+<style>
+  .stack-cell {
+    flex: 1 1 300px;
+    padding: clamp(26px, 2.6vw, 36px);
+    min-height: 280px;
+  }
+
+  .stack-cell__label {
+    font: 12px var(--mono);
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .stack-cell__description {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--muted);
+    margin: 12px 0 20px;
+  }
+
+  .stack-cell__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+</style>

@@ -1,0 +1,54 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import MetaLink from '@/components/primitives/MetaLink.astro';
+import { SITE } from '@/consts';
+---
+
+<BaseLayout
+  title={`Photography — ${SITE.title}`}
+  description="Photography from Johannes Krumm."
+  jsonLd="page"
+>
+  <main class="stub">
+    <p class="stub__eyebrow">05 / PHOTOGRAPHY</p>
+    <h1 class="stub__title">Photography</h1>
+    <p class="stub__note">This section is coming soon.</p>
+    <MetaLink href="/">&larr; Back to home</MetaLink>
+  </main>
+</BaseLayout>
+
+<style>
+  .stub {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: clamp(24px, 5vw, 64px);
+    text-align: center;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+  }
+
+  .stub__eyebrow {
+    font: 12px var(--mono);
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .stub__title {
+    font: 700 clamp(36px, 5.4vw, 60px) var(--mono);
+    letter-spacing: -0.03em;
+    margin: 0;
+  }
+
+  .stub__note {
+    font-size: clamp(15px, 1.4vw, 17px);
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+</style>
