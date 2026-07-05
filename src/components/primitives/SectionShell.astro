@@ -1,6 +1,6 @@
 ---
 /**
- * Full-viewport section shell shared by every scroll-snapped section.
+ * Section shell shared by every section on the homepage.
  *
  * Set `narrative` to wrap the section in a tall scroll-distance wrapper
  * (position:sticky pinning) for CSS scroll-driven animations.
@@ -40,20 +40,16 @@ const { id, name, class: className, narrative = false } = Astro.props;
 
 <style>
   .section {
-    /* svh keeps sections stable on mobile (100vh would jump as the URL bar
-       shows/hides). Padding clears the fixed bars (--bar-top / --bar-bottom)
-       plus a gap that scales down on short viewports, so more sections fit the
-       usable band between the bars before content starts to scroll under them.
-       At a 900px viewport this resolves to the original 104px / 96px. */
-    min-height: 100svh;
+    /* Natural-height sections — no snap, no forced viewport fill.
+       Every section clears the fixed top bar so content never hides
+       behind it; the first section gets extra breathing room. */
     box-sizing: border-box;
-    scroll-snap-align: start;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding-top: calc(var(--bar-top) + clamp(16px, 5vh, 44px));
-    padding-bottom: calc(var(--bar-bottom) + clamp(16px, 4.5vh, 40px));
+    padding-block: 2.5rem;
     padding-inline: clamp(20px, 5vw, 72px);
+  }
+
+  .section:first-of-type {
+    padding-top: calc(var(--bar-top) + 2.5rem);
   }
 
   .section__inner {
@@ -64,22 +60,17 @@ const { id, name, class: className, narrative = false } = Astro.props;
 
   /* ---- Narrative stage (pinned / scroll-scrubbed) ---------------------------
      A tall wrapper supplies scroll distance; its sticky child stays a clean
-     100svh snap target. The named view-timeline is scoped here so descendants
+     100svh stage. The named view-timeline is scoped here so descendants
      can reference it for CSS scroll-driven animations. */
   .narrative-wrap {
     view-timeline: --narrative;
     height: 200svh;
+    padding-block: 2.5rem;
   }
 
   .narrative-stage {
     position: sticky;
     top: 0;
     height: 100svh;
-    /* Snap to center so the overview (start of narrative) is visible at rest,
-       not the mid-collapse state that start-alignment would land on.
-       always: with proximity snap, a fast flick can skip sections — this
-       keeps the narrative from being overshot on trackpads. */
-    scroll-snap-align: center;
-    scroll-snap-stop: always;
   }
 </style>

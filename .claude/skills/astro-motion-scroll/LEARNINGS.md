@@ -183,3 +183,43 @@ Entry format:
   mandatory." The narrative POC stays as a progressive enhancement; if it ever
   fights snap on touch devices, the kill path is to remove the `narrative` prop
   from Experience (keeping SectionShell's narrative support for future use).
+
+## 2026-07-05 — Natural-height sections: snap removed entirely
+
+- **Context:** After reverting mandatory→proximity snap, the owner asked to
+  drop the full-viewport aesthetic entirely and go natural-height inline flow,
+  per the research's recommended modern portfolio pattern.
+- **Worked:**
+  - **`#jk-scroll` is a plain scroll container** — dropped `scroll-snap-type`,
+    `scroll-padding-*`, and `overscroll-behavior: contain`. Kept `scroll-behavior:
+    smooth` (nav links still use it).
+  - **`.section` is natural-height** — dropped `min-height: 100svh`,
+    `scroll-snap-align`, centering flexbox (`display:flex; flex-direction:column;
+    justify-content:center`), and the viewport-clamped padding. Replaced with
+    `padding-block: 2.5rem; padding-inline: clamp(20px, 5vw, 72px)`. First
+    section clears the fixed top bar with `padding-top: calc(var(--bar-top) +
+    2.5rem)`.
+  - **Narrative stage** — dropped `scroll-snap-align: center` and
+    `scroll-snap-stop: always`. Sticky pinning + `view-timeline` is
+    self-contained and doesn't need snap at all. Added `padding-block: 2.5rem`
+    to `.narrative-wrap` so it flows naturally between adjacent sections.
+  - **Build stays green** (0/0/0). Reveal system, progress line, clock,
+    active-section tracking all unaffected — they run on `inView`/
+    `IntersectionObserver`, not snap.
+  - **SKILL.md rewritten** — all snap language removed from every section.
+    §4 is now "Natural-height sections (no scroll-snap)" with the permanent
+    rationale. §5 (old §6) updated. Repo decisions codify "no snap, period."
+    `references/scroll-snap.css` marked historical.
+- **Didn't:** Nothing — this was a pure removal of a mechanism that had already
+  been rejected.
+- **Gotcha:** The `ClientRouter` re-init pattern, the `inView` reveal system,
+  and the CSS `view-timeline` narrative POC all survived untouched. They were
+  never coupled to snap — they just happened to coexist in the same container.
+  The only coupling was `scroll-snap-align` on sections and
+  `scroll-snap-stop` on the narrative stage, both removed.
+- **Verdict / decision:** **Natural-height is the permanent layout.** The site
+  is now a plain scrolling page with Motion reveals + one CSS scroll-driven
+  narrative section. This is the modern portfolio pattern (2025–2026):
+  progressive disclosure via scroll-driven reveals and sticky sections, zero
+  snap. No scroll-hijack libraries, no forced page transitions — content the
+  user controls at their own pace.
