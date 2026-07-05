@@ -184,6 +184,74 @@ Entry format:
   fights snap on touch devices, the kill path is to remove the `narrative` prop
   from Experience (keeping SectionShell's narrative support for future use).
 
+## 2026-07-05 — Unified grid layout + hero collapse
+
+- **Context:** Redesigned the page from fixed header/content/footer to a unified
+  bordered "page box" with all sections as a continuous vertical grid. Hero is the
+  first element in the PageBox (no fixed bar above it); a compact header fades in
+  on scroll and sticks to the top. Footer is sticky at the bottom.
+- **Worked:**
+  - **CompactHeader crossfade.** Motion `scroll()` with `offset: [0, 350]` maps
+    scroll distance to `.compact-header` opacity 0→1. Position sticky inside
+    `#jk-scroll`, not fixed — so it follows the scroll container. 
+  - **PageBox as outer border.** A single `border: 1px solid var(--line)` +
+    `max-width: var(--maxw)` wrapper constrains all sections. Sections no longer
+    need their own max-width.
+  - **Hairline separators.** `.section + .section { border-top: 1px solid
+    var(--line) }` in SectionShell; Home gets a `border-bottom` since it doesn't
+    use `.section` class (it's a standalone `<section class="home-section">`).
+  - **StickyFooter.** Same nav dots + links + clock as the old fixed BottomBar,
+    but `position: sticky; bottom: 0` inside the scroll container. Clock query
+    (`[data-clock]`) already used `querySelectorAll` — picks up the new element
+    automatically.
+  - **No more fixed-bar clearing.** First section no longer needs
+    `padding-top: calc(var(--bar-top) + 2.5rem)` — CompactHeader is transparent
+    at scrollTop 0, so the hero renders at the top of the viewport.
+  - **Build stays green** (0/0/0, 4 pages).
+- **Didn't:** Nothing — the crossfade is a simple opacity transition on a sticky
+  element, no height animation.
+- **Gotcha:** The `.section + .section` adjacency selector only fires when BOTH
+  siblings have class `.section`. Home uses `.home-section` (no `.section`), so
+  the Writing section (first `.section` child) was initially borderless — the
+  separator gap was between Home and Writing. Fixed by giving `.home-section` a
+  `border-bottom`.
+- **Verdict / decision:** Sticky chrome inside the scroll container (rather than
+  fixed to the viewport) keeps everything in the scroll flow. The PageBox pattern
+  gives the continuous-grid look while keeping each section's component
+  self-contained. CompactHeader + StickyFooter replace TopBar + BottomBar
+  cleanly — same data attributes, same IO/scroll wiring, zero changes to
+  section content.
+
+## 2026-07-05 — No-wrapper grid: sections ARE the grid
+
+- **Context:** The PageBox wrapper was the wrong abstraction — the user wanted
+  sections to form one continuous grid directly, no wrapping container.
+- **Worked:**
+  - **Each section carries its own border edges.** Home and every `.section` get
+    `border-left`, `border-right`, `max-width: var(--maxw)`, `margin: 0 auto`,
+    `width: 100%` — they independently center and align their vertical borders.
+  - **Home starts the grid** with `border-top`; Contact closes it with
+    `border-bottom`. Between-section hairlines come from `.section + .section
+    { border-top }` (plus narrative-wrap variants).
+  - **Removed the Home footer row** (MUNICH, DE · CET + SCROLL TO EXPLORE) — it
+    was redundant and wasted space now that the nav bento connects directly to
+    the next section.
+  - **Tightened Home bottom padding** from 20px to `clamp(14px, 2vw, 24px)` so
+    the nav bento connects more tightly to the next section.
+  - **No PageBox.** Deleted. Zero-wrapper layout — sections are direct children
+    of `#jk-scroll`.
+  - **Build green** (33 files, 0/0/0).
+- **Didn't:** Sub-pixel border misalignment is theoretically possible when
+  independently-centered elements each have 1px borders, but in practice at
+  1180px max-width on standard viewport widths, the centering math is stable.
+  If it ever manifests, the fix is a thin wrapper for borders only (no padding).
+- **Gotcha:** `.narrative-wrap` needed the same `border-left/right` +
+  `max-width` treatment as `.section` so a future narrative section doesn't
+  break the grid edges. Added preventively.
+- **Verdict / decision:** Sections-as-grid is cleaner than a wrapper — each
+  section owns its border contract, no intermediate container. The visual reads as
+  one continuous box from hero to contact.
+
 ## 2026-07-05 — Natural-height sections: snap removed entirely
 
 - **Context:** After reverting mandatory→proximity snap, the owner asked to
@@ -223,3 +291,114 @@ Entry format:
   progressive disclosure via scroll-driven reveals and sticky sections, zero
   snap. No scroll-hijack libraries, no forced page transitions — content the
   user controls at their own pace.
+
+## 2026-07-05 — Continuous-bento redesign: one PageBox, fail-toward-line, sticky opaque bars
+
+- **Context:** Rebuilt the page as ONE contained ~1180px box whose interior is a
+  single continuous bento grid — sections butt together sharing single 1px
+  hairlines, a sticky top name-bar and sticky bottom footer are the box's
+  top/bottom edges, the middle scrolls. Replaces the piecemeal "each section
+  draws its own L/R borders + adjacency top border + Home's 4-side box + Contact's
+  bottom border" assembly. Finally built the `PageBox` primitive that stale
+  doc-comments had assumed for weeks.
+- **The one invariant — "fail toward line-color":** the frame, every section
+  band, and every `Grid` all carry `background: var(--line)`; every hairline is a
+  1px flex `gap` exposing that line background; the ONLY real `border` lives on
+  `PageBox`. Two consequences that drove every edit:
+  1. **Borders live only on `PageBox`.** Every inner `Grid`/band/header is
+     borderless — any surviving separator border doubles to 2px against the gap.
+     Deleted: `Grid`'s `border:1px`, `SectionShell`'s L/R borders +
+     `.section + .section` top + max-width + side padding, `Home`'s 4-side box,
+     `Contact`'s `.contact` bottom border, `Experience`'s `.overview`/`.role`
+     `border`/`margin` separators.
+  2. **Nothing transparent may sit on the line background** — it flashes the full
+     line-color and `translateY` detaches it, exposing the gaps.
+- **Worked:**
+  - **`PageBox` = the frame.** `max-width:var(--maxw); margin:0 auto;
+    min-height:100%; background:var(--line); border:1px solid var(--line);
+    display:flex; flex-direction:column; gap:1px`. Direct children (HeroBar →
+    Home → 6 sections → Footer) separate via the 1px gap. **No `overflow`** so
+    the sticky bars resolve against `#jk-scroll` and travel the whole page.
+    `#jk-scroll` went from flex-column to a plain block scroll container (+ a
+    `padding-inline: clamp(12px,3vw,24px)` mobile side gutter).
+  - **Section band = borderless rail.** `SectionShell` collapsed to
+    `background:var(--line); display:flex; flex-direction:column; gap:1px` — no
+    border/max-width/padding. Its rows (header cell, `Grid` rows, full-width
+    cells) separate via its own 1px gap. `Grid` kept `gap:1px; background:line`
+    but lost its border. Every grid child needs `flex-grow ≥ 1` so the last
+    wrap-line fills the row (else a line sliver shows).
+  - **box-shadow separators, NOT borders, on the sticky bars.** A
+    `border-bottom`/`border-top` on a bar PLUS the PageBox gap doubles to 2px at
+    rest. `box-shadow: 0 1px 0 var(--line)` (HeroBar) / `0 -1px 0 var(--line)`
+    (Footer) paints INTO the 1px gap region (stays exactly 1px at rest) and gives
+    a persistent 1px separator when content scrolls under the pinned bar. The
+    shadow never joins the flex gap — that's the whole trick.
+  - **Reveal-on-inner-content.** `.reveal` must wrap ONLY content inside an
+    opaque cell (`<Cell><div class="reveal">…</div></Cell>`), never a cell/Grid/
+    band. Moved every section's single wrapping `<div class="reveal">` onto each
+    cell's inner content; `SectionHeader`'s reveal moved to `.section-header__inner`
+    (the cell stays opaque `--panel` and fixed). Reduced the hidden-state
+    translate `20px → 14px` (and JS `y:[20,0] → [14,0]`) so the slide stays within
+    cell padding. Writing's `.recent__row` reveals were already safe (inside the
+    opaque `.recent` cell) — left untouched, incl. their `--hairline` internal
+    separators.
+  - **Layout-preservation when wrapping in `.reveal`:** if a cell used
+    `flex`/`grid` + `justify-content:space-between` across MULTIPLE children,
+    wrapping them all in one `.reveal` collapses that to a single child — move the
+    layout onto the `.reveal` wrapper (`display:flex; …; height:100%`). Hit this
+    on `.nav-cell`, `.featured`, `.rollhook`, `.pinned`, `.contact__link`, and
+    the Experience `.role__inner`/`.overview__inner` grids.
+  - **Always-opaque name-bar (hero collapse resolved).** The old JS opacity
+    crossfade faded a transparent bar in over the frame — which now leaves a
+    line-strip above the hero and can't duplicate the giant name without a banned
+    height animation. Fix: HeroBar is always opaque, shows ONLY "Johannes Krumm" +
+    the accent progress line. Dropped the hero-collapse `scroll()` opacity driver
+    and the `[data-active-label]` entirely. The hero band no longer repeats the
+    name — its focal element is now the value statement promoted to the page's
+    single `<h1>` (name lives once, in the bar). As you scroll, the hero band
+    scrolls up under the pinned name bar → the hero "truncates" to the name, with
+    no height animation, no strip, no duplicate name.
+  - **Opaque bars = `--panel`.** The bars were semi-transparent `--bar-bg` +
+    `backdrop-filter: blur`. Over a line-colored frame that flashes line-color and
+    ghosts scrolling content through the frosted glass. Switched both to
+    `background: var(--panel)` (matching the cells, so they read as the box's
+    top/bottom rows) and dropped `backdrop-filter` (pointless on an opaque
+    element). `--bar-bg` token left defined-but-unused (out of scope to remove).
+- **Gotcha — the active-section observer drives BOTH the label AND the footer
+  dots.** "Drop the active-section label" does NOT mean delete the observer — the
+  same `IntersectionObserver` toggles `.dot.is-active`. Removed only the
+  `[data-active-label]` collection + its `textContent` update; kept the sections
+  collection, ratio math, and dot toggling. Deleting the whole block would have
+  silently killed the footer dots.
+- **Gotcha — build-green between passes.** Split into Group A (frame/primitives/
+  chrome/index/global/script) then Group B (Home + 6 sections). Kept `Grid`'s
+  `mergeTop` prop accepted as a no-op through Group A so Home's `<Grid mergeTop>`
+  still type-checked before Group B removed the usage. `SectionShell`'s `narrative`
+  prop was already unused (Experience reverted to a plain shell earlier), so
+  deleting it + `.narrative-wrap`/`.narrative-stage` was safe.
+- **Gotcha — stale Vite HMR after a rapid multi-file rewrite.** With the dev
+  server (`jkrumm.test`) live through both implementer passes (~16 `.astro` files
+  edited fast), Vite HMR silently **dropped the scoped-`<style>` updates for
+  `SectionHeader.astro` and `SectionShell.astro`** — the templates hot-updated but
+  the old CSS kept serving. Symptom: headers had no `--panel` box (transparent,
+  computed `background: rgba(0,0,0,0)`, `padding:0`) and `.section` still computed
+  the OLD `display:block; padding:40px 60px; max-width:1180px; border-left:1px` —
+  making the page look structurally wrong (sections inset, grey band showing)
+  even though the source was correct. **Diagnosis that saved a wrong "fix":** the
+  freshly-built `dist/` CSS had the right rule (`.section-header[cid]{background:
+  var(--panel);…}`), proving source was fine and the DEV SERVER was stale.
+  Touching each stale file (a real content/comment edit) forced a clean
+  re-transform; a full dev-server restart is the guaranteed clear. **Lesson: when
+  a live-reloaded page looks wrong after a big multi-file edit, verify against
+  `bun run build` output or a restarted server before touching code — don't
+  "fix" phantom bugs that are only stale HMR.** Confirmed via chrome-devtools
+  computed-style inspection, not just screenshots.
+- **Verdict / decision:** **Continuous-bento + PageBox is the layout.** One frame
+  owns the only border; everything inside fails toward line-color via 1px gaps;
+  sticky bars are opaque and use box-shadow (never border) separators; reveals
+  only ever animate over `--panel` inside an opaque cell. `bun run build` green
+  (0/0/0, 34 files, 4 pages). Visual/touch validation at `https://jkrumm.test`
+  deferred to the owner (hairline-doubling, sticky pinning, hero-under-bar scroll,
+  reveal flashes, mobile stack). This supersedes the earlier "sections-as-grid,
+  no PageBox" and "natural-height" entries for the frame model — natural-height
+  flow and once-only scroller-rooted reveals are unchanged.

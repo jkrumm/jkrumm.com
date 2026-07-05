@@ -50,6 +50,14 @@ This is the thing off-the-shelf scroll libraries get wrong here. See
   `matchMedia('(prefers-reduced-motion: reduce)')` AND keep the CSS opt-out. A
   media query alone can't stop an already-running JS tween — you need both.
 - **Hidden state in CSS, never JS.** Prevents FOUC (see §4).
+- **Reveals wrap inner content of an opaque cell — never a cell, grid, or band.**
+  The layout is line-colored bento (§5): a `.reveal` on a cell/grid/band animates
+  opacity 0 over `var(--line)` (line-color flash) and its `translateY` detaches
+  the element, exposing the 1px hairline gaps. Put `.reveal` on a `<div>` inside
+  the opaque `--panel` cell — the cell stays fixed; the fade/slide happens over
+  panel. Keep `y` small (~14px) so it stays within cell padding. If wrapping
+  collapses a multi-child `flex`/`grid` cell, move that layout onto the `.reveal`
+  wrapper (`height:100%`).
 
 ## 2. View transitions
 
@@ -63,7 +71,7 @@ support in `references/view-transitions.md`.
 ## 3. Scroll reveals (vanilla)
 
 The working pattern (`portfolio.ts`): `inView('.reveal', el => animate(el,
-{opacity:[0,1], y:[20,0]}, {duration:0.55, ease:[0.2,0.7,0.2,1]}), { root:
+{opacity:[0,1], y:[14,0]}, {duration:0.55, ease:[0.2,0.7,0.2,1]}), { root:
 scroller, amount: 0.2 })`, called from `init()` on `astro:page-load`, its `stop()`
 pushed to `teardown`. A `data-revealed` flag makes it fire once. Optional
 per-element `data-delay` (capped) staggers. Full code: `references/reveal-lifecycle.ts`.
@@ -77,36 +85,58 @@ ever hidden. Motion writes inline `opacity`/`transform` that override the hidden
 state. The hidden state lives in `global.css`, never in JS. Reduced-motion users
 get an `!important` opt-out that shows everything un-animated.
 
-## 5. Natural-height sections (no scroll-snap)
+## 5. Layout: one continuous-bento `PageBox` (natural-height, no snap)
 
-`#jk-scroll` is a plain `height:100svh; overflow-y:auto` container — no
-`scroll-snap-type`, no `scroll-padding-*`, no `overscroll-behavior: contain`.
-Each `.section` (`SectionShell.astro`) is natural-height: `padding-block: 2.5rem;
-padding-inline: clamp(20px, 5vw, 72px)`. The first section clears the fixed top
-bar with `padding-top: calc(var(--bar-top) + 2.5rem)`. No `min-height: 100svh`,
-no flexbox centering, no snap alignment. Scroll-driven reveals (Motion `inView`)
-and the CSS scroll-driven narrative (§6) are the only "scroll effects" — no
-scroll-hijack libraries (GSAP / Lenis / fullPage.js).
+The page is ONE contained ~1180px box (`PageBox.astro`) whose interior is a
+single continuous bento grid. `#jk-scroll` is a plain `height:100svh;
+overflow-y:auto` **block** scroll container (no snap — see below); `PageBox`
+(`max-width:var(--maxw); margin:0 auto; min-height:100%`) is its centered child.
 
-**Why no snap.** Mandatory snap is for slides and carousels, not content
-portfolios — it locks scroll, fights overflow, and reads as hostile on
-trackpads. Proximity snap without mandatory is a half-measure. The modern
-portfolio standard (2025–2026) is natural-height sections + scroll-driven
-reveals + sticky narrative stages. Snap is off the table permanently.
+**The invariant — "fail toward line-color."** The frame, every section band, and
+every `Grid` all carry `background: var(--line)`; every hairline is a **1px flex
+`gap`** exposing that background. The **only** real `border` lives on `PageBox`
+(`border:1px solid var(--line)`). Consequences that drive every edit:
 
-## 6. Pinned / scroll-scrubbed "narrative" sections
+- **Everything inside is borderless.** `SectionShell` (`.section`), `Grid`, and
+  the Home band are flex containers with `gap:1px; background:var(--line)` and
+  **no border, no max-width, no padding**. Any inner separator border doubles to
+  2px against the gap — never add one.
+- **Cells are opaque and own their padding.** Every `<Cell>` / header cell is
+  `background:var(--panel)` with its own padding (the old per-section
+  `padding-inline` is gone — the cell padding is the inset now). Every grid child
+  needs `flex-grow ≥ 1` so the last wrap-line fills the row (else a line sliver
+  shows).
+- **Sticky bars are opaque; separator is `box-shadow`, not border.** The name bar
+  (`CompactHeader`) and footer (`StickyFooter`) are direct `PageBox` children,
+  `background:var(--panel)`, `position:sticky` (they resolve against `#jk-scroll`
+  because `PageBox` has no `overflow`). Their 1px separator is
+  `box-shadow: 0 ±1px 0 var(--line)` — a `border` there PLUS the `PageBox` gap
+  would double to 2px; the shadow paints INTO the gap and stays exactly 1px, and
+  persists when content scrolls under the pinned bar. The name lives ONLY in the
+  always-opaque bar; the hero band never duplicates it.
+- **Reveals only over `--panel`** — see §1 (never on a cell/grid/band).
 
-The Phase-2 pattern: land on a centred overview → scroll expands the active
-item's detail → continued scroll collapses it → then scroll continues naturally.
-**Shipped as a POC on Experience** (July 2026). Mechanism (owner decision): **CSS
-`animation-timeline: view()`/`scroll()` as the default** — future-proof, zero-JS,
-off-main-thread — with a `@supports` + reduced-motion static fallback that
-Firefox rides (graceful degradation, not breakage); Motion `scroll()` is the
-reserved fallback only if that static degrade reads as broken. Pin = `position:
-sticky` in a tall wrapper (`200svh`, `view-timeline: --narrative`). Full detail
-in `references/scroll-narrative.md`. **Pending touch validation** — if momentum
-scroll behaves poorly on mobile, the kill path is removing the `narrative` prop
-from Experience (keeping SectionShell's narrative support).
+Still **natural-height, no scroll-snap**: no `scroll-snap-type`, no
+`scroll-padding-*`, no `min-height:100svh`, no snap alignment. Sections butt
+together sharing single hairlines; the sticky bars ARE the box's top/bottom edges
+(no fixed top bar to clear).
+
+**Why no snap.** Mandatory snap is for slides/carousels, not content portfolios —
+it locks scroll, fights overflow, reads as hostile on trackpads. Proximity snap
+is a half-measure. The house default is natural-height bento + scroll-driven
+reveals. Snap is off the table permanently.
+
+## 6. Pinned / scroll-scrubbed "narrative" sections — REMOVED (kept for reference)
+
+A CSS `view-timeline` narrative POC (sticky `200svh` wrapper,
+`animation-timeline: view()`, `@supports` + reduced-motion static fallback)
+shipped on Experience in July 2026, then was **removed** — sticky + view-timeline
+didn't animate reliably in natural flow and the tall wrapper created a jarring
+gap. The `narrative` prop was deleted from `SectionShell` in the continuous-bento
+redesign. The mechanism and its findings are preserved in
+`references/scroll-narrative.md` (historical) if a future section needs a
+pinned/scrubbed stage — rebuild it as a **self-contained wrapper**, not a
+SectionShell prop, and do NOT reach for a scroll-hijack library instead.
 
 ## 7. React-island variant (not used here — flagged for the future)
 
@@ -125,14 +155,25 @@ into/out of the island (unreliable — see view-transitions caveats).
   mis-sizes the stage; `100svh` is stable.
 - **`+` mark centred ON the corner** via `translate(-50%,-50%)`, so diagonally
   adjacent cells' marks overlap cleanly instead of doubling a few px apart.
+- **Continuous-bento, borders only on `PageBox`.** Fail toward line-color (§5):
+  one frame owns the only border; every band/grid/cell is borderless with 1px
+  line-colored gaps; cells are opaque `--panel` and own their padding; sticky bars
+  are opaque with `box-shadow` (not border) separators; reveals only ever animate
+  over `--panel` inside an opaque cell. This superseded the earlier
+  per-section-borders and no-wrapper layouts.
 - **No scroll-snap, period.** Mandatory snap is for slides/carousels, not
   content portfolios — research unanimous (Smashing Mag, MDN, web.dev). Even
-  proximity snap is a half-measure without mandatory. The house default is
-  **natural-height sections + scroll-driven reveals + sticky narrative.** No
-  snap anywhere.
+  proximity snap is a half-measure. The house default is **natural-height bento +
+  scroll-driven reveals.** No snap anywhere.
 - **No scroll-hijack libraries.** GSAP / Lenis / fullPage.js / Locomotive are
   not dependencies and won't be — they fight native scroll and add weight for
-  an effect the site gets from Motion reveals + CSS view-timeline.
+  an effect the site gets from Motion reveals alone.
+- **After a big multi-file edit, verify against `bun run build` / a restarted dev
+  server — not the hot-reloaded page.** Vite HMR can silently drop scoped-`<style>`
+  updates: stale `.section`/`.section-header` CSS looked like a real layout bug
+  (transparent header, inset sections) but the source and `dist/` were correct.
+  Confirm computed styles or the built CSS before "fixing" phantom bugs. Touching
+  the stale file forces a re-transform; a restart is the guaranteed clear.
 
 ## Self-learning loop (do this every time)
 

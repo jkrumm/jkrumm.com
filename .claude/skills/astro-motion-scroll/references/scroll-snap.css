@@ -1,0 +1,102 @@
+/* ============================================================================
+   Full-viewport scroll-snap that clears fixed chrome bars.
+   ----------------------------------------------------------------------------
+   Distilled from the WORKING code in this repo:
+     - src/pages/index.astro           → #jk-scroll (the scroll stage)
+     - src/components/primitives/SectionShell.astro → .section
+     - src/components/primitives/Plus.astro         → corner "+" centering
+     - src/styles/global.css           → scrollbar hide + reveal system
+   ========================================================================== */
+
+/* ---- The scroll stage -------------------------------------------------------
+   The page does NOT scroll the window — it scrolls THIS inner container. Every
+   observer/scroll() in the behavior layer must therefore be rooted here
+   (`root: scroller` / `container: scroller`), not on the document. */
+#jk-scroll {
+  height: 100svh;              /* svh, NOT vh: mobile URL-bar show/hide would make
+                                  100vh jump and mis-size the stage. */
+  overflow-y: auto;
+  overscroll-behavior: contain; /* trap the scroll chain: no rubber-band bleed to
+                                  the document / browser chrome; snap stays inside. */
+  scroll-behavior: smooth;
+  scroll-snap-type: y proximity;/* CURRENT state. `proximity` tolerates sections
+                                  that don't exactly fit the viewport. Phase 2
+                                  moves to `mandatory` once every non-narrative
+                                  section is an exact 100svh fit — see
+                                  references/scroll-narrative.md and LEARNINGS. */
+  scroll-padding-top: var(--bar-top);     /* snap point sits below the top bar   */
+  scroll-padding-bottom: var(--bar-bottom); /* ...and above the bottom bar        */
+}
+
+/* Hide the scrollbar but keep it scrollable (global.css). */
+#jk-scroll {
+  scrollbar-width: none;
+}
+#jk-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* ---- A snapped section ------------------------------------------------------
+   min-height:100svh + scroll-snap-align:start. Padding clears the fixed bars
+   plus a viewport-scaling gap so content centres in the usable band BETWEEN the
+   bars, not behind them. */
+.section {
+  min-height: 100svh;
+  box-sizing: border-box;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* vertically centre content in the band */
+  /* clamp() shrinks the gap on short viewports so more content fits before it
+     scrolls under a bar. At ~900px this resolves to the original 104px / 96px. */
+  padding-top: calc(var(--bar-top) + clamp(16px, 5vh, 44px));
+  padding-bottom: calc(var(--bar-bottom) + clamp(16px, 4.5vh, 40px));
+  padding-inline: clamp(20px, 5vw, 72px);
+}
+
+.section__inner {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+}
+
+/* ---- Corner "+" marks -------------------------------------------------------
+   Centre the glyph box ON the corner point via translate(-50%,-50%) so the "+"
+   sits on the grid intersection, and a cell's bottom-right mark overlaps the
+   diagonally-adjacent cell's top-left mark cleanly instead of doubling up a few
+   px apart. Parent must be position:relative. */
+.plus {
+  position: absolute;
+  display: block;
+  font: 13px/1 var(--mono);
+  color: var(--faint);
+  pointer-events: none;
+  user-select: none;
+}
+.plus--tl { top: 0;    left: 0;    transform: translate(-50%, -50%); }
+.plus--br { top: 100%; left: 100%; transform: translate(-50%, -50%); }
+
+/* ---- Reveal system (progressive enhancement, no FOUC) -----------------------
+   Content is VISIBLE by default. The <head> inline script adds `.js` to <html>
+   before first paint; only then are `.reveal` elements hidden, so Motion can
+   animate them in. If JS never runs, nothing is ever hidden. The hidden state
+   lives HERE (CSS), never in JS — that is what prevents the flash. */
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+html.js .reveal {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* Accessibility: reduced-motion users see everything, immediately, un-animated.
+   The behavior layer ALSO checks matchMedia and skips animating — belt AND
+   braces, because a media query alone can't stop an already-running JS tween. */
+@media (prefers-reduced-motion: reduce) {
+  html.js .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
