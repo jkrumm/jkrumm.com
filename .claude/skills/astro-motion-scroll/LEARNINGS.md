@@ -1273,3 +1273,54 @@ Entry format:
   identical (period → titles block → chevron); only the titles block branches on
   `data-multi`. Data content is placeholder (flagged in `experience.ts`) — the
   owner sets real companies/titles/dates; the layout is fixed.
+
+## 2026-07-06 — Index/listing surface: fail-toward-line frame, off the scroll stage
+
+- **Context:** Gave the guide + blog collections real index pages (`/guide`,
+  `/blog`). Built `IndexLayout.astro` + a shared `ReadingHeader.astro`
+  (`src/components/chrome/`), refactored `ArticleLayout` onto the same header, and
+  rebuilt both index pages onto `IndexLayout`. Docs-only pass here (read the source
+  for the code). This establishes the site's **third surface mode**: homepage
+  scroll-stage (`#jk-scroll`/`PageBox`) → article **reading** surface
+  (`ArticleLayout`, `--reading-maxw` 42rem) → **listing** surface (`IndexLayout`,
+  `--index-maxw` 960px).
+- **Worked:**
+  - **The "fail-toward-line" invariant transplants cleanly off the scroll stage.**
+    `.index-frame` (`background:var(--line); border:1px solid var(--line); gap:1px`)
+    is `PageBox` rebuilt on a plain `BaseLayout` page — one border, opaque cells on
+    1px line-gaps, no `#jk-scroll`, no sticky bento chrome. The frame model is
+    layout-portable; it was never coupled to the scroller.
+  - **Masthead = a two-cell bento row** (intro cell + right-aligned stat aside,
+    split by a 1px line-gap) — deliberately echoes the homepage hero's
+    content/portrait split so the standalone frame reads *full* instead of a lone
+    banner over emptiness. Stats (count / total read / latest date) are derived in
+    each index page's frontmatter from the collection.
+  - **The list is ONE opaque `--panel` cell, rows dividing on internal
+    `--hairline`** (`.chapter + .chapter` / `.post + .post { border-top:1px solid
+    var(--hairline) }`), NOT on frame gaps — the same continuous-spine trick as the
+    Experience timeline and Writing's `.recent`. A per-row bento cell would fracture
+    the list into gapped tiles and break the unbroken spine. `--hairline` (lighter
+    than `--line`) keeps internal rules quieter than the frame edge.
+  - **Shared `ReadingHeader` unifies all non-homepage chrome.** JK+ brand → home +
+    uppercase mono category; its `width` prop aligns the sticky bar to the page's
+    content column (`--reading-maxw` for articles, `--index-maxw` for indexes). One
+    slim calm header for both off-stage surfaces.
+  - **Off-stage surfaces relax the homepage-stage constraints.** Over plain `--bg`
+    (not a line-colored frame), reveal-only-over-`--panel`, box-shadow-separators,
+    and opaque-bars don't apply — normal borders/blockquotes are fine on
+    `ArticleLayout`, and `ReadingHeader` even keeps the frosted `--bar-bg`+blur the
+    homepage bars had to drop (blur only flashes over the line frame).
+- **Didn't / rejected — "+" registration corner marks.** Tried "+" corner marks on
+  the index frame (borrowing the retired snap-era homepage motif) and removed them:
+  they are NOT part of this design language and must not be reintroduced anywhere.
+  The unrelated "JK+" brand mark in `ReadingHeader` stays.
+- **Gotcha:** `IndexLayout.astro`'s own header doc-comment still lists "+"
+  registration corner-marks as borrowed — that line is **stale** (the code renders
+  none). Trust the CSS, not the comment. (Left as-is: docs-only pass.)
+- **Verdict / decision:** **The third surface mode is house style.** A new listing
+  page = `<IndexLayout {...}>` wrapping one styled `<ol>` (the page owns only the
+  list cell via the default slot; the layout owns header + masthead + footer). The
+  frame model is portable off the scroll stage; the two composition patterns
+  (two-cell masthead, single-panel hairline-divided list) fill a standalone frame
+  so it never reads empty. Distilled into `SKILL.md` §5 (off-stage-surfaces
+  subsection). Build validation deferred to the owner (docs-only change here).

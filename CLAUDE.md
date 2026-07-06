@@ -62,6 +62,12 @@ with `box-shadow` (not border) separators; `.reveal` may only wrap content
 **inside** an opaque cell. Full rationale in the `astro-motion-scroll` skill (§5)
 and its `LEARNINGS.md`.
 
+The homepage stage is one of **three surface modes**: two **off-stage**
+normal-scroll surfaces reuse the frame language — `ArticleLayout` (reading,
+`--reading-maxw`) and `IndexLayout` (guide/blog listing, a standalone
+fail-toward-line frame at `--index-maxw`, sharing the slim `ReadingHeader`). See
+the skill's off-stage-surfaces subsection before building another listing page.
+
 ## Content
 
 Edit typed modules in `src/data/`; the layout doesn't change. Design tokens (all

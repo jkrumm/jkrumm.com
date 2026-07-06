@@ -126,6 +126,47 @@ it locks scroll, fights overflow, reads as hostile on trackpads. Proximity snap
 is a half-measure. The house default is natural-height bento + scroll-driven
 reveals. Snap is off the table permanently.
 
+### Off-stage surfaces: reading + listing (the third layout mode)
+
+Everything above is the **homepage scroll-stage** (`#jk-scroll` → `PageBox` →
+sticky `CompactHeader` + section bands + `StickyFooter`, in-page anchor nav). The
+guide/blog collections add two **off-stage** surfaces — normal-scroll pages on
+`BaseLayout`, NOT the `#jk-scroll` stage — sharing one slim `ReadingHeader`
+(`src/components/chrome/`): JK+ brand → home (left) + uppercase mono category
+(right), `position:sticky`, its `width` prop matched to the page's content column.
+
+| Surface | Layout | Frame model |
+|-|-|-|
+| Homepage stage | `PageBox` in `#jk-scroll` | continuous bento, fail-toward-line |
+| Reading (article) | `ArticleLayout` — `--reading-maxw` (42rem) | centered prose column; normal borders/blockquotes allowed — NOT the bento invariant |
+| Listing (index) | `IndexLayout` — `--index-maxw` (960px) | standalone fail-toward-line frame, off the stage |
+
+**Listing (`IndexLayout`) — the bento invariant transplanted off-stage.** `/guide`
+and `/blog` index pages are a self-contained fail-toward-line frame: `.index-frame`
+(`background:var(--line); border:1px solid var(--line); gap:1px`) is `PageBox`
+rebuilt on a plain page — one border, opaque cells on 1px line-gaps. Two patterns
+fill it:
+
+- **Masthead = a two-cell bento row** — an intro cell (eyebrow + `<h1>` + intro)
+  and a right-aligned stat aside (count / total read / date) split by a 1px
+  line-gap. Echoes the homepage hero's content/portrait split so the standalone
+  frame reads *full*, not a lone banner over emptiness.
+- **List = ONE opaque `--panel` cell; rows divide on internal `--hairline`** (`.row
+  + .row { border-top:1px solid var(--hairline) }`), NOT frame gaps — the same
+  continuous-spine trick as the Experience timeline / Writing `.recent` (per-row
+  bento cells would fracture the list into gapped tiles). `--hairline` is lighter
+  than `--line`, so internal rules stay quieter than the frame edge.
+- **Footer = a sibling cross-link** (`/guide`↔`/blog`) + a back-to-home link.
+
+The page supplies only the list cell (default slot); `IndexLayout` owns header +
+masthead + footer, so a third listing page is `<IndexLayout {...}>` wrapping one
+styled `<ol>`. Both off-stage surfaces MAY use normal borders/hairlines — they sit
+over plain `--bg`, so the reveal-only-over-`--panel`, box-shadow-separator, and
+opaque-bar rules are homepage-stage constraints, not global (`ReadingHeader` even
+keeps the frosted `--bar-bg`+blur the homepage bars had to drop — fine over `--bg`,
+flashes only over the line frame). **No "+" corner marks** — tried on the index
+frame and removed; not part of this language (the "JK+" brand mark is unrelated).
+
 ## 6. Pinned / scroll-scrubbed sections — sticky-scroll-reveal (reference pattern)
 
 > **No longer ships on Experience** (retired 2026-07-06 — see LEARNINGS). The
