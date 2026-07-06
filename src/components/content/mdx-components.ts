@@ -6,6 +6,7 @@
  * Expressive Code's fenced code blocks) or `img` (Figure is the image path).
  */
 import Callout from './Callout.astro';
+import Chart from './Chart.astro';
 import Figure from './Figure.astro';
 import Kbd from './Kbd.astro';
 import PullQuote from './PullQuote.astro';
@@ -16,9 +17,9 @@ export const components = {
   table: Table,
   kbd: Kbd,
   Callout,
+  Chart,
   Figure,
   PullQuote,
   Steps,
   Kbd,
-  // Chart added in the charts phase
 };

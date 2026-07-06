@@ -69,6 +69,47 @@ Here's a claim that needs a source[^1].
   credit="Example"
 />
 
+## Chart
+
+Observable Plot rendered to inline SVG at build time — zero client JS, authored
+in MDX with serializable props only.
+
+export const deploys = [
+  { month: 'Jan', count: 3 },
+  { month: 'Feb', count: 8 },
+  { month: 'Mar', count: 6 },
+  { month: 'Apr', count: 12 },
+  { month: 'May', count: 10 },
+  { month: 'Jun', count: 15 },
+];
+
+<Chart
+  type="area"
+  data={deploys}
+  x="month"
+  y="count"
+  yLabel="deploys"
+  caption="Single-series area chart — deploys per month."
+/>
+
+export const stack = [
+  { quarter: 'Q1', share: 55, layer: 'TypeScript' },
+  { quarter: 'Q1', share: 30, layer: 'Astro' },
+  { quarter: 'Q1', share: 15, layer: 'Shell' },
+  { quarter: 'Q2', share: 60, layer: 'TypeScript' },
+  { quarter: 'Q2', share: 28, layer: 'Astro' },
+  { quarter: 'Q2', share: 12, layer: 'Shell' },
+];
+
+<Chart
+  type="bar"
+  data={stack}
+  x="quarter"
+  y="share"
+  series="layer"
+  caption="Multi-series stacked bar with a generated legend."
+/>
+
 ## Pull quote
 
 <PullQuote cite="Somebody, somewhere">

@@ -1,0 +1,153 @@
+---
+/**
+ * Declarative, framework-free chart — Observable Plot rendered to inline SVG at
+ * build time (zero client JS). Authored in MDX with serializable props only:
+ *
+ *   <Chart type="line" data={series} x="month" y="deploys" caption="…" />
+ *
+ * Margins are explicit because linkedom (the build-time DOM) has no font metrics
+ * for Plot's auto-layout. Colors are literal palette values (the site is
+ * light-only), matched to the design tokens.
+ */
+import * as Plot from '@observablehq/plot';
+import { renderPlotToSvg } from '@/utils/plot';
+
+interface Props {
+  type?: 'line' | 'bar' | 'area' | 'dot';
+  data: Array<Record<string, unknown>>;
+  x: string;
+  y: string;
+  /** Optional grouping field → one colored series per distinct value. */
+  series?: string;
+  height?: number;
+  caption?: string;
+  xLabel?: string;
+  yLabel?: string;
+}
+
+const { type = 'line', data, x, y, series, height = 300, caption, xLabel, yLabel } = Astro.props;
+
+const INK = '#57534e';
+const FAINT = '#a8a29e';
+const ACCENT = '#2f5bff';
+// Restrained categorical range for multi-series (accent-led, no primaries).
+const RANGE = ['#2f5bff', '#1c1917', '#8a827a', '#b45309'];
+
+const marks = (() => {
+  switch (type) {
+    case 'area':
+      return [
+        Plot.areaY(data, { x, y, fillOpacity: 0.12, ...(series ? { fill: series } : { fill: ACCENT }) }),
+        Plot.lineY(data, { x, y, strokeWidth: 1.5, ...(series ? { stroke: series } : { stroke: ACCENT }) }),
+      ];
+    case 'bar':
+      return [Plot.barY(data, { x, y, ...(series ? { fill: series } : { fill: ACCENT }) })];
+    case 'dot':
+      return [Plot.dot(data, { x, y, r: 3.2, ...(series ? { fill: series } : { fill: ACCENT }) })];
+    case 'line':
+    default:
+      return [Plot.lineY(data, { x, y, strokeWidth: 1.5, ...(series ? { stroke: series } : { stroke: ACCENT }) })];
+  }
+})();
+
+// Preserve author-intended order for categorical axes — Plot otherwise sorts a
+// string domain alphabetically, scrambling a line/area/bar. Numeric/date x is
+// left to Plot's continuous ordering.
+const xIsCategorical = typeof data[0]?.[x] === 'string';
+const xDomain = xIsCategorical ? [...new Set(data.map((row) => row[x]))] : undefined;
+// Pin the color domain so the bars and the generated legend share one order.
+const seriesDomain = series ? [...new Set(data.map((row) => String(row[series])))] : [];
+
+const svg = renderPlotToSvg({
+  width: 720,
+  height,
+  marginLeft: 52,
+  marginRight: 18,
+  marginTop: 16,
+  marginBottom: 38,
+  style: {
+    background: 'transparent',
+    color: INK,
+    fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+    fontSize: '12px',
+    overflow: 'visible',
+  },
+  x: { label: xLabel ?? null, tickPadding: 6, grid: false, ...(xDomain ? { domain: xDomain } : {}) },
+  y: { label: yLabel ?? null, grid: true, tickPadding: 6, tickSize: 0 },
+  ...(series ? { color: { domain: seriesDomain, range: RANGE } } : {}),
+  marks: [Plot.ruleY([0], { stroke: FAINT, strokeOpacity: 0.5 }), ...marks],
+});
+
+const legend = seriesDomain;
+---
+
+<figure class="chart">
+  <div class="chart__plot" set:html={svg} />
+  {
+    legend.length > 0 && (
+      <ul class="chart__legend">
+        {legend.map((label, index) => (
+          <li class="chart__legend-item">
+            <span class="chart__swatch" style={`background:${RANGE[index % RANGE.length]}`} />
+            {label}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+  {caption && <figcaption class="chart__caption">{caption}</figcaption>}
+</figure>
+
+<style>
+  .chart {
+    margin: 2em 0;
+  }
+
+  .chart__plot {
+    width: 100%;
+  }
+
+  /* The inlined SVG is unscoped (set:html) — reach it globally within the wrapper. */
+  .chart__plot :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* Soften Plot's grid lines to the site's hairline weight. */
+  .chart__plot :global([aria-label='y-grid'] line),
+  .chart__plot :global([aria-label='y-axis grid'] line) {
+    stroke: #e4e0db;
+  }
+
+  .chart__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .chart__legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font: 11px var(--mono);
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .chart__swatch {
+    width: 10px;
+    height: 10px;
+    flex: none;
+  }
+
+  .chart__caption {
+    margin-top: 12px;
+    font: 11px var(--mono);
+    letter-spacing: 0.04em;
+    color: var(--faint);
+  }
+</style>
