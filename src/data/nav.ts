@@ -9,7 +9,7 @@ export interface NavItem {
 }
 
 export const navSections: NavItem[] = [
-  { id: 'writing', number: '01', title: 'Writing' },
+  { id: 'blog', number: '01', title: 'Blog' },
   { id: 'experience', number: '02', title: 'Experience' },
   { id: 'stack', number: '03', title: 'Personal Stack' },
   { id: 'projects', number: '04', title: 'Projects' },
@@ -24,7 +24,7 @@ export interface NavDot {
 
 export const navDots: NavDot[] = [
   { id: 'home', name: 'Overview' },
-  { id: 'writing', name: 'Writing' },
+  { id: 'blog', name: 'Blog' },
   { id: 'experience', name: 'Experience' },
   { id: 'stack', name: 'Stack' },
   { id: 'projects', name: 'Projects' },

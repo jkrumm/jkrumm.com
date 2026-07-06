@@ -1,0 +1,180 @@
+---
+/**
+ * Blog section (`#blog`) — pinned feature article + recent list, sourced live
+ * from the `blog` content collection.
+ *
+ * Feature = first entry with frontmatter `pinned: true`, else the most recent.
+ * Recent = the next few by `publishedDate` desc, excluding the feature. Empty
+ * states are handled so the section stays intact while the archive is small.
+ */
+import Cell from '@/components/primitives/Cell.astro';
+import Grid from '@/components/primitives/Grid.astro';
+import SectionHeader from '@/components/primitives/SectionHeader.astro';
+import SectionShell from '@/components/primitives/SectionShell.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import { getReadingTime } from '@/utils/content';
+
+const isPublished = ({ data }: CollectionEntry<'blog'>) =>
+  import.meta.env.PROD ? data.status === 'published' : true;
+
+const posts = (await getCollection('blog', isPublished)).sort(
+  (a, b) => b.data.publishedDate.getTime() - a.data.publishedDate.getTime(),
+);
+
+const feature = posts.find((post) => post.data.pinned) ?? posts[0];
+const recentEntries = posts.filter((post) => post.id !== feature?.id).slice(0, 4);
+
+/** "2026.02" — mono year.month, matching the section's numeric aesthetic. */
+const stamp = (date: Date) => `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+const primaryTag = (entry: CollectionEntry<'blog'>) =>
+  entry.data.tags?.[0]?.toUpperCase() ?? 'WRITING';
+const tagLine = (entry: CollectionEntry<'blog'>) =>
+  (entry.data.tags ?? []).map((tag) => tag.toUpperCase()).join(' · ');
+
+const recentDelays = [120, 170, 220, 270];
+---
+
+<SectionShell id="blog" name="Blog">
+  <SectionHeader number="01" title="Blog" action={{ label: 'All Articles', href: '/blog' }} />
+  <Grid>
+    {
+      feature && (
+        <Cell as="a" href={`/blog/${feature.id}`} class="feature">
+          <div class="reveal" data-delay="60">
+            <span class="feature__chip">{feature.data.pinned ? 'PINNED' : 'LATEST'}</span>
+            <div>
+              <h3 class="feature__title">{feature.data.title}</h3>
+              <p class="feature__excerpt">{feature.data.description}</p>
+              <div class="feature__meta">
+                <span>{stamp(feature.data.publishedDate)}</span>
+                <span>{primaryTag(feature)}</span>
+                <span>{getReadingTime(feature.body ?? '')} MIN</span>
+              </div>
+            </div>
+          </div>
+        </Cell>
+      )
+    }
+    <Cell class="recent">
+      <div class="recent__label">RECENT</div>
+      {
+        recentEntries.length > 0 ? (
+          recentEntries.map((entry, index) => (
+            <a href={`/blog/${entry.id}`} class="recent__row reveal" data-delay={recentDelays[index]}>
+              <span class="recent__date">{stamp(entry.data.publishedDate)}</span>
+              <span>
+                <span class="recent__title">{entry.data.title}</span>
+                <span class="recent__tags">{tagLine(entry)}</span>
+              </span>
+            </a>
+          ))
+        ) : (
+          <p class="recent__empty reveal" data-delay="120">
+            More articles are on the way — the archive is just getting started.
+          </p>
+        )
+      }
+    </Cell>
+  </Grid>
+</SectionShell>
+
+<style>
+  .feature {
+    flex: 1.1 1 380px;
+    min-height: 300px;
+    padding: clamp(28px, 3vw, 40px);
+  }
+
+  .feature > .reveal {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+  }
+
+  .feature__chip {
+    align-self: flex-start;
+    background: var(--accent);
+    padding: 5px 9px;
+    font: 10px var(--mono);
+    letter-spacing: 0.14em;
+    color: #fff;
+  }
+
+  .feature__title {
+    margin: 0 0 14px;
+    font: 600 clamp(20px, 2vw, 26px) var(--mono);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  .feature__excerpt {
+    margin: 0;
+    max-width: 440px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .feature__meta {
+    display: flex;
+    gap: 16px;
+    margin-top: 20px;
+    font: 11px var(--mono);
+    letter-spacing: 0.06em;
+    color: var(--faint);
+  }
+
+  .recent {
+    flex: 1 1 420px;
+    padding: clamp(20px, 2vw, 30px) clamp(24px, 3vw, 36px);
+  }
+
+  .recent__label {
+    padding-bottom: 14px;
+    font: 11px var(--mono);
+    letter-spacing: 0.14em;
+    color: var(--faint);
+  }
+
+  .recent__row {
+    display: grid;
+    grid-template-columns: 74px 1fr;
+    align-items: baseline;
+    gap: 16px;
+    padding: 16px 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .recent__row:hover .recent__title {
+    color: var(--accent);
+  }
+
+  .recent__date {
+    font: 12px var(--mono);
+    color: var(--faint);
+  }
+
+  .recent__title {
+    font: 500 16px var(--mono);
+    color: inherit;
+    transition: color 0.2s;
+  }
+
+  .recent__tags {
+    display: block;
+    margin-top: 5px;
+    font: 10px var(--mono);
+    letter-spacing: 0.1em;
+    color: var(--faint);
+  }
+
+  .recent__empty {
+    margin: 0;
+    padding-top: 4px;
+    max-width: 34ch;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+</style>
