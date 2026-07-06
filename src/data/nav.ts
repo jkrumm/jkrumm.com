@@ -12,7 +12,7 @@ export const navSections: NavItem[] = [
   { id: 'writing', number: '01', title: 'Writing' },
   { id: 'experience', number: '02', title: 'Experience' },
   { id: 'stack', number: '03', title: 'Personal Stack' },
-  { id: 'projects', number: '04', title: 'Projects', accent: true },
+  { id: 'projects', number: '04', title: 'Projects' },
   { id: 'photography', number: '05', title: 'Photography' },
   { id: 'contact', number: '06', title: 'Contact' },
 ];

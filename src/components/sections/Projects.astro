@@ -16,7 +16,7 @@ import { SOCIAL } from '@/consts';
   <SectionHeader number="04" title="Projects" action={{ label: 'GitHub', href: SOCIAL.github }} />
 
   <Grid>
-    <Cell as="a" href={featured.href} target="_blank" rel="noopener" accent class="featured">
+    <Cell as="a" href={featured.href} target="_blank" rel="noopener" class="featured">
       <div class="reveal" data-delay="60">
         <div class="featured__meta">
           <span>{featured.meta}</span>
@@ -26,7 +26,7 @@ import { SOCIAL } from '@/consts';
           <h3 class="featured__title">{featured.title}</h3>
           <p class="featured__description">{featured.description}</p>
           <div class="featured__chips">
-            {featured.chips?.map((chip) => <Chip variant="on-accent">{chip}</Chip>)}
+            {featured.chips?.map((chip) => <Chip>{chip}</Chip>)}
           </div>
         </div>
       </div>
