@@ -35,6 +35,9 @@
 
   /* Layout */
   --maxw: 1180px;
+  /* Reading/index surfaces are calmer than the 1180px bento stage. */
+  --reading-maxw: 42rem;
+  --index-maxw: 960px;
   --bar-top: 60px;
   --bar-bottom: 56px;
 

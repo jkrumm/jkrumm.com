@@ -1,0 +1,214 @@
+---
+/**
+ * Listing surface for the guide + blog index pages. A calm standalone page that
+ * borrows the homepage's bento language — the "fail toward line" contained
+ * frame (one border, 1px line-gaps between opaque cells) and mono/line type —
+ * without the scroll-stage chrome.
+ *
+ * Owns: the shared ReadingHeader, the framed masthead cell, and a cross-link
+ * footer. The page supplies the list cells via the default slot; each slotted
+ * child is a direct frame child, so they separate on 1px line-gaps like the
+ * homepage bento.
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ReadingHeader from '@/components/chrome/ReadingHeader.astro';
+
+interface Stat {
+  value: string;
+  label: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  /** Header + eyebrow label, uppercase mono, e.g. "GUIDE" or "BLOG". */
+  category: string;
+  /** Masthead headline. */
+  heading: string;
+  /** Masthead intro sentence. */
+  intro: string;
+  /** Stat rows shown in the masthead aside cell (count, reading time, date). */
+  stats: Stat[];
+  /** Footer cross-link to the sibling surface. */
+  crossTeaser: string;
+  crossLabel: string;
+  crossHref: string;
+}
+
+const { title, description, category, heading, intro, stats, crossTeaser, crossLabel, crossHref } =
+  Astro.props;
+---
+
+<BaseLayout title={`${title} — Johannes Krumm`} description={description} ogType="website">
+  <ReadingHeader category={category} width="var(--index-maxw)" />
+
+  <main class="index-shell">
+    <div class="index-frame">
+      <header class="index-masthead">
+        <div class="index-masthead__main">
+          <p class="index-masthead__eyebrow">{category}</p>
+          <h1 class="index-masthead__title">{heading}</h1>
+          <p class="index-masthead__intro">{intro}</p>
+        </div>
+        <div class="index-masthead__aside">
+          {
+            stats.map((stat) => (
+              <div class="stat">
+                <span class="stat__value">{stat.value}</span>
+                <span class="stat__label">{stat.label}</span>
+              </div>
+            ))
+          }
+        </div>
+      </header>
+
+      <slot />
+    </div>
+
+    <footer class="index-foot">
+      <a class="index-foot__cross" href={crossHref}>
+        <span class="index-foot__teaser">{crossTeaser}</span>
+        <span class="index-foot__cross-label">{crossLabel} &rarr;</span>
+      </a>
+      <a class="index-foot__home" href="/">&larr; Back to home</a>
+    </footer>
+  </main>
+</BaseLayout>
+
+<style>
+  .index-shell {
+    max-width: var(--index-maxw);
+    margin: 0 auto;
+    padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 28px) clamp(48px, 8vw, 88px);
+    background: var(--bg);
+  }
+
+  /* The bento frame: one border, line-colored bg exposed as 1px gaps between the
+     opaque cells stacked inside it. Mirrors PageBox on a standalone page. */
+  .index-frame {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+
+  /* ------------------------------- Masthead ------------------------------- */
+  /* Two-cell bento: intro copy + a stat aside, divided by a 1px line-gap —
+     echoes the homepage hero's content/portrait split so the frame fills. */
+  .index-masthead {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    background: var(--line);
+  }
+
+  .index-masthead__main {
+    flex: 2 1 360px;
+    background: var(--panel);
+    padding: clamp(32px, 5vw, 56px) clamp(26px, 4vw, 48px);
+  }
+
+  .index-masthead__aside {
+    flex: 1 1 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    gap: clamp(16px, 2.4vw, 26px);
+    background: var(--panel);
+    padding: clamp(28px, 4vw, 48px) clamp(26px, 4vw, 40px);
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    text-align: right;
+  }
+
+  .stat__value {
+    font: 500 clamp(20px, 2.4vw, 26px) var(--mono);
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .stat__label {
+    font: 10px var(--mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .index-masthead__eyebrow {
+    margin: 0 0 18px;
+    font: 11px var(--mono);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .index-masthead__title {
+    margin: 0;
+    font: 700 clamp(30px, 5vw, 52px) var(--mono);
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    color: var(--ink);
+  }
+
+  .index-masthead__intro {
+    margin: 18px 0 0;
+    max-width: 44ch;
+    font-family: var(--sans);
+    font-size: clamp(15px, 1.6vw, 17px);
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  /* -------------------------------- Footer -------------------------------- */
+  .index-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: clamp(28px, 4vw, 40px);
+    padding-top: clamp(20px, 3vw, 26px);
+    border-top: 1px solid var(--line);
+  }
+
+  .index-foot__cross {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .index-foot__teaser {
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .index-foot__cross-label {
+    font: 500 14px var(--mono);
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    transition: color 0.2s;
+  }
+
+  .index-foot__cross:hover .index-foot__cross-label {
+    color: var(--accent);
+  }
+
+  .index-foot__home {
+    font: 12px var(--mono);
+    letter-spacing: 0.06em;
+    color: var(--faint);
+    transition: color 0.2s;
+  }
+
+  .index-foot__home:hover {
+    color: var(--accent);
+  }
+</style>

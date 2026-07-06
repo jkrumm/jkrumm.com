@@ -1,5 +1,5 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
+import IndexLayout from '@/layouts/IndexLayout.astro';
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { getReadingTime } from '@/utils/content';
 
@@ -10,122 +10,171 @@ const entries = (await getCollection('guide', isPublished)).sort(
   (a, b) => a.data.order - b.data.order,
 );
 
-const entriesWithReadingTime = entries.map((entry) => ({
+const chapters = entries.map((entry) => ({
   entry,
   readingTime: getReadingTime(entry.body ?? ''),
 }));
+
+const count = chapters.length;
+const totalMin = chapters.reduce((sum, chapter) => sum + chapter.readingTime, 0);
+
+const stats = [
+  { value: String(count).padStart(2, '0'), label: count === 1 ? 'Chapter' : 'Chapters' },
+  { value: `${totalMin} min`, label: 'Total read' },
+];
+
+if (count > 0) {
+  const latest = entries.reduce(
+    (max, entry) => {
+      const date = entry.data.updatedDate ?? entry.data.publishedDate;
+      return date.getTime() > max.getTime() ? date : max;
+    },
+    entries[0].data.updatedDate ?? entries[0].data.publishedDate,
+  );
+  stats.push({ value: latest.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), label: 'Updated' });
+}
 ---
 
-<BaseLayout
-  title="Guide — Johannes Krumm"
-  description="A structured handbook of my personal stack — tools, workflows and setup notes."
-  ogType="website"
+<IndexLayout
+  title="Guide"
+  description="A structured handbook of my personal stack — the tools, workflows and setup notes behind how I build and ship."
+  category="Guide"
+  heading="The Handbook"
+  intro="A structured, ordered walkthrough of the tools and workflows behind how I build and ship — read top to bottom, or jump to a chapter."
+  stats={stats}
+  crossTeaser="Prefer things in chronological order?"
+  crossLabel="Read the Blog"
+  crossHref="/blog"
 >
-  <main class="guide-index">
-    <p class="guide-index__eyebrow">GUIDE</p>
-    <h1 class="guide-index__title">The Handbook</h1>
-    <p class="guide-index__intro">
-      A structured, ordered walkthrough of the tools and workflows behind how I build and ship.
-    </p>
-
-    <ol class="guide-index__list">
-      {
-        entriesWithReadingTime.map(({ entry, readingTime }, index) => (
-          <li class="guide-index__row">
-            <a href={`/guide/${entry.id}`} class="guide-index__link">
-              <span class="guide-index__number">{String(index + 1).padStart(2, '0')}</span>
-              <span class="guide-index__body">
-                <span class="guide-index__row-title">{entry.data.title}</span>
-                <span class="guide-index__row-description">{entry.data.description}</span>
-              </span>
-              <span class="guide-index__reading-time">{readingTime} MIN</span>
-            </a>
-          </li>
-        ))
-      }
-    </ol>
-  </main>
-</BaseLayout>
+  <ol class="chapters">
+    {
+      chapters.map(({ entry, readingTime }, index) => (
+        <li class="chapter">
+          <a href={`/guide/${entry.id}`} class="chapter__link">
+            <span class="chapter__number">{String(index + 1).padStart(2, '0')}</span>
+            <span class="chapter__body">
+              <span class="chapter__title">{entry.data.title}</span>
+              <span class="chapter__description">{entry.data.description}</span>
+              {entry.data.tags && (
+                <span class="chapter__tags">
+                  {entry.data.tags.map((tag) => tag.toUpperCase()).join(' · ')}
+                </span>
+              )}
+            </span>
+            <span class="chapter__aside">
+              <span class="chapter__time">{readingTime} MIN</span>
+              <span class="chapter__arrow" aria-hidden="true">&rarr;</span>
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</IndexLayout>
 
 <style>
-  .guide-index {
-    max-width: 42rem;
-    margin: 0 auto;
-    padding: clamp(48px, 8vw, 96px) clamp(20px, 5vw, 32px);
-    background: var(--bg);
-  }
-
-  .guide-index__eyebrow {
-    margin: 0 0 12px;
-    font: 11px var(--mono);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-
-  .guide-index__title {
-    margin: 0 0 16px;
-    font: 700 clamp(28px, 4vw, 40px) var(--mono);
-    letter-spacing: -0.02em;
-    color: var(--ink);
-  }
-
-  .guide-index__intro {
-    margin: 0 0 40px;
-    max-width: 36rem;
-    font-family: var(--sans);
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--muted);
-  }
-
-  .guide-index__list {
+  /* The list itself is a bento cell (opaque panel); chapters divide on internal
+     hairlines so the ordered spine reads unbroken, like the Experience rail. */
+  .chapters {
     list-style: none;
     margin: 0;
     padding: 0;
-    border-top: 1px solid var(--line);
+    background: var(--panel);
   }
 
-  .guide-index__link {
-    display: flex;
+  .chapter + .chapter {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .chapter__link {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: baseline;
-    gap: 20px;
-    padding: 18px 0;
-    border-bottom: 1px solid var(--hairline);
+    gap: clamp(16px, 3vw, 32px);
+    padding: clamp(22px, 3vw, 30px) clamp(26px, 4vw, 48px);
+    transition: background-color 0.2s;
   }
 
-  .guide-index__link:hover .guide-index__row-title {
+  .chapter__link:hover {
+    background: var(--panel-hover);
+  }
+
+  .chapter__number {
+    font: 13px var(--mono);
+    letter-spacing: 0.06em;
     color: var(--accent);
   }
 
-  .guide-index__number {
-    font: 12px var(--mono);
-    color: var(--faint);
-  }
-
-  .guide-index__body {
-    flex: 1;
+  .chapter__body {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 7px;
+    min-width: 0;
   }
 
-  .guide-index__row-title {
-    font: 500 16px var(--mono);
+  .chapter__title {
+    font: 500 clamp(16px, 1.8vw, 19px) var(--mono);
+    letter-spacing: -0.01em;
     color: var(--ink);
     transition: color 0.2s;
   }
 
-  .guide-index__row-description {
+  .chapter__link:hover .chapter__title {
+    color: var(--accent);
+  }
+
+  .chapter__description {
     font-family: var(--sans);
     font-size: 14px;
+    line-height: 1.55;
     color: var(--muted);
   }
 
-  .guide-index__reading-time {
+  .chapter__tags {
+    margin-top: 2px;
+    font: 10px var(--mono);
+    letter-spacing: 0.1em;
+    color: var(--faint);
+  }
+
+  .chapter__aside {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    white-space: nowrap;
+  }
+
+  .chapter__time {
     font: 11px var(--mono);
     letter-spacing: 0.06em;
     color: var(--faint);
-    white-space: nowrap;
+  }
+
+  .chapter__arrow {
+    font: 15px var(--mono);
+    color: var(--dot-idle);
+    transform: translateX(-4px);
+    opacity: 0;
+    transition:
+      transform 0.2s var(--ease-reveal),
+      opacity 0.2s var(--ease-reveal),
+      color 0.2s;
+  }
+
+  .chapter__link:hover .chapter__arrow {
+    color: var(--accent);
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  @media (max-width: 560px) {
+    .chapter__link {
+      grid-template-columns: auto 1fr;
+    }
+
+    .chapter__aside {
+      grid-column: 2;
+      margin-top: 10px;
+    }
   }
 </style>
