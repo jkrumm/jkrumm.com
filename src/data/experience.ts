@@ -8,22 +8,45 @@ export const overview = {
   coreStack: 'TypeScript · Node · Cloud',
 };
 
+/** A single title held within a company (a rung of the promotion ladder). */
+export interface Position {
+  title: string;
+  period: string;
+}
+
 export interface Role {
+  /** Overall span at the company (e.g. the widest range of its positions). */
   period: string;
   current?: boolean;
+  /** Current / most-senior title — headlines a single-title entry, secondary on a ladder entry. */
   title: string;
+  /** Clean company name (no leading separator — the template adds one where needed). */
   company: string;
   scope: string;
   highlights: string[];
   stack: string[];
+  /**
+   * Optional promotion ladder, NEWEST FIRST (including the current title). When
+   * present the entry renders as a company node: the company headlines the row
+   * and the expanded body opens with this ladder before the shared tenure
+   * narrative. Omit it for a plain single-title role.
+   *
+   * NOTE: placeholder content — replace titles/dates (and collapse or split
+   * companies) with the real history; the layout stays the same.
+   */
+  positions?: Position[];
 }
 
 export const roles: Role[] = [
   {
-    period: '2022 — NOW',
+    period: '2020 — NOW',
     current: true,
     title: 'Tech Lead',
-    company: '· Product company, Munich',
+    company: 'Product company, Munich',
+    positions: [
+      { title: 'Tech Lead', period: '2023 — NOW' },
+      { title: 'Senior Full-Stack Developer', period: '2020 — 2023' },
+    ],
     scope:
       'Own the architecture of a full-stack platform. Lead a cross-functional team, set engineering standards, and keep releases boring.',
     highlights: [
@@ -34,9 +57,9 @@ export const roles: Role[] = [
     stack: ['TypeScript', 'Node', 'Cloud', 'Architecture'],
   },
   {
-    period: '2019 — 2022',
+    period: '2017 — 2020',
     title: 'Senior Full-Stack Developer',
-    company: '· SaaS scale-up',
+    company: 'SaaS scale-up',
     scope:
       'Built and scaled core product features end-to-end, from data model to UI, and introduced type-safe APIs across the stack.',
     highlights: [
@@ -47,9 +70,9 @@ export const roles: Role[] = [
     stack: ['TypeScript', 'React', 'Node', 'Postgres', 'API Design'],
   },
   {
-    period: '2016 — 2019',
+    period: '2014 — 2017',
     title: 'Full-Stack Developer',
-    company: '· Digital agency',
+    company: 'Digital agency',
     scope:
       'Delivered web products for a range of clients — the foundation for a systems-first way of building.',
     highlights: [

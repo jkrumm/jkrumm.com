@@ -343,108 +343,103 @@ function init(): void {
   // active pill is open on load with no flash.
   setActive(0, false);
 
-  // ---- Experience: sticky rail pinned under the bar → scrub roles + beam ----
-  // .role-split is a wrapper taller than its sticky child, so scrolling through
-  // the surplus height keeps the rail + pane PINNED (the page appears to "pause"
-  // on Experience). We map scroll progress across that pinned runway 0→1 to:
-  // active role index, accent highlight, detail crossfade, and the side-beam
-  // fill. Continuous scroll-math — no IntersectionObserver thresholds, no
-  // scroll-hijacking. Desktop + motion only; reduced-motion and <900px get the
-  // plain stacked column (CSS), so the scrub never runs there.
-  const roleSplit = scroller.querySelector<HTMLElement>('.role-split');
-  const roleSticky = scroller.querySelector<HTMLElement>('.role-sticky');
-  const roleRows = [...scroller.querySelectorAll<HTMLElement>('[data-role-row]')];
-  const roleDetails = [...scroller.querySelectorAll<HTMLElement>('[data-role-detail]')];
-  const roleBeam = scroller.querySelector<HTMLElement>('[data-role-beam-fill]');
+  // ---- Experience: exclusive accordion timeline ---------------------------
+  // Each role is a native <details>/<summary> (keyboard + no-JS work for free).
+  // JS upgrades the instant native toggle to a smooth height tween and enforces
+  // EXCLUSIVE open (one role at a time). Height is the ONE scoped exception to
+  // transform/opacity-only — an accordion is a height change with no compositor
+  // path (same precedent as the footer-pill width). We own the toggle
+  // (preventDefault, which also covers keyboard Enter/Space) so native and JS
+  // never fight; the <details> has NO `name` attr, which would fire native
+  // exclusivity on the programmatic open and snap the outgoing panel shut
+  // mid-tween. Reduced motion → instant toggle, still exclusive. No-JS → native
+  // <details> (independent disclosure), every role fully readable.
+  const tlEntries = [...scroller.querySelectorAll<HTMLDetailsElement>('[data-tl-entry]')];
+  if (tlEntries.length) {
+    const rmAcc = prefersReducedMotion();
+    const ACC_DUR = 0.42;
+    const ACC_EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
 
-  if (
-    roleSplit &&
-    roleSticky &&
-    roleRows.length &&
-    roleDetails.length &&
-    window.matchMedia('(min-width: 900px)').matches &&
-    !prefersReducedMotion()
-  ) {
-    // Per-role scroll distance as a fraction of the viewport — the ONE knob for
-    // how long Experience "holds" the page. 0.5 = half a screen of scroll per role.
-    const PER_ROLE_VH = 0.5;
-    const STEPS = roleRows.length;
-    let pinStart = 0;
-    let track = 0;
-    let activeRole = -1;
+    // Deferred settle steps (reset to auto / drop `open` / clear busy) run after
+    // the tween; every pending timer is cleared on teardown.
+    const timers = new Set<ReturnType<typeof setTimeout>>();
+    const after = (fn: () => void): void => {
+      const t = setTimeout(() => {
+        timers.delete(t);
+        fn();
+      }, ACC_DUR * 1000 + 30);
+      timers.add(t);
+    };
+    const bodyOf = (entry: HTMLDetailsElement): HTMLElement =>
+      entry.querySelector<HTMLElement>('[data-tl-body]')!;
 
-    const setActiveRole = (index: number, animated: boolean): void => {
-      const prevIndex = activeRole;
-      activeRole = index;
-      roleRows.forEach((row, i) => row.classList.toggle('is-active', i === index));
-
+    const openEntry = (entry: HTMLDetailsElement, animated: boolean): void => {
+      const body = bodyOf(entry);
+      entry.open = true; // render the body so we can measure + it stays semantic
       if (!animated) {
-        roleDetails.forEach((d, i) => { d.style.opacity = i === index ? '1' : '0'; });
+        body.style.height = 'auto';
         return;
       }
-      const prevDetail = roleDetails[prevIndex];
-      const nextDetail = roleDetails[index];
-      if (prevDetail && prevDetail !== nextDetail) {
-        animate(prevDetail, { opacity: 0 }, { duration: 0.28, ease: [0.4, 0, 1, 1] });
-      }
-      animate(nextDetail, { opacity: [0, 1], y: [8, 0] }, { duration: 0.36, ease: [0.2, 0.7, 0.2, 1] });
+      const target = body.scrollHeight; // measured before we clamp to 0 (same tick, no flash)
+      body.style.height = '0px';
+      animate(body, { height: [0, target] }, { duration: ACC_DUR, ease: ACC_EASE });
+      after(() => {
+        body.style.height = 'auto'; // let it reflow freely once open
+      });
     };
 
-    const updateRole = (): void => {
-      if (track <= 0) return;
-      const raw = (scroller.scrollTop - pinStart) / track;
-      const p = raw < 0 ? 0 : raw > 1 ? 1 : raw;
-      const index = Math.min(Math.floor(p * STEPS), STEPS - 1);
-      if (index !== activeRole) setActiveRole(index, true);
-      if (roleBeam) roleBeam.style.transform = `scaleY(${p})`;
-    };
-
-    // Chrome-bar insets, read once per measure from the design tokens (simple px
-    // values, so getPropertyValue parses cleanly — unlike the calc() customs).
-    const rootStyle = getComputedStyle(document.documentElement);
-    const barTop = parseFloat(rootStyle.getPropertyValue('--bar-top')) || 60;
-    const barBottom = parseFloat(rootStyle.getPropertyValue('--bar-bottom')) || 56;
-    const pinTopBase = 10 + barTop + 16; // fixed bar clearance (mirrors --pin-top)
-    const pinBottom = barBottom + 10 + 16; // sticky footer clearance (--pin-bottom)
-
-    // Measured once (init + resize). The card is a substantial band; we CENTER it
-    // vertically in the stage (between the two bars) via `top`, then build the
-    // runway beneath it: wrapper height = card height + surplus, where the surplus
-    // (= track, the pinned scroll distance) scales to the viewport. Below 900px,
-    // hand layout back to the stacked CSS (drop the inline height/top/opacities).
-    const measureRole = (): void => {
-      if (!window.matchMedia('(min-width: 900px)').matches) {
-        roleSplit.style.height = '';
-        roleSticky.style.top = '';
-        roleDetails.forEach((d) => { d.style.opacity = ''; });
-        if (roleBeam) roleBeam.style.transform = '';
-        track = 0;
-        activeRole = -1;
+    const closeEntry = (entry: HTMLDetailsElement, animated: boolean): void => {
+      const body = bodyOf(entry);
+      if (!animated) {
+        entry.open = false;
+        body.style.height = '';
         return;
       }
-      const cardH = roleSticky.offsetHeight;
-      const stage = scroller.clientHeight - pinTopBase - pinBottom;
-      // Centered pin position — never above the bar (short-viewport guard).
-      const topOffset = Math.max(pinTopBase, pinTopBase + (stage - cardH) / 2);
-      roleSticky.style.top = `${topOffset}px`;
-
-      const surplus = Math.round(STEPS * PER_ROLE_VH * scroller.clientHeight);
-      roleSplit.style.height = `${cardH + surplus}px`;
-      track = surplus;
-
-      const sr = scroller.getBoundingClientRect();
-      const wr = roleSplit.getBoundingClientRect();
-      pinStart = wr.top - sr.top + scroller.scrollTop - topOffset;
-      updateRole(); // re-sync active role + beam to the new geometry
+      const from = body.scrollHeight;
+      body.style.height = `${from}px`;
+      void body.offsetHeight; // reflow so the [from → 0] tween has a start value
+      animate(body, { height: [from, 0] }, { duration: ACC_DUR, ease: ACC_EASE });
+      after(() => {
+        entry.open = false; // hide + restore native semantics only after collapse
+        body.style.height = '';
+      });
     };
 
-    setActiveRole(0, false); // flash-free initial state (matches server-side CSS)
-    measureRole();
-    window.addEventListener('resize', measureRole);
-    teardown.push(() => window.removeEventListener('resize', measureRole));
+    let current: HTMLDetailsElement | null = tlEntries.find((e) => e.open) ?? null;
+    let busy = false; // lock the ~0.42s window so a double-click can't desync state
 
-    const stopRoleScroll = scroll(updateRole, { container: scroller });
-    teardown.push(stopRoleScroll);
+    const handlers: Array<{ el: HTMLElement; fn: (e: Event) => void }> = [];
+    tlEntries.forEach((entry) => {
+      const head = entry.querySelector<HTMLElement>('[data-tl-head]');
+      if (!head) return;
+      const fn = (e: Event): void => {
+        e.preventDefault(); // own the toggle (covers mouse + keyboard activation)
+        if (busy) return;
+        const animated = !rmAcc;
+        if (entry === current) {
+          closeEntry(entry, animated);
+          current = null;
+        } else {
+          if (current) closeEntry(current, animated); // exclusive: collapse the open one
+          openEntry(entry, animated);
+          current = entry;
+        }
+        if (animated) {
+          busy = true;
+          after(() => {
+            busy = false;
+          });
+        }
+      };
+      head.addEventListener('click', fn);
+      handlers.push({ el: head, fn });
+    });
+
+    teardown.push(() => {
+      handlers.forEach(({ el, fn }) => el.removeEventListener('click', fn));
+      timers.forEach((t) => clearTimeout(t));
+      timers.clear();
+    });
   }
 
   // ---- Scroll-driven: progress line + hero collapse + compact-bar reveal ----
