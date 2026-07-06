@@ -1,0 +1,22 @@
+---
+/**
+ * Inline keyboard-key label. Used both as an explicit `<Kbd>` tag and mapped
+ * from the markdown `kbd` element.
+ */
+---
+
+<kbd class="kbd"><slot /></kbd>
+
+<style>
+  .kbd {
+    display: inline-block;
+    padding: 0.1em 0.5em;
+    font: 0.85em var(--mono);
+    line-height: 1.4;
+    color: var(--ink-2);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    vertical-align: baseline;
+  }
+</style>

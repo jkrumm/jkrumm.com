@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" role="img" aria-label="Rollhook rolling-deploy flow: client through proxy to app replicas">
+  <style>
+    .box { fill: #f4f2ef; stroke: #d6d3d1; stroke-width: 1; }
+    .box-accent { fill: #f4f2ef; stroke: #2f5bff; stroke-width: 1.5; }
+    .label { font: 500 15px ui-monospace, SFMono-Regular, monospace; fill: #1c1917; }
+    .sub { font: 11px ui-monospace, SFMono-Regular, monospace; fill: #a8a29e; letter-spacing: 0.06em; }
+    .flow { stroke: #a8a29e; stroke-width: 1.5; fill: none; }
+    .flow-accent { stroke: #2f5bff; stroke-width: 1.5; fill: none; }
+    .arrow { fill: #a8a29e; }
+  </style>
+
+  <!-- Client -->
+  <rect class="box" x="24" y="74" width="150" height="72" rx="0" />
+  <text class="label" x="99" y="108" text-anchor="middle">Client</text>
+  <text class="sub" x="99" y="128" text-anchor="middle">REQUESTS</text>
+
+  <!-- Proxy -->
+  <rect class="box-accent" x="300" y="74" width="200" height="72" />
+  <text class="label" x="400" y="108" text-anchor="middle">Rollhook proxy</text>
+  <text class="sub" x="400" y="128" text-anchor="middle">HEALTH-GATED</text>
+
+  <!-- App replicas -->
+  <rect class="box" x="626" y="30" width="150" height="60" />
+  <text class="label" x="701" y="65" text-anchor="middle">app · v2</text>
+  <rect class="box" x="626" y="130" width="150" height="60" />
+  <text class="label" x="701" y="165" text-anchor="middle">app · v1</text>
+
+  <!-- Client -> Proxy -->
+  <path class="flow" d="M174 110 H288" />
+  <path class="arrow" d="M288 110 l-9 -4 v8 z" />
+
+  <!-- Proxy -> replicas -->
+  <path class="flow-accent" d="M500 100 C560 100, 566 60, 620 60" />
+  <path class="flow" d="M500 120 C560 120, 566 160, 620 160" />
+  <path class="arrow" d="M620 60 l-9 -4 v8 z" fill="#2f5bff" />
+  <path class="arrow" d="M620 160 l-9 -4 v8 z" />
+</svg>

@@ -1,25 +1,34 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import ArticleLayout from '@/layouts/ArticleLayout.astro';
+import { components } from '@/components/content/mdx-components';
 import { getGitLastModified, getReadingTime } from '@/utils/content';
 
 export async function getStaticPaths() {
   const isPublished = ({ data }: CollectionEntry<'blog'>) =>
     import.meta.env.PROD ? data.status === 'published' : true;
 
-  const entries = await getCollection('blog', isPublished);
+  // Newest first — neighbours read as ← newer / older →.
+  const entries = (await getCollection('blog', isPublished)).sort(
+    (a, b) => b.data.publishedDate.getTime() - a.data.publishedDate.getTime(),
+  );
 
-  return entries.map((entry) => ({
+  const link = (entry: CollectionEntry<'blog'> | undefined) =>
+    entry ? { href: `/blog/${entry.id}`, title: entry.data.title } : null;
+
+  return entries.map((entry, index) => ({
     params: { slug: entry.id },
-    props: { entry },
+    props: { entry, prev: link(entries[index - 1]), next: link(entries[index + 1]) },
   }));
 }
 
 interface Props {
   entry: CollectionEntry<'blog'>;
+  prev: { href: string; title: string } | null;
+  next: { href: string; title: string } | null;
 }
 
-const { entry } = Astro.props;
+const { entry, prev, next } = Astro.props;
 const { Content } = await render(entry);
 
 const updatedDate = entry.data.updatedDate ?? getGitLastModified(entry.filePath) ?? entry.data.publishedDate;
@@ -34,9 +43,11 @@ const readingTime = getReadingTime(entry.body ?? '');
   updatedDate={updatedDate}
   readingTime={readingTime}
   backHref="/blog"
-  backLabel="Writing"
+  backLabel="Blog"
+  prev={prev}
+  next={next}
 >
   <div class="prose">
-    <Content />
+    <Content components={components} />
   </div>
 </ArticleLayout>

@@ -1,0 +1,52 @@
+---
+/**
+ * A large emphasized pull-quote — visually distinct from the accent-left-
+ * border `.prose blockquote`. Slot is the quote text; an optional citation
+ * line runs below in mono/muted.
+ */
+interface Props {
+  cite?: string;
+}
+
+const { cite } = Astro.props;
+---
+
+<figure class="pull-quote">
+  <span class="pull-quote__mark" aria-hidden="true">&ldquo;</span>
+  <blockquote class="pull-quote__text">
+    <slot />
+  </blockquote>
+  {cite && <figcaption class="pull-quote__cite">{cite}</figcaption>}
+</figure>
+
+<style>
+  .pull-quote {
+    margin: 0;
+    padding: 0.2em 0 0.2em 0.2em;
+  }
+
+  .pull-quote__mark {
+    display: block;
+    font: 700 3em/1 var(--mono);
+    color: var(--accent);
+    opacity: 0.35;
+  }
+
+  .pull-quote__text {
+    margin: -0.6em 0 0;
+    font: 600 1.4em/1.4 var(--sans);
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .pull-quote__cite {
+    margin-top: 0.6em;
+    font: 12px var(--mono);
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .pull-quote__cite::before {
+    content: '— ';
+  }
+</style>

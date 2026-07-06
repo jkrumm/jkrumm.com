@@ -1,0 +1,85 @@
+---
+/**
+ * Admonition box for prose content — a left accent bar, panel background and
+ * a mono uppercase label, with the slot rendered as regular prose. Semantic
+ * tint colors are component-local custom properties (no new global tokens).
+ */
+interface Props {
+  type?: 'note' | 'info' | 'warn' | 'success';
+  title?: string;
+}
+
+const { type = 'note', title } = Astro.props;
+
+const glyphs: Record<NonNullable<Props['type']>, string> = {
+  note: '✎',
+  info: 'ℹ',
+  warn: '⚠',
+  success: '✓',
+};
+
+const label = title ?? type;
+---
+
+<div class:list={['callout', `callout--${type}`]}>
+  <p class="callout__label"><span class="callout__glyph" aria-hidden="true">{glyphs[type]}</span>{label}</p>
+  <div class="callout__body">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .callout {
+    --callout-accent: var(--accent);
+    padding: 0.9em 1.2em;
+    background: var(--panel);
+    border-left: 3px solid var(--callout-accent);
+  }
+
+  .callout--note {
+    --callout-accent: var(--faint);
+  }
+
+  .callout--info {
+    --callout-accent: var(--accent);
+  }
+
+  .callout--warn {
+    --callout-accent: #b5750f;
+  }
+
+  .callout--success {
+    --callout-accent: #2f7a4f;
+  }
+
+  .callout__label {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    font: 600 11px var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--callout-accent);
+  }
+
+  .callout__glyph {
+    font-size: 1.1em;
+  }
+
+  .callout__body {
+    margin-top: 0.6em;
+  }
+
+  .callout__body :global(> * + *) {
+    margin-top: 1em;
+  }
+
+  .callout__body :global(> :first-child) {
+    margin-top: 0;
+  }
+
+  .callout__body :global(> :last-child) {
+    margin-bottom: 0;
+  }
+</style>

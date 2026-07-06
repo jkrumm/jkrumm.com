@@ -1,0 +1,51 @@
+---
+/**
+ * Wraps a markdown ordered list into a numbered-steps layout — big mono
+ * numerals on a connecting hairline down the left. The slot is a plain
+ * markdown `<ol>`; scoped `<style>` cannot reach it directly, so it's styled
+ * via `:global()` selectors.
+ */
+---
+
+<div class="steps">
+  <slot />
+</div>
+
+<style>
+  .steps :global(ol) {
+    list-style: none;
+    margin: 0 !important;
+    padding: 0;
+    counter-reset: steps;
+  }
+
+  .steps :global(li) {
+    position: relative;
+    counter-increment: steps;
+    margin: 0 !important;
+    padding: 0 0 1.6em 2.6em;
+    border-left: 1px solid var(--line);
+  }
+
+  .steps :global(li:last-child) {
+    padding-bottom: 0;
+    border-left-color: transparent;
+  }
+
+  .steps :global(li::before) {
+    content: counter(steps);
+    position: absolute;
+    top: -0.2em;
+    left: 0;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6em;
+    height: 1.6em;
+    font: 700 0.85em var(--mono);
+    color: var(--accent);
+    background: var(--bg);
+    border: 1px solid var(--line);
+  }
+</style>

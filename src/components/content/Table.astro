@@ -1,0 +1,19 @@
+---
+/**
+ * Mapped to the markdown `table` element — wraps the slotted rows in a
+ * horizontally scrollable region so wide tables don't overflow the reading
+ * column. `.prose table/th/td` in global.css still styles the table itself.
+ */
+---
+
+<div class="table-scroll" role="region" tabindex="0">
+  <table>
+    <slot />
+  </table>
+</div>
+
+<style>
+  .table-scroll {
+    overflow-x: auto;
+  }
+</style>

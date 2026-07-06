@@ -1,0 +1,50 @@
+---
+/**
+ * The manual-SVG/image vehicle for prose content — a plain <img> (no
+ * astro:assets pipeline, src is a bare path) wrapped in a <figure> with an
+ * optional caption and credit line.
+ */
+interface Props {
+  src: string;
+  alt: string;
+  caption?: string;
+  credit?: string;
+}
+
+const { src, alt, caption, credit } = Astro.props;
+---
+
+<figure class="figure">
+  <img src={src} alt={alt} loading="lazy" decoding="async" />
+  {
+    (caption || credit) && (
+      <figcaption class="figure__caption">
+        {caption}
+        {credit && <span class="figure__credit">{caption ? ' — ' : ''}{credit}</span>}
+      </figcaption>
+    )
+  }
+</figure>
+
+<style>
+  .figure {
+    margin: 0;
+  }
+
+  .figure img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+  }
+
+  .figure__caption {
+    margin-top: 0.6em;
+    font: 12px var(--mono);
+    color: var(--muted);
+  }
+
+  .figure__credit {
+    color: var(--faint);
+  }
+</style>

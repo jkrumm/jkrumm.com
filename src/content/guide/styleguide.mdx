@@ -1,0 +1,104 @@
+---
+title: 'Block Styleguide'
+description: 'A kitchen-sink reference exercising every content block and prose pattern available to guide/blog articles.'
+order: 99
+status: 'draft'
+publishedDate: 2026-07-06
+tags: ['reference']
+---
+
+This page is a kitchen-sink reference exercising every block component in the
+map, plus the plain markdown prose patterns the Sätteri pipeline produces.
+
+## Prose basics
+
+A regular paragraph with an inline `code` span, a link, and *emphasis* mixed
+with **strong** text, so the base `.prose` styles get a normal workout.
+
+### Lists
+
+- A bulleted list item
+- Another item
+- A third item with `inline code`
+
+1. A numbered list item
+2. A second numbered item
+3. A third numbered item
+
+### Blockquote
+
+> This is a standard `.prose blockquote` — accent left border, muted italic
+> text — distinct from the `PullQuote` component below.
+
+### Code block
+
+```ts
+export function greet(name: string): string {
+  return `Hello, ${name}!`;
+}
+```
+
+### Footnote
+
+Here's a claim that needs a source[^1].
+
+## Callouts
+
+<Callout type="note">
+  A note callout — the default type when none is given.
+</Callout>
+
+<Callout type="info" title="Heads up">
+  An info callout with a custom title overriding the default type label.
+</Callout>
+
+<Callout type="warn">
+  A warning callout — use this for gotchas and footguns.
+</Callout>
+
+<Callout type="success">
+  A success callout — use this to confirm a working end state.
+</Callout>
+
+## Figure
+
+<Figure
+  src="/diagrams/example.svg"
+  alt="Rollhook rolling-deploy flow: client through a health-gated proxy to app replicas"
+  caption="A build-time SVG diagram, hand-authored and committed under /public/diagrams — zero client JS."
+  credit="Example"
+/>
+
+## Pull quote
+
+<PullQuote cite="Somebody, somewhere">
+  The guardrail isn't there to slow the agent down — it's there so a fast
+  agent doesn't have to be a careless one.
+</PullQuote>
+
+## Steps
+
+<Steps>
+
+1. Read the brief end to end before touching any file
+2. Match existing naming, structure and error handling
+3. Run the repo's own validators and iterate until green
+
+</Steps>
+
+## Inline key
+
+Press <Kbd>Cmd</Kbd> + <Kbd>K</Kbd> to open the command palette, or the
+markdown-mapped <kbd>Esc</kbd> to close it.
+
+## Wide table
+
+| Layer | Tool | Why | Owner | Status | Notes |
+| --- | --- | --- | --- | --- | --- |
+| Deploys | Rollhook | Rolling restarts, no dropped requests | Infra | Stable | Zero-downtime |
+| Routing | Traefik / Caddy | Automatic TLS, simple config | Infra | Stable | — |
+| Logs | Grafana / Loki | Cheap, self-hosted, good enough | Infra | Stable | — |
+| Content | This styleguide | Exercises every block once | Content | Draft | Dev-only page |
+
+[^1]: This footnote confirms the GFM footnote pipeline still renders correctly
+    through the components map.

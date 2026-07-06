@@ -2,10 +2,17 @@
 /**
  * Reading surface for the guide + blog collections — a normal-scroll article
  * page, NOT the bento `#jk-scroll` stage. Wraps `BaseLayout` for head/SEO/fonts
- * and adds a slim sticky reading header, a centered prose column, an article
- * header block (title + mono meta row) and a minimal back-link footer.
+ * and adds a slim sticky reading header, a Home / {collection} / {title}
+ * breadcrumb, a centered prose column, an article header block (title + mono
+ * meta row) and a prev/next + back-link footer.
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import ReadingHeader from '@/components/chrome/ReadingHeader.astro';
+
+interface ArticleLink {
+  href: string;
+  title: string;
+}
 
 interface Props {
   title: string;
@@ -17,10 +24,23 @@ interface Props {
   readingTime: number;
   backHref: string;
   backLabel: string;
+  /** Adjacent articles for foot navigation; null at the ends of the sequence. */
+  prev?: ArticleLink | null;
+  next?: ArticleLink | null;
 }
 
-const { title, description, category, publishedDate, updatedDate, readingTime, backHref, backLabel } =
-  Astro.props;
+const {
+  title,
+  description,
+  category,
+  publishedDate,
+  updatedDate,
+  readingTime,
+  backHref,
+  backLabel,
+  prev = null,
+  next = null,
+} = Astro.props;
 
 const dateFormat: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
 const publishedLabel = publishedDate.toLocaleDateString('en-US', dateFormat);
@@ -29,17 +49,17 @@ const updatedLabel = showUpdated ? updatedDate.toLocaleDateString('en-US', dateF
 ---
 
 <BaseLayout title={`${title} — Johannes Krumm`} description={description} ogType="article">
-  <header class="article-header">
-    <div class="article-header__bar">
-      <a href="/" class="article-header__brand">
-        <span class="article-header__mark">JK<span class="article-header__plus">+</span></span>
-        <span class="article-header__name">Johannes Krumm</span>
-      </a>
-      <span class="article-header__category">{category}</span>
-    </div>
-  </header>
+  <ReadingHeader category={category} />
 
   <main class="reading-column">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/" class="breadcrumb__link">Home</a>
+      <span class="breadcrumb__sep" aria-hidden="true">/</span>
+      <a href={backHref} class="breadcrumb__link">{backLabel}</a>
+      <span class="breadcrumb__sep" aria-hidden="true">/</span>
+      <span class="breadcrumb__current" aria-current="page">{title}</span>
+    </nav>
+
     <div class="article-meta">
       <h1 class="article-meta__title">{title}</h1>
       <div class="article-meta__row">
@@ -53,66 +73,73 @@ const updatedLabel = showUpdated ? updatedDate.toLocaleDateString('en-US', dateF
     <slot />
 
     <footer class="article-footer">
-      <a href={backHref} class="article-footer__back">&larr; {backLabel}</a>
+      {
+        (prev || next) && (
+          <nav class="article-nav" aria-label="More articles">
+            {prev ? (
+              <a href={prev.href} class="article-nav__link article-nav__link--prev">
+                <span class="article-nav__dir">&larr; Previous</span>
+                <span class="article-nav__title">{prev.title}</span>
+              </a>
+            ) : (
+              <span class="article-nav__spacer" />
+            )}
+            {next ? (
+              <a href={next.href} class="article-nav__link article-nav__link--next">
+                <span class="article-nav__dir">Next &rarr;</span>
+                <span class="article-nav__title">{next.title}</span>
+              </a>
+            ) : (
+              <span class="article-nav__spacer" />
+            )}
+          </nav>
+        )
+      }
+      <a href={backHref} class="article-footer__back">&larr; All {backLabel}</a>
     </footer>
   </main>
 </BaseLayout>
 
 <style>
-  .article-header {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: var(--bar-bg);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 1px 0 var(--line);
-  }
-
-  .article-header__bar {
-    max-width: 42rem;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-    padding: 0 clamp(20px, 5vw, 32px);
-  }
-
-  .article-header__brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--mono);
-  }
-
-  .article-header__mark {
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--ink);
-  }
-
-  .article-header__plus {
-    color: var(--accent);
-  }
-
-  .article-header__name {
-    font-size: 13px;
-    color: var(--ink-2);
-  }
-
-  .article-header__category {
-    font: 11px var(--mono);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-
   .reading-column {
-    max-width: 42rem;
+    max-width: var(--reading-maxw);
     margin: 0 auto;
     padding: clamp(32px, 6vw, 64px) clamp(20px, 5vw, 32px) clamp(48px, 8vw, 96px);
     background: var(--bg);
+  }
+
+  .breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: clamp(20px, 3vw, 28px);
+    font: 11px var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .breadcrumb__link {
+    color: var(--faint);
+    transition: color 0.2s;
+  }
+
+  .breadcrumb__link:hover {
+    color: var(--accent);
+  }
+
+  .breadcrumb__sep {
+    color: var(--faint);
+    opacity: 0.6;
+  }
+
+  .breadcrumb__current {
+    color: var(--ink-2);
+    /* Long titles truncate rather than wrap the crumb onto many lines. */
+    max-width: min(100%, 32ch);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .article-meta {
@@ -141,11 +168,65 @@ const updatedLabel = showUpdated ? updatedDate.toLocaleDateString('en-US', dateF
 
   .article-footer {
     margin-top: clamp(40px, 6vw, 64px);
-    padding-top: 20px;
+    padding-top: clamp(24px, 3vw, 32px);
     border-top: 1px solid var(--line);
   }
 
+  .article-nav {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .article-nav__link {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    transition:
+      border-color 0.2s,
+      background-color 0.2s;
+  }
+
+  .article-nav__link:hover {
+    border-color: var(--accent);
+    background: var(--panel);
+  }
+
+  .article-nav__link--next {
+    text-align: right;
+  }
+
+  .article-nav__dir {
+    font: 11px var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .article-nav__title {
+    font: 500 14px var(--mono);
+    line-height: 1.3;
+    color: var(--ink);
+    /* Keep neighbour cards a single row tall regardless of title length. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .article-nav__link:hover .article-nav__title {
+    color: var(--accent);
+  }
+
+  .article-nav__spacer {
+    flex: 1 1 0;
+  }
+
   .article-footer__back {
+    display: inline-block;
     font: 12px var(--mono);
     letter-spacing: 0.06em;
     color: var(--accent);
@@ -153,5 +234,15 @@ const updatedLabel = showUpdated ? updatedDate.toLocaleDateString('en-US', dateF
 
   .article-footer__back:hover {
     text-decoration: underline;
+  }
+
+  @media (max-width: 560px) {
+    .article-nav {
+      flex-direction: column;
+    }
+
+    .article-nav__link--next {
+      text-align: left;
+    }
   }
 </style>
