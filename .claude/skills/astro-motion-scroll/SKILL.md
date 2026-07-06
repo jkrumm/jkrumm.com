@@ -1,6 +1,6 @@
 ---
 name: astro-motion-scroll
-description: Build and debug the jkrumm.com scroll experience — Motion (motion.dev) scroll-triggered reveals, CSS scroll-driven "narrative" sections (sticky + view-timeline), and native View Transitions via astro:transitions ClientRouter. Use for any work on section reveals, section pinning/scrubbing, the #jk-scroll stage, or route transitions in this repo.
+description: Build and debug the jkrumm.com scroll experience — Motion (motion.dev) scroll-triggered reveals, native sticky-scroll-reveal / scrollytelling pinned sections (position:sticky + Motion scroll(), no scroll-hijacking), and View Transitions via astro:transitions ClientRouter. Use for any work on section reveals, section pinning/scrubbing, scroll-linked animation, the #jk-scroll stage, or route transitions in this repo.
 ---
 
 # astro-motion-scroll
@@ -126,17 +126,57 @@ it locks scroll, fights overflow, reads as hostile on trackpads. Proximity snap
 is a half-measure. The house default is natural-height bento + scroll-driven
 reveals. Snap is off the table permanently.
 
-## 6. Pinned / scroll-scrubbed "narrative" sections — REMOVED (kept for reference)
+## 6. Pinned / scroll-scrubbed sections — sticky-scroll-reveal (reference pattern)
 
-A CSS `view-timeline` narrative POC (sticky `200svh` wrapper,
-`animation-timeline: view()`, `@supports` + reduced-motion static fallback)
-shipped on Experience in July 2026, then was **removed** — sticky + view-timeline
-didn't animate reliably in natural flow and the tall wrapper created a jarring
-gap. The `narrative` prop was deleted from `SectionShell` in the continuous-bento
-redesign. The mechanism and its findings are preserved in
-`references/scroll-narrative.md` (historical) if a future section needs a
-pinned/scrubbed stage — rebuild it as a **self-contained wrapper**, not a
-SectionShell prop, and do NOT reach for a scroll-hijack library instead.
+> **No longer ships on Experience** (retired 2026-07-06 — see LEARNINGS). The
+> Experience section is now a **click-driven timeline accordion** (native
+> `<details>`/`<summary>` + a Motion height tween, exclusive open), NOT a
+> scroll-scrubbed beam. The sticky-scroll-reveal knowledge below is kept as the
+> reference for any *future* pinned/scrub section; it is not currently in use.
+
+The one principle that governs every pinned/scrub effect:
+
+> **Every pixel of scroll distance must be real content or a viewport-filling
+> visual. Never scroll past nothing.** The "static empty panel" (a sub-viewport
+> card pinned in a tall *empty spacer* runway) is the universal anti-pattern —
+> it cost three failed Experience iterations before the fix.
+
+**The pattern (retired from Experience — reference only):** the native
+**sticky-scroll-reveal / scrollytelling**
+pattern (The Pudding / scrollama / Aceternity). A 2-col grid: the role **chapters**
+(`.role-detail`, compact self-contained cards ≈ content height) are stacked real
+content that *provides the scroll distance*; beside them a **slim side-beam rail**
+(a thin filling spine + one dot per role — NOT a wide text column) is
+`position:sticky` and pins under the name-bar while the chapters scroll past. One
+`scroll(cb,{container:#jk-scroll})` subscription maps the pinned travel 0→1 to the
+beam `scaleY` + active-dot highlight. Both sides always show content → no dead
+panel. Files: `Experience.astro`, the "Experience: sticky-scroll-reveal" block in
+`portfolio.ts`, `experience.ts`.
+
+**Why slim, not a wide rail:** with only 3 sparse roles a full-width sticky rail
+reads *empty* (3 labels spread over a viewport-tall column) — the same airiness as
+tall chapters. A slim beam (~64px, spine + dots) reads as an intentional progress
+rail at any density, and the role identity lives in the (filled) cards. Verified
+by screenshotting the real render at mid-scrub, not by reasoning — the wide-rail
+version looked broken until seen.
+
+**Geometry (the sticky-pin identity):** pinned travel `track =
+wrapper.offsetHeight − sticky.offsetHeight` (NOT − viewport). Here the wrapper is
+REAL (the chapters), not a synthetic surplus. `pinStart = sectionTop − pinTop`;
+`p = clamp((scrollTop − pinStart)/track)`. Read `--bar-top` (a simple px token) to
+rebuild `pinTop` — never parse the `--pin-top` calc() custom (returns an
+unresolved string). The sticky child MUST be `align-self:start` in the grid (a
+stretched item can't stick). Knob: `--chapter-min` (per-chapter height = the
+"hold" per role). Fallback <900px/reduced-motion/no-JS: rail hidden, chapters
+stack as self-contained cards.
+
+**Do NOT reach for a scroll-hijack library** (GSAP `pin:true` pin-spacer, Lenis /
+Locomotive virtual scroll, fullPage.js) — native `position:sticky` gives pinning
+for free and keeps the scrollbar/keyboard/find-in-page/reduced-motion intact.
+Full pattern catalog, the hijack-library breakdown, the Motion `scroll()` API
+cheatsheet, and the 2026 CSS scroll-driven-animation state:
+**`references/scroll-interaction-patterns.md`** (the house scroll bible).
+`references/scroll-narrative.md` is the superseded `view-timeline` POC (historical).
 
 ## 7. React-island variant (not used here — flagged for the future)
 
@@ -167,7 +207,12 @@ into/out of the island (unreliable — see view-transitions caveats).
   scroll-driven reveals.** No snap anywhere.
 - **No scroll-hijack libraries.** GSAP / Lenis / fullPage.js / Locomotive are
   not dependencies and won't be — they fight native scroll and add weight for
-  an effect the site gets from Motion reveals alone.
+  an effect the site gets from native `position:sticky` + Motion `scroll()`
+  alone. GSAP `pin:true` injects a `pin-spacer` + `position:fixed`; Lenis /
+  Locomotive replace native scroll with a lerp'd `requestAnimationFrame`
+  transform (breaking scrollbar/keyboard/find-in-page/momentum). The pinned
+  "page pauses" effect is native sticky-scroll-reveal (§6). Full teeth-y
+  breakdown in `references/scroll-interaction-patterns.md`.
 - **After a big multi-file edit, verify against `bun run build` / a restarted dev
   server — not the hot-reloaded page.** Vite HMR can silently drop scoped-`<style>`
   updates: stale `.section`/`.section-header` CSS looked like a real layout bug
@@ -197,8 +242,12 @@ step of the task, not a background process.
 
 ## Reference files
 
+- `references/scroll-interaction-patterns.md` — **the house scroll bible**: the
+  no-empty-runway principle, native-vs-hijack (library breakdown), the pattern
+  catalog, the Motion `scroll()` cheatsheet, CSS scroll-driven state (2026),
+  a11y. Read before any pinned/scrub work.
 - `references/reveal-lifecycle.ts` — init/teardown + once-only `inView` pattern.
 - `references/scroll-snap.css` — historical: snap stage (pre-July-2026 revert).
 - `references/view-transitions.md` — `ClientRouter` setup, directives, caveats.
-- `references/scroll-narrative.md` — pinned/scrubbed section pattern.
+- `references/scroll-narrative.md` — superseded `view-timeline` POC (historical).
 - `LEARNINGS.md` — running log; read before starting, append after finishing.

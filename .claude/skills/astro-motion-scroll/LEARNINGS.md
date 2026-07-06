@@ -1064,3 +1064,212 @@ Entry format:
   a `clamp()` min-height for presence, spread the rail so its highlight travels with
   the beam. Two knobs now: `PER_ROLE_VH` (scrub length) + `.role-sticky` `min-height`
   clamp (card presence).
+
+## 2026-07-05 — Experience: the REAL fix — sticky-scroll-reveal, not an empty runway
+
+- **Context:** After three iterations (pin+runway → content-height → center the
+  card) the owner STILL rejected it: "still too big of a height … only the content
+  is centered but still not good." I'd been treating the empty space as a tuning
+  problem and had written a handover prompt. The owner pushed back hard: *"research
+  that! This has been solved already!!"* — then, further: *"become an expert … form
+  a new skill or advance ours."* Correct instinct — I was reasoning from a wrong
+  mechanism.
+- **Research (4 parallel `/research` jobs, cited):** scroll-hijacking landscape,
+  native CSS scroll-driven animations (2026), the Motion `scroll()` API, and a
+  production pattern catalog. The unifying verdict — **the static empty panel is
+  the universal anti-pattern**: providing scroll distance without scroll content.
+  Every prior Experience version was the anti-pattern — `.role-split` was an *empty
+  spacer runway* with a sub-viewport card pinned in it, so the opaque `--panel`
+  wrapper filled the viewport around the card. You cannot fix that by centering or
+  resizing; you fix it by making the runway be REAL content.
+- **The fix — native sticky-scroll-reveal / scrollytelling** (The Pudding /
+  scrollama / Aceternity; all `position:sticky`, zero hijack):
+  - **Right = role CHAPTERS** (`.role-detail`, `min-height: max(340px,
+    var(--chapter-min:58svh))`) — real stacked content that IS the scroll runway.
+    Each wraps `.reveal` (reuses the global `inView` system — no new JS).
+  - **Left = full-stage-height timeline rail** (`position:sticky; top:--pin-top;
+    align-self:start; height: calc(100svh − pins)`) with beam spine + 3 nav rows
+    spread `space-between`. Full height ⇒ **no left-side void** (the earlier
+    small-card problem). `aria-hidden` (decorative; chapters are the real content).
+  - Both sides always show content → the empty panel is gone by construction.
+- **Geometry got SIMPLER, not harder.** No more JS-set wrapper height, no centered
+  `top`. `track = roleSplit.offsetHeight − roleRail.offsetHeight` (wrapper − sticky,
+  both real content heights); `pinStart = sectionTop − pinTop`; `p = clamp(...)`;
+  beam `scaleY(p)`; active index `floor(p·N)`. My VERY FIRST fix's identity (`track
+  = wrapper − sticky`) was right all along — the bug was only that the wrapper was
+  empty. Now it's the chapters.
+- **Gotchas confirmed:**
+  - **`align-self:start` is REQUIRED** on the sticky grid item — a stretched item
+    (default `stretch`) fills the row and can't stick.
+  - Still read `--bar-top` (simple px) not `--pin-top` (calc custom → unresolved
+    string). Carried over correctly.
+  - Mobile branch resets the JS-owned beam transform + `is-active` classes (rail is
+    `display:none` there anyway); chapters stack as self-contained role cards —
+    this ALSO fixes the old "mobile rail headers detached from details" issue,
+    because each chapter now carries its own period·title·company header.
+  - Details no longer crossfade (they scroll); the global `.reveal` fades each
+    chapter in as it enters. One fewer bespoke animation.
+- **Skill advanced (the owner's explicit ask):** wrote
+  `references/scroll-interaction-patterns.md` (the house scroll bible: the
+  no-empty-runway principle, native-vs-hijack library breakdown — GSAP pin-spacer,
+  Lenis/Locomotive virtual scroll, fullPage; the pattern catalog; the Motion
+  `scroll()` cheatsheet; CSS scroll-driven state 2026; a11y). Rewrote SKILL.md §6
+  from "REMOVED" to the shipped sticky-scroll-reveal pattern; updated the
+  description, the no-hijack gotcha, and the reference list.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0, 34 files, 4
+  pages); `dist/` confirms the new markup (`role-chapters`, 3 `data-role-detail`, 3
+  `data-role-detail__inner reveal`, `role-nav`, `role-beam__fill`), CSS
+  (`position:sticky`, `--chapter-min:58svh`, `grid-template-columns:clamp(220px,28%,
+  320px) minmax(0,1fr)`), and JS (`.offsetHeight-w.offsetHeight`, `scaleY(`,
+  `.role-rail`). Owner validates feel at `https://jkrumm.test`. **Pattern to keep
+  (the big one):** for ANY pinned/scrub section, the scroll distance must be REAL
+  content (a column of generous chapter-blocks) or a viewport-filling visual —
+  never an empty spacer with a small pinned card. Native `position:sticky` +
+  `align-self:start` + one Motion `scroll()` subscription; the chapters are the
+  runway; the sticky side fills the stage. `--chapter-min` is the single hold knob.
+
+## 2026-07-06 — Experience: SEE it, don't reason it — slim beam + compact cards
+
+- **Context:** The scrollytelling rebuild (prev entry) was structurally correct but
+  the owner: "those roles are still wayy too high, it looks horrible." Two real
+  faults I'd reasoned past instead of looking at: (1) chapters at `58svh` with
+  `place-items:center` → each role's ~280px of content floated in a ~460px void;
+  (2) a full-WIDTH sticky rail with 3 sparse labels spread `space-between` over a
+  viewport-tall column → the left half read empty too. Correct structure, wrong
+  proportions.
+- **Turning point — actually rendered it.** Loaded `https://jkrumm.test` in the
+  chrome-devtools MCP browser, scrolled `#jk-scroll` to a *verified* mid-scrub
+  position (read back `beamFill.style.transform` + `.is-active` to confirm p≈0.5),
+  and screenshotted. The airiness was obvious in one frame — after ~4 rounds of
+  reasoning about it blind. **Lesson: for a visual complaint, drive the real page
+  and screenshot before theorizing. Verify the scroll state by reading the live
+  values, not by trusting a computed `scrollTop` (programmatic sets drift/clamp
+  while reveals settle and the page lays out — wait ~1.2s post-navigate first).**
+- **Fixes:**
+  - **Compact cards:** `--chapter-min` 58svh → 34svh; `min-height: max(300px,
+    var(--chapter-min))`; content `place-items:center start` (left-aligned in the
+    now-wide column, `max-width:620px`). Cards hug their content (~320px), filled.
+  - **Slim side-beam, not a wide rail:** the owner literally said "the beam on the
+    side." Rebuilt the rail as a ~64px column (`clamp(56px,7%,88px)`) = a thin
+    centered spine + one dot per role (`.role-dot`), sticky. A slim beam reads as
+    an intentional progress rail at any density; the role identity lives in the
+    (filled) cards. Killed the airiness completely.
+  - **Tall-viewport guard:** a full-stage beam needs `3·chapter-min > stage(≈92svh)`
+    or `track ≤ 0` and the scrub dies (hit this at a 2029px automation height).
+    34svh (×3 = 102svh) clears it; on normal laptops the content/300px floor wins
+    so cards stay ~320px regardless.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0). Rendered
+  mid-scrub + at entry: slim blue beam fills to the active dot, compact filled role
+  cards scroll past, pinned under the name-bar — matches the owner's "beam on the
+  side, scroll through the roles" and is no longer tall/empty. Owner feel-tests on
+  the dev server. **Patterns to keep:** (1) screenshot the real render for any
+  "looks wrong" report — reasoning about proportions blind cost 4 rounds; (2) for
+  SPARSE content, a pinned scrub wants a SLIM progress beam + compact
+  self-contained cards, not a wide rail or tall chapters (both read empty); (3) a
+  full-stage sticky element requires the content column to exceed it at every
+  viewport height, or guard `track > 0` (already do) and size the knob to clear it.
+
+## 2026-07-06 — Experience: beam → click-driven timeline accordion (`<details>`)
+
+- **Context:** Owner scrapped the sticky-scroll-reveal beam ("F that scrolling
+  beam") for a **timeline accordion**: current role expanded by default, the rest
+  expand on click, EXCLUSIVE (one open at a time — confirmed via AskUserQuestion),
+  with a well-placed expand affordance. Full rewrite of `Experience.astro` +
+  swapped the "Experience: sticky-scroll-reveal" block in `portfolio.ts`. The
+  scroll-scrub mechanic is GONE — the section is now purely click-driven.
+- **Worked:**
+  - **Native `<details>`/`<summary>` is the right primitive.** Keyboard
+    (Enter/Space on the focused summary), the expanded/collapsed a11y state, and
+    the entire no-JS path come FREE from the element — no hand-rolled
+    button+aria-expanded+region. First role is `<details open>` (SSR, flash-free).
+  - **JS upgrades the instant native toggle to a smooth height tween + enforces
+    exclusivity.** Intercept `click` on the summary with `preventDefault()` (this
+    ALSO covers keyboard activation — Enter/Space dispatch a click), then own the
+    open/close: `entry.open=true` → measure `body.scrollHeight` → clamp
+    `height:'0px'` same tick → `animate(body,{height:[0,target]},{dur,ease})`;
+    close is the mirror (`[from→0]`, then drop `open`). A `current` ref +
+    `busy` lock (the ~0.42s window) keep a double-click from desyncing state.
+  - **Height is the ONE scoped exception to transform/opacity-only.** An accordion
+    IS a height change — no compositor path exists (same finding as the
+    footer-pill `width`, 2026-07-05). Reused ONLY the repo-proven
+    `animate(el,{prop:[from,to]},{duration,ease})` signature — no `.finished`,
+    `onComplete`, `type:'spring'`, or `height:'auto'` keyframe (all
+    version-sensitive per prior entries). Settle-to-`auto` and drop-`open` run on
+    a tracked `setTimeout(dur+30ms)`, cleared on teardown.
+  - **No-flash open:** measure `scrollHeight` BEFORE clamping to `0px`, both in the
+    same tick as `entry.open=true`, so the body never paints at full height for a
+    frame. **No-flash close:** keep `open=true` through the collapse tween, only
+    set `open=false` after (else the content vanishes natively mid-animation).
+  - **NO `name` attribute on the `<details>`.** The native exclusive-accordion
+    `name` group fires on the PROGRAMMATIC `open` too, which would snap the
+    outgoing panel shut instantly and kill my close tween. So exclusivity is
+    JS-owned; the no-JS fallback degrades to INDEPENDENT disclosure (acceptable —
+    every role still fully readable/toggleable). Verified: can't have both native
+    `name` exclusivity and a custom collapse animation.
+  - **Timeline visual = one opaque `--panel` cell with a continuous spine**
+    (mirrors Writing's `.recent`, NOT per-role bento cells). Entries separated by
+    internal `--hairline` rows; the spine is `.tl-item::before` (full item height
+    in the node gutter, so stacked items form ONE line), trimmed at the ends via
+    `:first-child{top:--node-y}` / `:last-child{bottom:calc(100% - --node-y)}` so
+    it never overshoots past the first/last node. Node + spine both key off the
+    same `--node-x/--node-y/--node-r` custom props on `.tl-item`, so they can't
+    drift regardless of head padding. Current node = accent + `--accent-glow` ring.
+    (A per-role bento-cell layout would have broken the spine at every 1px gap.)
+  - **Expand affordance:** a circular chevron button right-aligned in the head
+    (`margin-left:auto`), rotating 180° on `[open]` via CSS transition. The whole
+    head is the click target; the chevron is the signpost. `list-style:none` +
+    `::-webkit-details-marker{display:none}` kills the native triangle.
+  - **Reveal stays legal:** `.reveal` on the inner `<ol>` (content INSIDE the
+    opaque cell), so the block fades in once on scroll over `--panel` — never the
+    cell/band. Accordion bodies are NOT reveal-wrapped (they open on click, not
+    scroll).
+- **Reduced motion:** JS still runs but `animated=false` → instant open/close
+  (still exclusive, no `busy` lock); the chevron rotates with no transition
+  (`@media (prefers-reduced-motion: reduce)` drops `transform` from its
+  transition list).
+- **Didn't / N/A:** No scroll(), no IntersectionObserver, no sticky, no geometry
+  math — the whole beam apparatus (pinStart/track/`scaleY`/`--chapter-min`/the
+  `@media (min-width:900px)` desktop split) was DELETED. The section works
+  identically at every width now (the old sticky rail was desktop-only).
+- **Gotcha:** sideclaw `check` MCP still down (`SyntaxError: Failed to parse
+  JSON` at the transport, same as the 2026-07-05 entries) — fell back to
+  `bun run build`.
+- **Verdict / decision:** **Ships.** `bun run build` green (0/0/0, 34 files, 4
+  pages); `dist/` confirms 3 `<details class="tl-entry">` (first `open`), all
+  `data-tl-*` hooks + `tl-node`/`tl-toggle`, the accordion driver in the bundle,
+  and ZERO `role-beam`/`data-role-row`/`scaleY` (old beam gone). Visual/feel
+  validation at `https://jkrumm.test` deferred to the owner (open/close tween
+  feel, exclusive handoff when switching roles, chevron rotation, hover affordance,
+  reduced-motion instant path, no-JS independent toggle, keyboard). **Patterns to
+  keep:** for a disclosure/accordion, START from native `<details>`/`<summary>`
+  (free keyboard + a11y state + no-JS) and layer a Motion HEIGHT tween on top by
+  intercepting the summary `click` with `preventDefault` (covers keyboard) and
+  owning `entry.open`; height is the sanctioned exception (like the pill width);
+  never add a `name` attr if you animate the collapse (native exclusivity snaps
+  the outgoing panel); build a continuous timeline spine in ONE opaque cell with
+   end-trimmed `::before` connectors keyed off shared node custom props, never
+  per-item bento cells (the 1px gaps break the line). **Supersedes the
+  sticky-scroll-reveal beam as what ships on Experience** (SKILL.md §6 / the
+  scroll-interaction-patterns bible describe the retired beam — the pattern
+  knowledge stays as reference, but it no longer ships here).
+- **Follow-up (same day) — optical-centering a rotating chevron.** A down-chevron
+  reads optically low; nudging it toward its point must survive the 180° open
+  rotation. Put the `transform: translateY(1px)` on the **SVG child**, NOT the
+  rotating `.tl-toggle` container: the parent's `rotate(180deg)` then flips the
+  child's local +y into screen −y, so the down-chevron sits lower and the
+  (rotated) up-chevron sits higher — one declaration, both states correct. A nudge
+  on the container itself would move BOTH states the same screen direction.
+- **Follow-up — intra-company progression (nested ladder).** Need: show a
+  promotion path within one company (Full-Stack → Senior → Tech Lead) on the
+  timeline. Chosen (AskUserQuestion): a **nested ladder** — one timeline node =
+  the company; the head shows the company as the headline with the current title
+  as a dim `now`-badged subtitle; the expanded body OPENS with a mini promotion
+  timeline (node + connector per rung, newest first, current rung accent) above
+  the shared tenure scope/highlights/stack. Model: optional `Role.positions?:
+  {title,period}[]` — present → ladder/company-headline branch, absent →
+  unchanged single-title entry (title headline, `· company` inline). Zero JS
+  change: the ladder lives inside `[data-tl-body]`, so the accordion's
+  `scrollHeight` measure includes it automatically. Kept the head structurally
+  identical (period → titles block → chevron); only the titles block branches on
+  `data-multi`. Data content is placeholder (flagged in `experience.ts`) — the
+  owner sets real companies/titles/dates; the layout is fixed.
