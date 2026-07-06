@@ -472,9 +472,9 @@ function init(): void {
       heroCollapse.style.transform = `translateY(${-22 * heroP}px)`;
     }
     // Compact bar reveals as a whole once the hero starts scrolling past
-    // (30%→60% — early and quick). Opacity fade for everyone; slide motion-gated.
+    // (20%→50% — early and quick). Opacity fade for everyone; slide motion-gated.
     if (bar) {
-      const barP = Math.min(Math.max((p - 0.3) / 0.3, 0), 1);
+      const barP = Math.min(Math.max((p - 0.2) / 0.3, 0), 1);
       bar.style.opacity = `${barP}`;
       bar.style.transform = rm ? 'none' : `translateY(${-10 * (1 - barP)}px)`;
       bar.style.pointerEvents = barP > 0.02 ? 'auto' : 'none';
