@@ -1,5 +1,7 @@
 import { defineConfig, fontProviders } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import expressiveCode from 'astro-expressive-code';
+import mdx from '@astrojs/mdx';
 
 // https://astro.build/config
 export default defineConfig({
@@ -23,7 +25,28 @@ export default defineConfig({
     },
   },
 
-  integrations: [sitemap()],
+  integrations: [
+    // Must run before mdx() so MDX code blocks are also processed.
+    expressiveCode({
+      themes: ['github-light'],
+      styleOverrides: {
+        borderRadius: '0',
+        borderColor: 'var(--line)',
+        codeBackground: 'var(--bg)',
+        codeFontFamily: 'var(--mono)',
+        codeFontSize: '13px',
+        uiFontFamily: 'var(--mono)',
+        frames: {
+          editorTabBarBackground: 'var(--panel)',
+          editorActiveTabBackground: 'var(--panel)',
+          editorBackground: 'var(--bg)',
+          terminalBackground: 'var(--bg)',
+        },
+      },
+    }),
+    mdx(),
+    sitemap(),
+  ],
 
   // Native Astro font pipeline — self-hosted, subset and preloaded at build
   // time (no @fontsource packages, no CLS). Exposed as CSS variables consumed

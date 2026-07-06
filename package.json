@@ -13,8 +13,11 @@
     "astro": "bun --bun node_modules/.bin/astro"
   },
   "dependencies": {
+    "@astrojs/markdown-satteri": "0.3.3",
+    "@astrojs/mdx": "7.0.2",
     "@astrojs/sitemap": "3.7.3",
     "astro": "7.0.3",
+    "astro-expressive-code": "0.44.0",
     "motion": "12.42.2"
   },
   "devDependencies": {

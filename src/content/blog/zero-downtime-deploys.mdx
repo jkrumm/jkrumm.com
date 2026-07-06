@@ -1,0 +1,62 @@
+---
+title: 'Zero-downtime deploys with rolling Docker Compose'
+description: 'How Rollhook rolls containers one by one behind a proxy — health checks, draining, and webhook-driven releases with no dropped requests.'
+status: 'published'
+publishedDate: 2026-02-10
+tags: ['infrastructure', 'docker', 'deploys']
+---
+
+A single-VPS deploy usually means one of two things: a few seconds of
+downtime while the container restarts, or a hand-rolled blue/green setup that
+is more infrastructure than the app it's protecting. Neither felt right for a
+personal stack, so I built Rollhook — a small webhook-triggered service that
+rolls a Docker Compose stack one replica at a time.
+
+## The problem with `docker compose up -d`
+
+Restarting a service in place drops every in-flight request the moment the
+container exits, and the replacement isn't ready to receive traffic until its
+health check passes. For a one-container service, that gap is unavoidable
+unless you run more than one replica and roll them individually.
+
+> The goal isn't zero restarts — it's zero requests hitting a container that
+> isn't ready yet.
+
+### How the rollout works
+
+- A webhook (triggered from CI) hits Rollhook with the service name and new image tag
+- Rollhook scales up one new replica alongside the old ones
+- It polls the container's health check endpoint until it reports healthy
+- Traffic only shifts to the new replica once the check passes[^1]
+- The old replica drains its remaining connections, then stops
+
+```ts
+// simplified rollout loop
+async function rollService(service: string, replicas: string[]): Promise<void> {
+  for (const replica of replicas) {
+    await startReplica(replica);
+    await waitUntilHealthy(replica);
+    await drainAndStop(previousReplica(replica));
+  }
+}
+```
+
+The proxy in front (Traefik) only ever sees healthy backends in its pool, so
+from the outside the deploy is invisible — no dropped connections, no
+maintenance page.
+
+| Stage | Old replica | New replica |
+| --- | --- | --- |
+| Start | serving | starting |
+| Health check passes | serving | serving |
+| Drain | draining | serving |
+| Done | stopped | serving |
+
+Rollhook itself is intentionally small: a webhook receiver, a health-check
+poller, and a Compose wrapper. No orchestrator, no cluster — just enough
+automation to make deploys boring, which for a personal-infra project is
+exactly the point.
+
+[^1]: The health check is the same `HEALTHCHECK` directive already defined in
+    the service's `Dockerfile` — Rollhook doesn't invent a second contract for
+    readiness.

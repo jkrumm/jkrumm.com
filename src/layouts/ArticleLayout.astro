@@ -1,0 +1,157 @@
+---
+/**
+ * Reading surface for the guide + blog collections — a normal-scroll article
+ * page, NOT the bento `#jk-scroll` stage. Wraps `BaseLayout` for head/SEO/fonts
+ * and adds a slim sticky reading header, a centered prose column, an article
+ * header block (title + mono meta row) and a minimal back-link footer.
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Uppercase mono section label shown top-right, e.g. "GUIDE" or "BLOG". */
+  category: string;
+  publishedDate: Date;
+  updatedDate: Date;
+  readingTime: number;
+  backHref: string;
+  backLabel: string;
+}
+
+const { title, description, category, publishedDate, updatedDate, readingTime, backHref, backLabel } =
+  Astro.props;
+
+const dateFormat: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+const publishedLabel = publishedDate.toLocaleDateString('en-US', dateFormat);
+const showUpdated = updatedDate.getTime() !== publishedDate.getTime();
+const updatedLabel = showUpdated ? updatedDate.toLocaleDateString('en-US', dateFormat) : null;
+---
+
+<BaseLayout title={`${title} — Johannes Krumm`} description={description} ogType="article">
+  <header class="article-header">
+    <div class="article-header__bar">
+      <a href="/" class="article-header__brand">
+        <span class="article-header__mark">JK<span class="article-header__plus">+</span></span>
+        <span class="article-header__name">Johannes Krumm</span>
+      </a>
+      <span class="article-header__category">{category}</span>
+    </div>
+  </header>
+
+  <main class="reading-column">
+    <div class="article-meta">
+      <h1 class="article-meta__title">{title}</h1>
+      <div class="article-meta__row">
+        <span>{category}</span>
+        <span>{publishedLabel}</span>
+        <span>{readingTime} MIN READ</span>
+        {showUpdated && <span>Updated {updatedLabel}</span>}
+      </div>
+    </div>
+
+    <slot />
+
+    <footer class="article-footer">
+      <a href={backHref} class="article-footer__back">&larr; {backLabel}</a>
+    </footer>
+  </main>
+</BaseLayout>
+
+<style>
+  .article-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bar-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 1px 0 var(--line);
+  }
+
+  .article-header__bar {
+    max-width: 42rem;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    padding: 0 clamp(20px, 5vw, 32px);
+  }
+
+  .article-header__brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+  }
+
+  .article-header__mark {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  .article-header__plus {
+    color: var(--accent);
+  }
+
+  .article-header__name {
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+
+  .article-header__category {
+    font: 11px var(--mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .reading-column {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: clamp(32px, 6vw, 64px) clamp(20px, 5vw, 32px) clamp(48px, 8vw, 96px);
+    background: var(--bg);
+  }
+
+  .article-meta {
+    margin-bottom: clamp(28px, 4vw, 40px);
+    padding-bottom: clamp(20px, 3vw, 28px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .article-meta__title {
+    margin: 0 0 16px;
+    font: 700 clamp(28px, 4vw, 40px) var(--mono);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--ink);
+  }
+
+  .article-meta__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font: 11px var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .article-footer {
+    margin-top: clamp(40px, 6vw, 64px);
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+
+  .article-footer__back {
+    font: 12px var(--mono);
+    letter-spacing: 0.06em;
+    color: var(--accent);
+  }
+
+  .article-footer__back:hover {
+    text-decoration: underline;
+  }
+</style>

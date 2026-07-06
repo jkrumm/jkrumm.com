@@ -1,0 +1,131 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import { getReadingTime } from '@/utils/content';
+
+const isPublished = ({ data }: CollectionEntry<'guide'>) =>
+  import.meta.env.PROD ? data.status === 'published' : true;
+
+const entries = (await getCollection('guide', isPublished)).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+
+const entriesWithReadingTime = entries.map((entry) => ({
+  entry,
+  readingTime: getReadingTime(entry.body ?? ''),
+}));
+---
+
+<BaseLayout
+  title="Guide — Johannes Krumm"
+  description="A structured handbook of my personal stack — tools, workflows and setup notes."
+  ogType="website"
+>
+  <main class="guide-index">
+    <p class="guide-index__eyebrow">GUIDE</p>
+    <h1 class="guide-index__title">The Handbook</h1>
+    <p class="guide-index__intro">
+      A structured, ordered walkthrough of the tools and workflows behind how I build and ship.
+    </p>
+
+    <ol class="guide-index__list">
+      {
+        entriesWithReadingTime.map(({ entry, readingTime }, index) => (
+          <li class="guide-index__row">
+            <a href={`/guide/${entry.id}`} class="guide-index__link">
+              <span class="guide-index__number">{String(index + 1).padStart(2, '0')}</span>
+              <span class="guide-index__body">
+                <span class="guide-index__row-title">{entry.data.title}</span>
+                <span class="guide-index__row-description">{entry.data.description}</span>
+              </span>
+              <span class="guide-index__reading-time">{readingTime} MIN</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </main>
+</BaseLayout>
+
+<style>
+  .guide-index {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: clamp(48px, 8vw, 96px) clamp(20px, 5vw, 32px);
+    background: var(--bg);
+  }
+
+  .guide-index__eyebrow {
+    margin: 0 0 12px;
+    font: 11px var(--mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .guide-index__title {
+    margin: 0 0 16px;
+    font: 700 clamp(28px, 4vw, 40px) var(--mono);
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .guide-index__intro {
+    margin: 0 0 40px;
+    max-width: 36rem;
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .guide-index__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .guide-index__link {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .guide-index__link:hover .guide-index__row-title {
+    color: var(--accent);
+  }
+
+  .guide-index__number {
+    font: 12px var(--mono);
+    color: var(--faint);
+  }
+
+  .guide-index__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .guide-index__row-title {
+    font: 500 16px var(--mono);
+    color: var(--ink);
+    transition: color 0.2s;
+  }
+
+  .guide-index__row-description {
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .guide-index__reading-time {
+    font: 11px var(--mono);
+    letter-spacing: 0.06em;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+</style>

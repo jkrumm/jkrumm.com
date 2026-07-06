@@ -1,0 +1,42 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import ArticleLayout from '@/layouts/ArticleLayout.astro';
+import { getGitLastModified, getReadingTime } from '@/utils/content';
+
+export async function getStaticPaths() {
+  const isPublished = ({ data }: CollectionEntry<'blog'>) =>
+    import.meta.env.PROD ? data.status === 'published' : true;
+
+  const entries = await getCollection('blog', isPublished);
+
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<'blog'>;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const updatedDate = entry.data.updatedDate ?? getGitLastModified(entry.filePath) ?? entry.data.publishedDate;
+const readingTime = getReadingTime(entry.body ?? '');
+---
+
+<ArticleLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  category="BLOG"
+  publishedDate={entry.data.publishedDate}
+  updatedDate={updatedDate}
+  readingTime={readingTime}
+  backHref="/blog"
+  backLabel="Writing"
+>
+  <div class="prose">
+    <Content />
+  </div>
+</ArticleLayout>

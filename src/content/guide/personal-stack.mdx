@@ -1,0 +1,72 @@
+---
+title: 'Personal Stack'
+description: 'A tour of the tools behind my AI-coding setup, homelab and VPS — and why each one earned its place.'
+order: 1
+status: 'published'
+publishedDate: 2026-01-15
+tags: ['stack', 'tooling']
+---
+
+Every tool in this stack had to earn its keep. I run a small homelab, a
+production VPS, and an increasingly agent-driven coding workflow — and I'd
+rather spend an evening removing a moving part than adding one that "might be
+useful later." This page is the current state of that stack, in three groups:
+AI coding, homelab, and VPS/infra.
+
+## AI coding
+
+The core idea is agents with strong guardrails, not agents left to wander.
+Every repository carries a `CLAUDE.md` that encodes conventions, validation
+commands, and scope limits, so an agent starting cold in any project already
+knows how that project wants to be touched.
+
+> The guardrail isn't there to slow the agent down — it's there so a fast
+> agent doesn't have to be a careless one.
+
+### Guardrails in practice
+
+- Global rules for TypeScript, commit conventions, and dependency hygiene apply everywhere
+- Per-project rules narrow scope with `paths:` frontmatter
+- Validation always runs through the repo's own scripts, never ad hoc commands
+- Research is required before touching an unfamiliar external API — no coding from memory[^1]
+
+## Homelab
+
+The homelab exists to make self-hosting boring — reproducible, monitored, and
+recoverable without me remembering what I did six months ago. A Proxmox
+cluster hosts the VMs, TrueNAS handles storage, and everything that runs a
+service does so through Docker Compose with the same shape of `Makefile`
+across repos:
+
+```ts
+// scripts/deploy.ts — the shape every repo's deploy target follows
+async function deploy(service: string): Promise<void> {
+  await healthCheck(service);
+  await rollOne(service);
+  await waitForReady(service);
+}
+```
+
+That consistency is the actual payoff: I can drop into any repo and already
+know how to bring it up, tear it down, or check its logs.
+
+## VPS / infra
+
+Production runs on a Hetzner VPS behind Traefik/Caddy, with Rollhook handling
+zero-downtime rolling deploys triggered by webhook. Observability runs through
+Grafana and Loki, which is enough for a one-person operation without pulling
+in a heavier stack.
+
+| Layer | Tool | Why |
+| --- | --- | --- |
+| Deploys | Rollhook | Rolling restarts, no dropped requests |
+| Routing | Traefik / Caddy | Automatic TLS, simple config |
+| Logs | Grafana / Loki | Cheap, self-hosted, good enough |
+
+The common thread across all three groups is the same: fewer moving parts,
+each one well understood, each one replaceable without replacing everything
+around it.
+
+[^1]: This is the `research-first` rule in practice — treat any library API
+    touched after the model's training cutoff as unverified until checked
+    against current docs.
