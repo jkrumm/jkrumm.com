@@ -2,9 +2,9 @@
 /**
  * Reading surface for the guide + blog collections — a normal-scroll article
  * page, NOT the bento `#jk-scroll` stage. Wraps `BaseLayout` for head/SEO/fonts
- * and adds a slim sticky reading header, a Home / {collection} / {title}
- * breadcrumb, a centered prose column, an article header block (title + mono
- * meta row) and a prev/next + back-link footer.
+ * and adds a CSS-only scroll-progress line, a slim sticky reading header, a
+ * Home / {collection} / {title} breadcrumb, an optional in-article contents
+ * list, the prose column, and a related + prev/next + back-link footer.
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ReadingHeader from '@/components/chrome/ReadingHeader.astro';
@@ -12,6 +12,12 @@ import ReadingHeader from '@/components/chrome/ReadingHeader.astro';
 interface ArticleLink {
   href: string;
   title: string;
+}
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
 }
 
 interface Props {
@@ -27,6 +33,10 @@ interface Props {
   /** Adjacent articles for foot navigation; null at the ends of the sequence. */
   prev?: ArticleLink | null;
   next?: ArticleLink | null;
+  /** Rendered headings from render(entry) — drives the contents list. */
+  headings?: Heading[];
+  /** Topically related articles (shared tags), shown at the foot. */
+  related?: ArticleLink[];
 }
 
 const {
@@ -40,15 +50,22 @@ const {
   backLabel,
   prev = null,
   next = null,
+  headings = [],
+  related = [],
 } = Astro.props;
 
 const dateFormat: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
 const publishedLabel = publishedDate.toLocaleDateString('en-US', dateFormat);
 const showUpdated = updatedDate.getTime() !== publishedDate.getTime();
 const updatedLabel = showUpdated ? updatedDate.toLocaleDateString('en-US', dateFormat) : null;
+
+// Contents list: section headings only (skip h1 + the sr-only footnotes label).
+const toc = headings.filter((h) => (h.depth === 2 || h.depth === 3) && h.slug !== 'footnote-label');
+const showToc = toc.length >= 2;
 ---
 
 <BaseLayout title={`${title} — Johannes Krumm`} description={description} ogType="article">
+  <div class="reading-progress" aria-hidden="true"></div>
   <ReadingHeader category={category} />
 
   <main class="reading-column">
@@ -70,9 +87,42 @@ const updatedLabel = showUpdated ? updatedDate.toLocaleDateString('en-US', dateF
       </div>
     </div>
 
+    {
+      showToc && (
+        <nav class="toc" aria-label="Table of contents">
+          <p class="toc__label">Contents</p>
+          <ol class="toc__list">
+            {toc.map((heading) => (
+              <li class:list={['toc__item', heading.depth === 3 && 'toc__item--sub']}>
+                <a href={`#${heading.slug}`} class="toc__link">
+                  {heading.text}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+
     <slot />
 
     <footer class="article-footer">
+      {
+        related.length > 0 && (
+          <nav class="related" aria-label="Related articles">
+            <p class="related__label">Related</p>
+            <ul class="related__list">
+              {related.map((item) => (
+                <li>
+                  <a href={item.href} class="related__link">
+                    {item.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )
+      }
       {
         (prev || next) && (
           <nav class="article-nav" aria-label="More articles">
@@ -101,11 +151,125 @@ const updatedLabel = showUpdated ? updatedDate.toLocaleDateString('en-US', dateF
 </BaseLayout>
 
 <style>
+  /* Reading-progress line — CSS-only via a scroll-driven timeline (zero JS).
+     Browsers without scroll-driven animations simply leave it at scaleX(0)
+     (invisible), so it degrades cleanly. Hidden under reduced-motion.
+     Longhands (not the `animation` shorthand) so the CSS minifier can't fold
+     animation-timeline into the shorthand, which is spec-invalid and drops it. */
+  .reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 30;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    animation-name: reading-progress-grow;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+    animation-timeline: scroll(root block);
+  }
+
+  @keyframes reading-progress-grow {
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reading-progress {
+      display: none;
+    }
+  }
+
   .reading-column {
     max-width: var(--reading-maxw);
     margin: 0 auto;
     padding: clamp(32px, 6vw, 64px) clamp(20px, 5vw, 32px) clamp(48px, 8vw, 96px);
     background: var(--bg);
+  }
+
+  /* In-article contents list. */
+  .toc {
+    margin-bottom: clamp(32px, 5vw, 48px);
+    padding: 20px 22px;
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+  }
+
+  .toc__label {
+    margin: 0 0 12px;
+    font: 11px var(--mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .toc__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: toc;
+  }
+
+  .toc__item {
+    padding: 5px 0;
+  }
+
+  .toc__item--sub {
+    padding-left: 20px;
+  }
+
+  .toc__link {
+    font: 13px var(--mono);
+    line-height: 1.4;
+    color: var(--ink-2);
+    transition: color 0.2s;
+  }
+
+  .toc__item--sub .toc__link {
+    color: var(--muted);
+  }
+
+  .toc__link:hover {
+    color: var(--accent);
+  }
+
+  /* Related articles (foot). */
+  .related {
+    margin-bottom: 28px;
+  }
+
+  .related__label {
+    margin: 0 0 14px;
+    font: 11px var(--mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .related__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .related__link {
+    display: block;
+    padding: 12px 0;
+    font: 500 15px var(--mono);
+    color: var(--ink);
+    border-top: 1px solid var(--hairline);
+    transition: color 0.2s;
+  }
+
+  .related__link:hover {
+    color: var(--accent);
   }
 
   .breadcrumb {
