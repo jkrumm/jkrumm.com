@@ -1,0 +1,246 @@
+---
+title: 'Flicker-free dark mode in Astro, done properly'
+description: 'Correct on the very first paint after a hard refresh, no flash, three-way light/system/dark — how I built a theme toggle on a fully static Astro site with an inline script, data-theme tokens, and a Motion-driven control.'
+status: 'published'
+publishedDate: 2026-07-07
+tags: ['astro', 'frontend', 'dark-mode']
+---
+
+Dark mode is one of those features that looks like an afternoon and turns into a
+week the moment you care about the details. The naïve version — a button that
+toggles a class and flips some colors — ships a white flash into every dark-mode
+user's face on every page load. On a statically generated site it's worse,
+because there's no server to help you.
+
+This site is Astro with `output: 'static'` and View Transitions turned on. Here's
+what it took to make the theme *correct on the first painted frame*, survive hard
+refreshes and client-side navigation, and switch smoothly — without a single
+dependency for the theming itself.
+
+## What "done properly" actually means
+
+<Callout type="note">
+  The bar isn't "it has a dark mode." The bar is that a returning dark-mode
+  visitor never sees a light frame, a pinned choice always wins over the OS, and
+  none of it breaks when Astro soft-swaps the page.
+</Callout>
+
+<Steps>
+
+1. Correct on the **first paint** after a hard refresh — no flash, ever
+2. A real **three-way** choice: light, dark, or *follow the system*
+3. Survives **View-Transition navigation** without resetting
+4. **Smooth** on a deliberate switch, but never animates on load
+5. **Accessible** — keyboard-operable, and honours `prefers-reduced-motion`
+
+</Steps>
+
+Miss the first one and everything else is decoration.
+
+## Beat the flash before the first paint
+
+The flash happens because your CSS paints before your theme JavaScript runs. The
+only way to win is to decide the theme *before the browser paints anything* — and
+on a static site the one tool that can do that is a blocking inline script in the
+`<head>`.
+
+```astro
+<!-- In the root layout's <head>, BEFORE <ClientRouter /> -->
+<script is:inline>
+  (function () {
+    var d = document.documentElement;
+    d.classList.add('js');
+    var KEY = 'jk-theme';
+    function system() {
+      return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    function stored() {
+      try { return localStorage.getItem(KEY); } catch (e) { return null; }
+    }
+    function apply(pref) {
+      var resolved = pref === 'light' || pref === 'dark' ? pref : system();
+      d.setAttribute('data-theme', resolved);
+      d.style.colorScheme = resolved;
+    }
+    apply(stored() || 'system');
+    // …expose a small window.__theme API for the toggle to call…
+  })();
+</script>
+```
+
+The `is:inline` directive is doing the heavy lifting. It tells Astro to leave the
+script exactly where it is — not bundle it, not defer it, not turn it into a
+module. A plain inline `<script>` is *parser-blocking*: the browser cannot paint
+until it has run. So by the time the first pixel lands, `<html>` already carries
+the right `data-theme`.
+
+<Callout type="warn">
+  It has to sit **before** `<ClientRouter />` in the head. If View Transitions
+  initialise first, the snapshot it takes can capture the wrong theme.
+</Callout>
+
+### Why `localStorage`, not a cookie
+
+You'll see cookie-based theming recommended a lot. That advice is written for
+apps with a server that reads the cookie on each request and renders the right
+markup. A statically built Astro site has no such server — the HTML is baked once,
+at build time.
+
+That flips the decision entirely: the *client* is the only place that knows the
+preference, and `localStorage` is synchronous, so the blocking script above can
+read it inline. A cookie would buy you nothing here and cost you `SameSite`/`Secure`
+fiddling. Reach for a cookie only if you later add SSR.
+
+## One `:root`, one `[data-theme="dark"]`
+
+All the colours are CSS custom properties in a single `:root`. Dark mode is just a
+second block that redefines the same token names — so flipping one attribute on
+`<html>` re-cascades the whole site. I use an attribute rather than a `.dark`
+class to keep it orthogonal to everything else, and I set `color-scheme` so native
+UI (scrollbars, form controls) themes too.
+
+```css
+:root {
+  color-scheme: light;
+  --bg: #efeeeb;
+  --ink: #1c1917;
+  --accent: #42658b;
+  /* …the rest of the palette… */
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #1a1a1a;
+  --ink: #e7e7e7;
+  --accent: #567fab;
+  /* …only the colour tokens are overridden… */
+}
+```
+
+One thing I got wrong the first time: a *warm* neutral dark (browns and warm
+greys) looks cheap next to a clean product. Neutral greys (`R = G = B`) read far
+more expensive. The accent also can't be the same on both themes — the vivid blue
+that pops on paper is harsh on black, so it lightens in the dark block.
+
+## Three states, not two
+
+The trick to a good system toggle is realising that "system" is not a resolved
+colour — it's a *sentinel* that means "don't pin me, follow the OS." So I store one
+of three preferences and resolve `system` lazily.
+
+| Stored preference | What renders | Reacts to OS change? |
+| --- | --- | --- |
+| `light` | light | no |
+| `dark` | dark | no |
+| `system` | whatever the OS says now | **yes, live** |
+
+That last row needs a listener, but only while the preference is `system` — a
+pinned choice must ignore the OS flipping underneath it.
+
+```ts
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if ((stored() || 'system') === 'system') apply('system');
+});
+```
+
+<PullQuote>
+  The control highlights the preference you *chose*, not the theme you're
+  currently seeing. Pick "system" on a dark laptop and the monitor icon lights
+  up — not the moon.
+</PullQuote>
+
+## The View Transitions trap
+
+Astro's `<ClientRouter />` swaps the document on navigation instead of doing a
+full reload. That's great for feel, and it quietly breaks theming: the incoming
+statically-built `<html>` has no `data-theme` on it (that attribute only ever
+existed at runtime), so the page can flash the default theme for a frame mid-swap.
+
+The fix is to re-apply the stored theme on the `astro:after-swap` event, which
+fires after the new DOM is in place but before it paints:
+
+```ts
+document.addEventListener('astro:after-swap', () => {
+  window.__theme?.apply(window.__theme.get());
+});
+```
+
+<Callout type="warn">
+  This one is easy to miss because it only shows up when you navigate — a hard
+  refresh looks perfect while every in-app link flashes. Test both paths.
+</Callout>
+
+## Smooth to switch, instant to load
+
+I wanted the colour change to *crossfade* when you click the toggle — but a
+permanent CSS transition on your colours is a trap: it also animates the very
+first paint (a slow fade-in from white) and fights other animations on the page.
+
+The fix is a transition that only exists *during* a deliberate switch. The toggle
+adds a class to `<html>` for ~480 ms and removes it; the CSS transition is scoped
+to that class, so it never touches the initial load.
+
+```css
+html.theme-anim,
+html.theme-anim * {
+  transition:
+    background-color 0.42s ease,
+    color 0.42s ease,
+    border-color 0.42s ease !important;
+}
+```
+
+Note what's *missing*: `transform` and `opacity`. Those belong to the site's
+scroll animations, and letting a global colour transition touch them would cause
+visible collisions. Under `prefers-reduced-motion` the class is never added, so
+reduced-motion users get an instant, honest switch.
+
+## The control itself
+
+The toggle is a three-segment radiogroup — sun, monitor, moon — with a thumb that
+slides to the active segment. It's a Web Component, which turns out to be the neat
+trick for View Transitions: `connectedCallback` re-runs whenever Astro re-inserts
+the element, so it re-syncs its own state across navigation with zero extra wiring.
+
+Two details separate "fine" from "good" here:
+
+**It must not slide on load.** The first time the component mounts, it has to
+*snap* the thumb to the stored segment. If you let the slide animation run on
+mount, every hard refresh plays a little swipe from the left as the thumb travels
+to wherever your saved theme is. So mount is instant; only a real click or
+keypress springs.
+
+**The motion should be felt, not seen.** The thumb rides a critically-damped
+[Motion](https://motion.dev) spring — physical, but with zero overshoot. I tried a
+hover *lift* on the icons and cut it: it read as jumpy. Hover is a colour change;
+motion is reserved for press and selection. Restraint is the whole game.
+
+For keyboard users it behaves like a native radiogroup — <Kbd>Tab</Kbd> reaches
+the group once, then <Kbd>←</Kbd> / <Kbd>→</Kbd> move and select, with
+`aria-checked` tracking the choice.
+
+## The bits everyone forgets
+
+Two surfaces don't come from your CSS variables and will stay stubbornly light:
+
+- **Code blocks.** Syntax highlighting bakes its own colours. This site uses
+  Expressive Code, so the fix is a dual theme (`github-light` / `github-dark`)
+  keyed to the same `data-theme` attribute — no per-block CSS.
+- **Build-time SVG.** My charts are Observable Plot rendered to SVG *at build
+  time*, with literal hex baked in. CSS can't flip a colour that's an SVG
+  presentation attribute, so those had to be driven through `currentColor` and a
+  token instead.
+
+<Callout type="success">
+  End state: a returning dark-mode visitor gets a dark first paint on a cold load,
+  the toggle snaps (never slides) to their choice, switching springs smoothly,
+  navigation never flashes, and it all degrades to an honest instant swap under
+  reduced motion. No theming dependency — just an inline script, one attribute,
+  and a set of tokens.
+</Callout>
+
+The whole thing is maybe 150 lines across a layout, a stylesheet, and one
+component. Most of that week I mentioned at the top wasn't code — it was noticing
+the flash on navigation, the swipe on load, the warm-grey cheapness, the light
+charts. Dark mode is easy. *Flicker-free* dark mode is a list of small things you
+only find by looking hard.
