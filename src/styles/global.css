@@ -3,7 +3,7 @@
    Gray tokens are drawn from Tailwind's "stone" scale (light theme) and
    Mantine's "dark" scale (dark theme, below), with a few values interpolated
    between scale steps where the canonical shades didn't land at the right
-   contrast level (e.g. --panel, --faint-2, dark --hairline).
+   contrast level (e.g. --panel, dark --hairline).
    ========================================================================== */
 :root {
   color-scheme: light;
@@ -22,13 +22,11 @@
   --ink-2: #57534d;
   --muted: #79716b;
   --faint: #a6a09b;
-  --faint-2: #908983;
 
   /* Accent — muted steel blue (calmer than a vivid primary) */
   --accent: #42658b;
   --accent-hover: #375676;
-  --accent-glow: rgba(66, 101, 139, 0.16);
-  --dot-idle: #cfcac4;
+  --accent-glow: color-mix(in srgb, var(--accent) 16%, transparent);
   --on-accent: #ffffff;
 
   /* Status */
@@ -38,8 +36,8 @@
   /* Shadow */
   --shadow-rgb: 28, 25, 23;
 
-  /* Chrome */
-  --bar-bg: rgba(245, 245, 244, 0.82);
+  /* Chrome — derived: --bg at 82% opacity (auto-follows --bg across themes) */
+  --bar-bg: color-mix(in srgb, var(--bg) 82%, transparent);
 
   /* Typography — the CSS variables come from Astro's font pipeline
      (astro.config.mjs → fonts[].cssVariable). */
@@ -98,13 +96,11 @@
   --ink-2: #b8b8b8;
   --muted: #828282;
   --faint: #696969;
-  --faint-2: #767676;
 
   /* Accent — muted steel blue, lightened for contrast on dark */
   --accent: #567fab;
   --accent-hover: #6b91ba;
-  --accent-glow: rgba(86, 127, 171, 0.22);
-  --dot-idle: #454545;
+  --accent-glow: color-mix(in srgb, var(--accent) 22%, transparent);
 
   /* Status */
   --status-warning: #e0a83a;
@@ -113,8 +109,7 @@
   /* Shadow */
   --shadow-rgb: 0, 0, 0;
 
-  /* Chrome */
-  --bar-bg: rgba(31, 31, 31, 0.82);
+  /* --bar-bg derives from --bg (see :root) — no dark override needed. */
 
   /* Placeholder fills — neutral dark variants so the stripe placeholders don't glow */
   --stripe-portrait: repeating-linear-gradient(135deg, #262626 0 9px, #1f1f1f 9px 18px);
