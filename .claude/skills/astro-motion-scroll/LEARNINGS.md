@@ -1324,3 +1324,140 @@ Entry format:
   (two-cell masthead, single-panel hairline-divided list) fill a standalone frame
   so it never reads empty. Distilled into `SKILL.md` §5 (off-stage-surfaces
   subsection). Build validation deferred to the owner (docs-only change here).
+
+## 2026-07-07 — Flicker-free light/system/dark theme + segmented toggle
+
+- **Goal:** a three-way theme (light/system/dark) that is FOUC-free on hard
+  refresh, survives `ClientRouter` navigation, and crossfades smoothly on switch —
+  toggle centered in the homepage `StickyFooter`, top-right of `ReadingHeader` for
+  off-stage pages. Orchestrated via parallel `@implementer` subagents on disjoint
+  files; validated by a single `bun run build` (0/0).
+- **FOUC is beaten before first paint, not after.** The blocking `is:inline` head
+  script in `BaseLayout` sets `data-theme` + `style.colorScheme` on `<html>` from
+  `localStorage` (key `jk-theme`) BEFORE the parser continues — it MUST stay
+  `is:inline` (no module/defer/async) and BEFORE `<ClientRouter />`. It reuses the
+  existing `.js`-add slot (add `.js` first — the reveal system depends on it). On a
+  static (`output: 'static'`) site, `localStorage` is the only correct store:
+  there's no server to read a cookie at request time.
+- **`ClientRouter` strips the runtime attribute on swap → re-apply on
+  `astro:after-swap`.** The swapped-in static `<html>` has no `data-theme`; a
+  bundled (non-inline) `astro:after-swap` listener calls `window.__theme.apply(get())`
+  (no animation) before the new view paints. Without it, every navigation flashes.
+- **Smooth switch WITHOUT a load-flash = a transient class, never a permanent
+  transition.** `window.__theme.set()` adds `html.theme-anim` for 480ms then removes
+  it; CSS transitions `background/border/color/fill/box-shadow` only while that class
+  is present. A *permanent* global color transition would animate the very first
+  paint and fight Motion reveals. The `theme-anim` rule deliberately EXCLUDES
+  transform/opacity so it can never collide with `.reveal` tweens. Skipped entirely
+  under `prefers-reduced-motion` (instant switch).
+- **State model: store the PREFERENCE (`light|dark|system`), resolve lazily.** The
+  segmented control highlights the stored pref, so system→dark lights the MONITOR,
+  not the moon. A `matchMedia('(prefers-color-scheme: dark)')` `change` listener
+  re-resolves only while the stored pref is `system` (a pinned choice ignores OS
+  flips).
+- **The toggle is a Web Component, which is why it survives view transitions for
+  free.** `customElements.define('theme-toggle', …)` (guarded) re-runs
+  `connectedCallback` when Astro re-inserts the element after a swap, so it re-syncs
+  its active state with zero extra wiring. Sliding thumb = `transform: translateX`
+  keyed off `track[data-active=…]` (compositor-safe, animation-rule compliant).
+  Radiogroup a11y: roving tabindex + Arrow/Home/End select-and-move + `aria-checked`.
+  Icons are inline Lucide SVGs (no icon dependency — the repo's inline-`<svg>`
+  convention). Visibility gated on `:global(html.js)` — a JS-only control is never
+  shown dead.
+- **Token layer: one `[data-theme='dark']` block overriding ONLY color tokens.**
+  Neutral-gray dark (Mantine-style dark scale, `--bg:#1a1a1a … --accent:#567fab`)
+  beside the single `:root`; layout/type/spacing/motion tokens inherit. **Keep the
+  dark surfaces truly neutral (R=G=B) — a warm/brown tint reads cheap;** the accent
+  is a muted steel blue (`#42658b` light / `#567fab` dark), not a vivid primary.
+  Surfaces step lightest→darkest `line > hairline > panel-hover > panel > bg` so the
+  fail-toward-line hairlines invert to light seams on dark. Because every surface already reads
+  `var(--token)` and `body` reads `--bg/--ink`, flipping the attribute cascades the
+  whole site. Add `color-scheme` to both blocks (themes native scrollbars/controls).
+- **Gotcha — code blocks use `astro-expressive-code`, NOT raw Shiki
+  `markdown.shikiConfig`.** Dual-theme via `expressiveCode({ themes:
+  ['github-light','github-dark'], customizeTheme(t){ t.name = t.type } })`: renaming
+  the theme names to `light`/`dark` makes expressive-code's default
+  `themeCssSelector` emit `[data-theme='light|dark']` rules that key off our
+  attribute (with system media-query fallback) — no extra config. The `.astro-code`
+  CSS a raw-Shiki plan would add is inert here (that class never appears in output).
+- **Gotcha — build-time SVG bakes literal colors that DON'T flip.** `Chart.astro`
+  (Observable Plot → inline SVG via `set:html`) baked light-palette hex. Fixes that
+  work post-build: grid line was already a CSS rule (`--hairline` token now); axis
+  text flips by REMOVING `color: INK` from the Plot `style` object so the SVG root
+  has no inline color and scoped CSS `.chart__plot :global(svg){color:var(--ink-2)}`
+  drives `currentColor` (verified against `dist/` output — Plot text is
+  `fill="currentColor"`, ticks inherit). Mark `fill`/`stroke` stay literal accent
+  (`#2f5bff` reads fine on dark); left as-is (no reliably-targetable per-mark
+  selector). `Callout.astro` warn/success got `[data-theme='dark']` brightness bumps.
+- **Verdict / decision:** the theme system is house style. New surfaces get it for
+  free by consuming tokens + rendering `<ThemeToggle />` where a control belongs.
+  Never use a `class="dark"` (attribute only), never make the color transition
+  permanent, never bake a non-token color into build-time SVG. Validated: `bun run
+  build` 0 errors / 0 warnings, 7 pages. Runtime acceptance (flicker on refresh,
+  nav persistence, keyboard, reduced-motion) is owner-verified manually.
+
+## 2026-07-07 — ThemeToggle: instant-mount fix + Motion spring polish
+
+- **Context:** `ThemeToggle.astro`'s sliding thumb was pure CSS
+  (`transition: transform 0.28s`) driven by a `[data-active]` attribute. On hard
+  reload the thumb rendered at its CSS default (light) then `connectedCallback`'s
+  `sync()` flipped `data-active` to the stored theme, and the CSS transition
+  animated that first snap — a swipe-across on every load. Asked to (1) fix that
+  and (2) drive the thumb + add press/hover micro-interactions with a Motion
+  spring instead of the CSS easing.
+- **Worked — explicit `animate: boolean` threaded through the sync path.**
+  `sync(animated)` → `positionThumb(pref, animated)` / `animateScale(svg, scale,
+  animated)`. `connectedCallback` always calls `sync(false)` (instant mount, no
+  swipe). A `pendingUserChange` flag is set only inside `choose()` (the
+  click/keyboard path) right before calling `window.__theme.set()`; the
+  `themechange` listener reads-and-clears that flag to decide `animated` for its
+  own `sync()` call. So a deliberate selection animates (flag was true), while an
+  OS-driven scheme change, another toggle instance, or another tab firing
+  `themechange` snaps instantly (flag stays false) — same code path, no separate
+  "trigger source" plumbing needed. Removed the CSS `transition` and the three
+  `[data-active='…'] { transform }` rules entirely — Motion now owns 100% of the
+  thumb's transform, so there's no CSS/JS fight (the old dead reduced-motion
+  `transition: none` override went too, since there's no CSS transition left to
+  disable).
+- **Worked — geometry from `offsetLeft`, not hardcoded thirds.** The old CSS used
+  `translateX(0|100%|200%)` assuming exactly 3 equal segments. Motion target:
+  `x = button.offsetLeft - thumb.offsetLeft`. Both share the track as
+  `offsetParent` (`position:relative` on `.theme-toggle__track`), and `offsetLeft`
+  is a layout-box property untouched by an already-applied `transform` — so this
+  stays correct across re-renders/size changes without measuring `getBoundingClientRect`
+  or re-deriving from CSS percentages.
+- **Verified Motion API from installed types, no `/research` needed.**
+  `node_modules/motion-dom/dist/index.d.ts` confirms `SpringOptions` (`stiffness`,
+  `damping`, `mass`, `bounce`, `duration`) and that `animate(el, { x, y, scale },
+  transition)` treats `x`/`y`/`scale` as independent transform values (already
+  proven in this repo — `portfolio.ts` reveals use `y: [14, 0]`). `motion`'s
+  `index.d.ts` is just `export * from 'framer-motion/dom'`, same surface.
+- **Spring choice:** thumb = `{ type: 'spring', stiffness: 500, damping: 40, mass:
+  0.8 }` — critically damped (`damping == 2*sqrt(stiffness*mass)` = 40 exactly),
+  so zero overshoot, still reads as physical rather than eased-in-CSS. Icon
+  press/selection = `{ type: 'spring', stiffness: 600, damping: 32, mass: 0.5 }` —
+  slightly underdamped (ratio ≈0.87 of critical) for a single faint settle on
+  press-release/selection "pop", per the brief's "no visible bounce, or the
+  faintest single settle at most." Hover lift is a plain 0.16s tween (`y: -1`),
+  not a spring — a 1px hover nudge doesn't need spring physics.
+- **Gotcha — don't let the param name `animate` shadow the imported Motion
+  `animate` function.** Every method took the flag as `animated`, never `animate`,
+  specifically to avoid this; worth flagging for the next spring-driven widget in
+  this repo.
+- **Gotcha — press/hover/rest-scale share one property (`scale`) but are driven by
+  separate call sites** (pointerdown, pointerup, pointerleave, `sync()`'s
+  selection-scale). Every call goes through one `animateScale()` that always
+  `.stop()`s the previous handle (tracked in a `WeakMap<SVGElement, AnimHandle>`)
+  before starting the next — otherwise a fast press-then-release during an
+  in-flight spring would let two competing tweens fight over the same transform.
+- **Lifecycle:** `disconnectedCallback` stops the thumb's in-flight animation and
+  removes every listener registered through a small tracked-`on()` helper (mirrors
+  the `teardown[]` pattern in `portfolio.ts`, scoped per-instance here since this
+  is a custom element, not a module-level init). `reducedMotion()` is a live
+  `matchMedia(...).matches` check (not cached), called at the top of every
+  animation branch — reduced motion snaps thumb, scale, and hover instantly and
+  never calls `animate()`.
+- **Verdict / decision:** validated `bun run build` — 0 errors / 0 warnings, 51
+  files, 7 pages. Pattern (explicit `animated` flag on every sync path, instant on
+  mount/external-resync, animated only on direct user action) is the template for
+  any other segmented-control/toggle this site adds.

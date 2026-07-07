@@ -27,11 +27,11 @@ interface Props {
 
 const { type = 'line', data, x, y, series, height = 300, caption, xLabel, yLabel } = Astro.props;
 
-const INK = '#57534e';
 const FAINT = '#a8a29e';
-const ACCENT = '#2f5bff';
-// Restrained categorical range for multi-series (accent-led, no primaries).
-const RANGE = ['#2f5bff', '#1c1917', '#8a827a', '#b45309'];
+const ACCENT = '#42658b';
+// Restrained categorical range for multi-series — accent-led mid-tones that read
+// on both the light stone and the dark neutral background (no near-black/near-white).
+const RANGE = ['#42658b', '#8a827a', '#a8763f', '#5a8c6e'];
 
 const marks = (() => {
   switch (type) {
@@ -67,7 +67,6 @@ const svg = renderPlotToSvg({
   marginBottom: 38,
   style: {
     background: 'transparent',
-    color: INK,
     fontFamily: 'ui-monospace, SFMono-Regular, monospace',
     fontSize: '12px',
     overflow: 'visible',
@@ -112,12 +111,13 @@ const legend = seriesDomain;
     display: block;
     width: 100%;
     height: auto;
+    color: var(--ink-2);
   }
 
   /* Soften Plot's grid lines to the site's hairline weight. */
   .chart__plot :global([aria-label='y-grid'] line),
   .chart__plot :global([aria-label='y-axis grid'] line) {
-    stroke: #e4e0db;
+    stroke: var(--hairline);
   }
 
   .chart__legend {

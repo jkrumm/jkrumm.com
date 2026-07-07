@@ -3,6 +3,8 @@
    Values mirror design_handoff_portfolio/README.md § Design Tokens.
    ========================================================================== */
 :root {
+  color-scheme: light;
+
   /* Surfaces */
   --bg: #efeeeb;
   --panel: #f4f2ef;
@@ -19,10 +21,10 @@
   --faint: #a8a29e;
   --faint-2: #8a827a;
 
-  /* Accent */
-  --accent: #2f5bff;
-  --accent-hover: #244cf0;
-  --accent-glow: rgba(47, 91, 255, 0.16);
+  /* Accent — muted steel blue (calmer than a vivid primary) */
+  --accent: #42658b;
+  --accent-hover: #375676;
+  --accent-glow: rgba(66, 101, 139, 0.16);
   --dot-idle: #cfcac4;
 
   /* Chrome */
@@ -56,6 +58,47 @@
   --space-card-x: clamp(24px, 2.6vw, 34px);
   --space-hero-y: clamp(20px, 2.4vw, 30px);
   --space-hero-x: clamp(26px, 3.2vw, 42px);
+}
+
+/* ============================================================================
+   Dark theme — neutral gray (Mantine-style dark scale, zero warmth). Overrides
+   only the color tokens; layout/type/spacing/motion inherit from :root. Applied
+   via [data-theme="dark"] on <html> by the blocking inline script in
+   BaseLayout.astro (set before first paint). Surfaces step lightest→darkest:
+   line > hairline > panel-hover > panel > bg, so the fail-toward-line hairlines
+   read as light seams on the dark panels (inverse of the light theme).
+   ========================================================================== */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg: #1a1a1a;
+  --panel: #242424;
+  --panel-hover: #2e2e2e;
+
+  /* Lines */
+  --line: #3f3f3f;
+  --hairline: #333333;
+
+  /* Ink / text */
+  --ink: #e7e7e7;
+  --ink-2: #a8a8a8;
+  --muted: #828282;
+  --faint: #6b6b6b;
+  --faint-2: #767676;
+
+  /* Accent — muted steel blue, lightened for contrast on dark */
+  --accent: #567fab;
+  --accent-hover: #6b91ba;
+  --accent-glow: rgba(86, 127, 171, 0.22);
+  --dot-idle: #454545;
+
+  /* Chrome */
+  --bar-bg: rgba(26, 26, 26, 0.82);
+
+  /* Placeholder fills — neutral dark variants so the stripe placeholders don't glow */
+  --stripe-portrait: repeating-linear-gradient(135deg, #262626 0 9px, #1f1f1f 9px 18px);
+  --stripe-photo: repeating-linear-gradient(135deg, #2a2a2a 0 10px, #202020 10px 20px);
 }
 
 *,
@@ -113,6 +156,40 @@ html.js .reveal {
     opacity: 1 !important;
     transform: none !important;
   }
+}
+
+/* ============================================================================
+   Theme crossfade — only active during a deliberate switch (the inline script
+   adds `html.theme-anim` for ~480ms, then removes it). Never permanent, so it
+   can't flash on first paint. Excludes transform/opacity so it never collides
+   with Motion reveals. Reduced motion never gets the class → instant switch.
+   ========================================================================== */
+html.theme-anim,
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition:
+    background-color 0.42s var(--ease-reveal),
+    border-color 0.42s var(--ease-reveal),
+    color 0.42s var(--ease-reveal),
+    fill 0.42s var(--ease-reveal),
+    box-shadow 0.42s var(--ease-reveal) !important;
+}
+
+/* Shiki dual-theme: default to light vars, swap to dark under [data-theme].
+   Note: this project renders Markdown/MDX code blocks via astro-expressive-code
+   (see astro.config.mjs), not Astro's native Shiki renderer, so `.astro-code`
+   does not currently appear in rendered output — kept for parity/forward
+   compatibility in case a raw Shiki/`<Code>` usage is introduced later. */
+.astro-code,
+.astro-code span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+[data-theme='dark'] .astro-code,
+[data-theme='dark'] .astro-code span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
 }
 
 /* Keyboard focus ring */

@@ -5,6 +5,8 @@
  * label on the right. Keeps every non-homepage page on one calm, consistent
  * chrome. `width` aligns the bar to the page's content column.
  */
+import ThemeToggle from '@/components/chrome/ThemeToggle.astro';
+
 interface Props {
   /** Uppercase mono label shown top-right, e.g. "GUIDE" or "BLOG". */
   category: string;
@@ -21,7 +23,10 @@ const { category, width = 'var(--reading-maxw)' } = Astro.props;
       <span class="reading-header__mark">JK<span class="reading-header__plus">+</span></span>
       <span class="reading-header__name">Johannes Krumm</span>
     </a>
-    <span class="reading-header__category">{category}</span>
+    <div class="reading-header__right">
+      <span class="reading-header__category">{category}</span>
+      <ThemeToggle />
+    </div>
   </div>
 </header>
 
@@ -77,5 +82,11 @@ const { category, width = 'var(--reading-maxw)' } = Astro.props;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--accent);
+  }
+
+  .reading-header__right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
   }
 </style>

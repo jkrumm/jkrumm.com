@@ -28,7 +28,13 @@ export default defineConfig({
   integrations: [
     // Must run before mdx() so MDX code blocks are also processed.
     expressiveCode({
-      themes: ['github-light'],
+      themes: ['github-light', 'github-dark'],
+      // Rename themes to 'light'/'dark' so the default `themeCssSelector`
+      // (`[data-theme='${theme.name}']`) matches this site's [data-theme]
+      // convention on <html>, set by the runtime theme script.
+      customizeTheme(theme) {
+        theme.name = theme.type;
+      },
       styleOverrides: {
         borderRadius: '0',
         borderColor: 'var(--line)',

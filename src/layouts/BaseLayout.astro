@@ -29,9 +29,45 @@ const { title = SITE.title, description = SITE.description, ogType = 'website', 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
 
-    <!-- Add `.js` before first paint so scroll-reveals never flash unhidden. -->
+    <!-- Set theme + `.js` before first paint: no FOUC on hard refresh. -->
     <script is:inline>
-      document.documentElement.classList.add('js');
+      (function () {
+        var d = document.documentElement;
+        d.classList.add('js');
+        var KEY = 'jk-theme';
+        function system() {
+          return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        function stored() {
+          try { return localStorage.getItem(KEY); } catch (e) { return null; }
+        }
+        function apply(pref) {
+          var resolved = pref === 'light' || pref === 'dark' ? pref : system();
+          d.setAttribute('data-theme', resolved);
+          d.style.colorScheme = resolved;
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', resolved === 'dark' ? '#1a1a1a' : '#efeeeb');
+        }
+        apply(stored() || 'system');
+        window.__theme = {
+          get: function () { return stored() || 'system'; },
+          resolved: function () { return d.getAttribute('data-theme') || 'light'; },
+          apply: apply,
+          set: function (pref) {
+            try { localStorage.setItem(KEY, pref); } catch (e) {}
+            if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              d.classList.add('theme-anim');
+              clearTimeout(window.__themeT);
+              window.__themeT = setTimeout(function () { d.classList.remove('theme-anim'); }, 480);
+            }
+            apply(pref);
+            window.dispatchEvent(new CustomEvent('themechange', { detail: pref }));
+          },
+        };
+        matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+          if ((stored() || 'system') === 'system') apply('system');
+        });
+      })();
     </script>
 
     <Font cssVariable="--font-mono" preload />
@@ -41,6 +77,13 @@ const { title = SITE.title, description = SITE.description, ogType = 'website', 
     {jsonLd && <JsonLd type={jsonLd} />}
 
     <ClientRouter />
+
+    <script>
+      document.addEventListener('astro:after-swap', () => {
+        // @ts-expect-error — defined by the inline theme script above
+        window.__theme?.apply(window.__theme.get());
+      });
+    </script>
   </head>
   <body>
     <slot />

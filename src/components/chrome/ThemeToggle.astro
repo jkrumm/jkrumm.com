@@ -1,0 +1,271 @@
+---
+/**
+ * Three-way theme toggle (light / system / dark) as a segmented radiogroup with
+ * a sliding thumb. Reads/writes window.__theme (defined in BaseLayout's inline
+ * head script). Only functional with JS, so it's hidden until `html.js`.
+ */
+---
+
+<theme-toggle class="theme-toggle">
+  <div class="theme-toggle__track" role="radiogroup" aria-label="Color theme">
+    <span class="theme-toggle__thumb" aria-hidden="true"></span>
+    <button
+      type="button"
+      class="theme-toggle__btn"
+      data-pref="light"
+      role="radio"
+      aria-checked="false"
+      aria-label="Light"
+      tabindex="-1"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+      </svg>
+    </button>
+    <button
+      type="button"
+      class="theme-toggle__btn"
+      data-pref="system"
+      role="radio"
+      aria-checked="false"
+      aria-label="System"
+      tabindex="-1"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+      </svg>
+    </button>
+    <button
+      type="button"
+      class="theme-toggle__btn"
+      data-pref="dark"
+      role="radio"
+      aria-checked="false"
+      aria-label="Dark"
+      tabindex="-1"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+      </svg>
+    </button>
+  </div>
+</theme-toggle>
+
+<script>
+  import { animate } from 'motion';
+
+  type ThemePref = 'light' | 'system' | 'dark';
+  type AnimHandle = ReturnType<typeof animate> | null;
+
+  const ORDER: ThemePref[] = ['light', 'system', 'dark'];
+
+  // Calm, settled springs — senior restraint, not a bouncy toy. The thumb
+  // spring is critically damped (damping == 2*sqrt(stiffness*mass)): zero
+  // overshoot, still feels physical rather than eased. The icon spring is
+  // slightly underdamped so a selection "pop" or press-release reads as a
+  // single faint settle, never a visible bounce.
+  const THUMB_SPRING = { type: 'spring', stiffness: 500, damping: 40, mass: 0.8 } as const;
+  const ICON_SPRING = { type: 'spring', stiffness: 600, damping: 32, mass: 0.5 } as const;
+
+  const ACTIVE_ICON_SCALE = 1.06;
+  const PRESS_ICON_SCALE = 0.88;
+
+  const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  class ThemeToggle extends HTMLElement {
+    track!: HTMLElement;
+    thumb!: HTMLElement;
+    btns!: HTMLButtonElement[];
+    onChange!: () => void;
+    pendingUserChange = false;
+    thumbAnim: AnimHandle = null;
+    scaleAnims = new WeakMap<SVGElement, AnimHandle>();
+    listeners: Array<{ el: EventTarget; type: string; fn: EventListenerOrEventListenerObject }> = [];
+
+    connectedCallback() {
+      this.track = this.querySelector('.theme-toggle__track')!;
+      this.thumb = this.querySelector('.theme-toggle__thumb')!;
+      this.btns = [...this.querySelectorAll<HTMLButtonElement>('.theme-toggle__btn')];
+
+      // First sync on mount is always instant — it must snap to the stored
+      // theme, never animate across from the CSS default position.
+      this.sync(false);
+
+      const on = <K extends keyof HTMLElementEventMap>(
+        el: EventTarget,
+        type: K,
+        fn: (e: HTMLElementEventMap[K]) => void,
+      ): void => {
+        el.addEventListener(type, fn as EventListener);
+        this.listeners.push({ el, type, fn: fn as EventListener });
+      };
+
+      on(this.track, 'click', (e) => {
+        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.theme-toggle__btn');
+        if (btn) this.choose(btn.dataset.pref as ThemePref);
+      });
+      on(this.track, 'keydown', (e) => this.onKey(e));
+
+      const restScaleFor = (btn: HTMLButtonElement): number =>
+        btn.getAttribute('aria-checked') === 'true' ? ACTIVE_ICON_SCALE : 1;
+
+      this.btns.forEach((btn) => {
+        const svg = btn.querySelector('svg');
+        if (!svg) return;
+
+        on(btn, 'pointerdown', () => {
+          if (reducedMotion()) return;
+          this.animateScale(svg, PRESS_ICON_SCALE);
+        });
+        on(btn, 'pointerup', () => {
+          if (reducedMotion()) return;
+          this.animateScale(svg, restScaleFor(btn));
+        });
+        // No hover *lift* — it read as jumpy. Hover feedback is the CSS color
+        // brighten only; motion is reserved for press + selection.
+        on(btn, 'pointerleave', () => {
+          this.animateScale(svg, restScaleFor(btn), !reducedMotion());
+        });
+      });
+
+      // Any re-sync that isn't the direct result of THIS toggle's own choose()
+      // (OS-driven scheme change, another toggle instance, another tab) snaps
+      // instantly — only a deliberate click/keyboard selection animates.
+      this.onChange = () => {
+        const animated = this.pendingUserChange;
+        this.pendingUserChange = false;
+        this.sync(animated);
+      };
+      window.addEventListener('themechange', this.onChange);
+    }
+
+    disconnectedCallback() {
+      window.removeEventListener('themechange', this.onChange);
+      this.listeners.forEach(({ el, type, fn }) => el.removeEventListener(type, fn));
+      this.listeners = [];
+      this.thumbAnim?.stop();
+    }
+
+    sync(animated: boolean) {
+      // @ts-expect-error — window.__theme is defined by BaseLayout's inline head script
+      const pref: ThemePref = window.__theme?.get?.() ?? 'system';
+      this.track.dataset.active = pref;
+      this.btns.forEach((btn) => {
+        const on = btn.dataset.pref === pref;
+        btn.setAttribute('aria-checked', String(on));
+        btn.tabIndex = on ? 0 : -1;
+        const svg = btn.querySelector('svg');
+        if (svg) this.animateScale(svg, on ? ACTIVE_ICON_SCALE : 1, animated);
+      });
+      this.positionThumb(pref, animated);
+    }
+
+    positionThumb(pref: ThemePref, animated: boolean) {
+      const btn = this.btns.find((b) => b.dataset.pref === pref);
+      if (!btn) return;
+      // Relative to the track (both share it as offsetParent), unaffected by
+      // any transform already applied — so this stays correct if segment
+      // sizes ever change, no hardcoded pixel widths.
+      const x = btn.offsetLeft - this.thumb.offsetLeft;
+      this.thumbAnim?.stop();
+      if (!animated || reducedMotion()) {
+        this.thumb.style.transform = `translateX(${x}px)`;
+        this.thumbAnim = null;
+        return;
+      }
+      this.thumbAnim = animate(this.thumb, { x }, THUMB_SPRING);
+    }
+
+    animateScale(svg: SVGElement, scale: number, animated = true) {
+      this.scaleAnims.get(svg)?.stop();
+      if (!animated || reducedMotion()) {
+        svg.style.transform = `scale(${scale})`;
+        this.scaleAnims.set(svg, null);
+        return;
+      }
+      this.scaleAnims.set(svg, animate(svg, { scale }, ICON_SPRING));
+    }
+
+    choose(pref: ThemePref) {
+      this.pendingUserChange = true;
+      // @ts-expect-error — window.__theme is defined by BaseLayout's inline head script
+      window.__theme?.set?.(pref);
+    }
+
+    onKey(e: KeyboardEvent) {
+      // @ts-expect-error — window.__theme is defined by BaseLayout's inline head script
+      const cur = ORDER.indexOf((window.__theme?.get?.() ?? 'system') as ThemePref);
+      let next: number | null = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (cur + 1) % 3;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (cur + 2) % 3;
+      else if (e.key === 'Home') next = 0;
+      else if (e.key === 'End') next = 2;
+      else if (e.key === ' ' || e.key === 'Enter') next = cur;
+      if (next === null) return;
+      e.preventDefault();
+      this.choose(ORDER[next]);
+      this.btns[next].focus();
+    }
+  }
+
+  if (!customElements.get('theme-toggle')) customElements.define('theme-toggle', ThemeToggle);
+</script>
+
+<style>
+  .theme-toggle {
+    display: none;
+  }
+
+  :global(html.js) .theme-toggle {
+    display: inline-flex;
+  }
+
+  .theme-toggle__track {
+    position: relative;
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--panel-hover);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+
+  .theme-toggle__thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: calc((100% - 6px) / 3);
+    height: calc(100% - 6px);
+    border-radius: 999px;
+    background: var(--panel);
+    box-shadow: 0 1px 3px -1px rgba(0, 0, 0, 0.28);
+  }
+
+  .theme-toggle__btn {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 26px;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: var(--faint);
+    position: relative;
+    z-index: 1;
+  }
+
+  .theme-toggle__btn svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .theme-toggle__btn[aria-checked='true'] {
+    color: var(--accent);
+  }
+
+  .theme-toggle__btn:not([aria-checked='true']):hover {
+    color: var(--ink-2);
+  }
+</style>
