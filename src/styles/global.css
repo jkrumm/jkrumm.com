@@ -47,6 +47,15 @@
 
   /* Motion */
   --ease-reveal: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* Spacing — shared bento card/cell padding scale. Vertical is always ≤
+     horizontal so cards read compact; pick the tier by visual weight. */
+  --space-bar-y: clamp(14px, 2vw, 24px);
+  --space-bar-x: clamp(20px, 3vw, 40px);
+  --space-card-y: clamp(18px, 2vw, 26px);
+  --space-card-x: clamp(24px, 2.6vw, 34px);
+  --space-hero-y: clamp(20px, 2.4vw, 30px);
+  --space-hero-x: clamp(26px, 3.2vw, 42px);
 }
 
 *,

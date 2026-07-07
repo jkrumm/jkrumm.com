@@ -62,7 +62,7 @@ import { SOCIAL } from '@/consts';
 <style>
   .featured {
     flex: 1.4 1 420px;
-    padding: clamp(28px, 3vw, 42px);
+    padding: var(--space-hero-y) var(--space-hero-x);
     min-height: 280px;
   }
 
@@ -110,7 +110,7 @@ import { SOCIAL } from '@/consts';
 
   .rollhook {
     flex: 1;
-    padding: clamp(24px, 2.4vw, 32px);
+    padding: var(--space-card-y) var(--space-card-x);
     min-height: 138px;
   }
 
@@ -146,7 +146,7 @@ import { SOCIAL } from '@/consts';
   }
 
   .github {
-    padding: clamp(20px, 2vw, 28px) clamp(24px, 2.4vw, 32px);
+    padding: var(--space-card-y) var(--space-card-x);
   }
 
   .github > .reveal {
