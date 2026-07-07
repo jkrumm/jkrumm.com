@@ -8,7 +8,7 @@ export async function getStaticPaths() {
   const isPublished = ({ data }: CollectionEntry<'guide'>) =>
     import.meta.env.PROD ? data.status === 'published' : true;
 
-  // Handbook order — neighbours read as ← previous / next chapter →.
+  // Guide order — neighbours read as ← previous / next chapter →.
   const entries = (await getCollection('guide', isPublished)).sort(
     (a, b) => a.data.order - b.data.order,
   );

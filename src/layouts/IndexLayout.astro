@@ -21,7 +21,7 @@ interface Stat {
 interface Props {
   title: string;
   description: string;
-  /** Header + eyebrow label, uppercase mono, e.g. "GUIDE" or "BLOG". */
+  /** ReadingHeader label, uppercase mono, e.g. "GUIDE" or "BLOG". */
   category: string;
   /** Masthead headline. */
   heading: string;
@@ -46,7 +46,6 @@ const { title, description, category, heading, intro, stats, crossTeaser, crossL
     <div class="index-frame">
       <header class="index-masthead">
         <div class="index-masthead__main">
-          <p class="index-masthead__eyebrow">{category}</p>
           <h1 class="index-masthead__title">{heading}</h1>
           <p class="index-masthead__intro">{intro}</p>
         </div>
@@ -139,14 +138,6 @@ const { title, description, category, heading, intro, stats, crossTeaser, crossL
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--faint);
-  }
-
-  .index-masthead__eyebrow {
-    margin: 0 0 18px;
-    font: 11px var(--mono);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--accent);
   }
 
   .index-masthead__title {
