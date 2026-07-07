@@ -46,7 +46,7 @@ const { title = SITE.title, description = SITE.description, ogType = 'website', 
           d.setAttribute('data-theme', resolved);
           d.style.colorScheme = resolved;
           var m = document.querySelector('meta[name="theme-color"]');
-          if (m) m.setAttribute('content', resolved === 'dark' ? '#1a1a1a' : '#efeeeb');
+          if (m) m.setAttribute('content', resolved === 'dark' ? '#1f1f1f' : '#f5f5f4');
         }
         apply(stored() || 'system');
         window.__theme = {

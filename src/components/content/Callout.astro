@@ -1,8 +1,9 @@
 ---
 /**
  * Admonition box for prose content — a left accent bar, panel background and
- * a mono uppercase label, with the slot rendered as regular prose. Semantic
- * tint colors are component-local custom properties (no new global tokens).
+ * a mono uppercase label, with the slot rendered as regular prose. Warn/success
+ * tints source from global --status-* tokens; --callout-accent is only a
+ * component-local indirection for how those colors get threaded in.
  */
 interface Props {
   type?: 'note' | 'info' | 'warn' | 'success';
@@ -45,19 +46,11 @@ const label = title ?? type;
   }
 
   .callout--warn {
-    --callout-accent: #b5750f;
-  }
-
-  :global([data-theme='dark']) .callout--warn {
-    --callout-accent: #e0a83a;
+    --callout-accent: var(--status-warning);
   }
 
   .callout--success {
-    --callout-accent: #2f7a4f;
-  }
-
-  :global([data-theme='dark']) .callout--success {
-    --callout-accent: #56c07a;
+    --callout-accent: var(--status-success);
   }
 
   .callout__label {

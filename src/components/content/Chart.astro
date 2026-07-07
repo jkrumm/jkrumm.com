@@ -11,6 +11,7 @@
  */
 import * as Plot from '@observablehq/plot';
 import { renderPlotToSvg } from '@/utils/plot';
+import { FAINT, ACCENT, RANGE } from '@/utils/chart-palette';
 
 interface Props {
   type?: 'line' | 'bar' | 'area' | 'dot';
@@ -26,12 +27,6 @@ interface Props {
 }
 
 const { type = 'line', data, x, y, series, height = 300, caption, xLabel, yLabel } = Astro.props;
-
-const FAINT = '#a8a29e';
-const ACCENT = '#42658b';
-// Restrained categorical range for multi-series — accent-led mid-tones that read
-// on both the light stone and the dark neutral background (no near-black/near-white).
-const RANGE = ['#42658b', '#8a827a', '#a8763f', '#5a8c6e'];
 
 const marks = (() => {
   switch (type) {

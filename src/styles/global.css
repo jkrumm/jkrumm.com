@@ -1,34 +1,45 @@
 /* ============================================================================
    Design tokens — single source of truth for the portfolio.
-   Values mirror design_handoff_portfolio/README.md § Design Tokens.
+   Gray tokens are drawn from Tailwind's "stone" scale (light theme) and
+   Mantine's "dark" scale (dark theme, below), with a few values interpolated
+   between scale steps where the canonical shades didn't land at the right
+   contrast level (e.g. --panel, --faint-2, dark --hairline).
    ========================================================================== */
 :root {
   color-scheme: light;
 
   /* Surfaces */
-  --bg: #efeeeb;
-  --panel: #f4f2ef;
-  --panel-hover: #fbfaf8;
+  --bg: #f5f5f4;
+  --panel: #f8f8f7;
+  --panel-hover: #fafaf9;
 
   /* Lines */
   --line: #d6d3d1;
-  --hairline: #e4e0db;
+  --hairline: #e7e5e4;
 
   /* Ink / text */
   --ink: #1c1917;
-  --ink-2: #57534e;
-  --muted: #78716c;
-  --faint: #a8a29e;
-  --faint-2: #8a827a;
+  --ink-2: #57534d;
+  --muted: #79716b;
+  --faint: #a6a09b;
+  --faint-2: #908983;
 
   /* Accent — muted steel blue (calmer than a vivid primary) */
   --accent: #42658b;
   --accent-hover: #375676;
   --accent-glow: rgba(66, 101, 139, 0.16);
   --dot-idle: #cfcac4;
+  --on-accent: #ffffff;
+
+  /* Status */
+  --status-warning: #b5750f;
+  --status-success: #2f7a4f;
+
+  /* Shadow */
+  --shadow-rgb: 28, 25, 23;
 
   /* Chrome */
-  --bar-bg: rgba(240, 239, 236, 0.82);
+  --bar-bg: rgba(245, 245, 244, 0.82);
 
   /* Typography — the CSS variables come from Astro's font pipeline
      (astro.config.mjs → fonts[].cssVariable). */
@@ -61,30 +72,32 @@
 }
 
 /* ============================================================================
-   Dark theme — neutral gray (Mantine-style dark scale, zero warmth). Overrides
-   only the color tokens; layout/type/spacing/motion inherit from :root. Applied
-   via [data-theme="dark"] on <html> by the blocking inline script in
-   BaseLayout.astro (set before first paint). Surfaces step lightest→darkest:
-   line > hairline > panel-hover > panel > bg, so the fail-toward-line hairlines
-   read as light seams on the dark panels (inverse of the light theme).
+   Dark theme — neutral gray, drawn from Mantine's "dark" scale, zero warmth
+   (see the header comment above re: interpolated steps).
+   Overrides only the color tokens; layout/type/spacing/motion inherit from
+   :root. Applied via [data-theme="dark"] on <html> by the blocking inline
+   script in BaseLayout.astro (set before first paint). Surfaces step
+   lightest→darkest: line > hairline > panel-hover > panel > bg, so the
+   fail-toward-line hairlines read as light seams on the dark panels (inverse
+   of the light theme).
    ========================================================================== */
 [data-theme='dark'] {
   color-scheme: dark;
 
   /* Surfaces */
-  --bg: #1a1a1a;
+  --bg: #1f1f1f;
   --panel: #242424;
   --panel-hover: #2e2e2e;
 
   /* Lines */
-  --line: #3f3f3f;
-  --hairline: #333333;
+  --line: #424242;
+  --hairline: #383838;
 
   /* Ink / text */
-  --ink: #e7e7e7;
-  --ink-2: #a8a8a8;
+  --ink: #c9c9c9;
+  --ink-2: #b8b8b8;
   --muted: #828282;
-  --faint: #6b6b6b;
+  --faint: #696969;
   --faint-2: #767676;
 
   /* Accent — muted steel blue, lightened for contrast on dark */
@@ -93,8 +106,15 @@
   --accent-glow: rgba(86, 127, 171, 0.22);
   --dot-idle: #454545;
 
+  /* Status */
+  --status-warning: #e0a83a;
+  --status-success: #56c07a;
+
+  /* Shadow */
+  --shadow-rgb: 0, 0, 0;
+
   /* Chrome */
-  --bar-bg: rgba(26, 26, 26, 0.82);
+  --bar-bg: rgba(31, 31, 31, 0.82);
 
   /* Placeholder fills — neutral dark variants so the stripe placeholders don't glow */
   --stripe-portrait: repeating-linear-gradient(135deg, #262626 0 9px, #1f1f1f 9px 18px);
