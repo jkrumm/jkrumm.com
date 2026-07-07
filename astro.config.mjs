@@ -52,6 +52,23 @@ export default defineConfig({
     }),
     mdx(),
     sitemap(),
+
+    // Dev-only Color Lab toolbar app — live-preview/tweak color design
+    // tokens while `astro dev` runs. The toolbar (and this entrypoint) is
+    // never loaded by `astro build`/`astro preview`; zero production footprint.
+    {
+      name: 'color-lab-dev-toolbar',
+      hooks: {
+        'astro:config:setup': ({ addDevToolbarApp }) => {
+          addDevToolbarApp({
+            id: 'color-lab',
+            name: 'Color Lab',
+            icon: 'grid',
+            entrypoint: new URL('./src/dev-toolbar/color-lab.ts', import.meta.url),
+          });
+        },
+      },
+    },
   ],
 
   // Native Astro font pipeline — self-hosted, subset and preloaded at build
