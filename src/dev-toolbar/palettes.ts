@@ -4,19 +4,6 @@
  */
 
 export const TAILWIND_PALETTES: Record<string, Record<string, string>> = {
-  stone: {
-    '50': '#fafaf9',
-    '100': '#f5f5f4',
-    '200': '#e7e5e4',
-    '300': '#d6d3d1',
-    '400': '#a6a09b',
-    '500': '#79716b',
-    '600': '#57534d',
-    '700': '#44403b',
-    '800': '#292524',
-    '900': '#1c1917',
-    '950': '#0c0a09',
-  },
   neutral: {
     '50': '#fafafa',
     '100': '#f5f5f5',
@@ -160,4 +147,44 @@ export const MANTINE_PALETTES: Record<string, Record<string, string>> = {
     '8': '#1971c2',
     '9': '#1864ab',
   },
+};
+
+// Sourced from @blueprintjs/colors' canonical colors.ts (palantir/blueprint).
+// Gray runs lightest-to-darkest as white -> light-gray-1..5 -> gray-1..5 ->
+// dark-gray-1..5 -> black (17 steps); each hue below is the standard 5-step
+// (1 = darkest/most saturated, 5 = lightest) core/extended color scale.
+export const BLUEPRINT_PALETTES: Record<string, Record<string, string>> = {
+  gray: {
+    white: '#ffffff',
+    'light-gray-5': '#f6f7f9',
+    'light-gray-4': '#edeff2',
+    'light-gray-3': '#e5e8eb',
+    'light-gray-2': '#dce0e5',
+    'light-gray-1': '#d3d8de',
+    'gray-5': '#c5cbd3',
+    'gray-4': '#abb3bf',
+    'gray-3': '#8f99a8',
+    'gray-2': '#738091',
+    'gray-1': '#5f6b7c',
+    'dark-gray-5': '#404854',
+    'dark-gray-4': '#383e47',
+    'dark-gray-3': '#2f343c',
+    'dark-gray-2': '#252a31',
+    'dark-gray-1': '#1c2127',
+    black: '#111418',
+  },
+  blue: { '1': '#184a90', '2': '#215db0', '3': '#2d72d2', '4': '#4c90f0', '5': '#8abbff' },
+  green: { '1': '#165a36', '2': '#1c6e42', '3': '#238551', '4': '#32a467', '5': '#72ca9b' },
+  orange: { '1': '#77450d', '2': '#935610', '3': '#c87619', '4': '#ec9a3c', '5': '#fbb360' },
+  red: { '1': '#8e292c', '2': '#ac2f33', '3': '#cd4246', '4': '#e76a6e', '5': '#fa999c' },
+  cerulean: { '1': '#0c5174', '2': '#0f6894', '3': '#147eb3', '4': '#3fa6da', '5': '#68c1ee' },
+  forest: { '1': '#1d7324', '2': '#238c2c', '3': '#29a634', '4': '#43bf4d', '5': '#62d96b' },
+  gold: { '1': '#5c4405', '2': '#866103', '3': '#d1980b', '4': '#f0b726', '5': '#fbd065' },
+  indigo: { '1': '#5642a6', '2': '#634dbf', '3': '#7961db', '4': '#9881f3', '5': '#bdadff' },
+  lime: { '1': '#43501b', '2': '#5a701a', '3': '#8eb125', '4': '#b6d94c', '5': '#d4f17e' },
+  rose: { '1': '#a82255', '2': '#c22762', '3': '#db2c6f', '4': '#f5498b', '5': '#ff66a1' },
+  sepia: { '1': '#5e4123', '2': '#7a542e', '3': '#946638', '4': '#af855a', '5': '#d0b090' },
+  turquoise: { '1': '#004d46', '2': '#007067', '3': '#00a396', '4': '#13c9ba', '5': '#7ae1d8' },
+  vermilion: { '1': '#96290d', '2': '#b83211', '3': '#d33d17', '4': '#eb6847', '5': '#ff9980' },
+  violet: { '1': '#5c255c', '2': '#7c327c', '3': '#9d3f9d', '4': '#bd6bbd', '5': '#d69fd6' },
 };
