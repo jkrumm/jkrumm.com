@@ -1,5 +1,37 @@
 /* ============================================================================
    Design tokens — single source of truth for the portfolio.
+
+   Token map below documents each token's ROLE only. Per-theme hex VALUES live
+   once, at the :root (light) and [data-theme='dark'] blocks — edit them there;
+   keeping values out of this map means they never live in two places.
+
+   SURFACES
+     --bg              Page background — furthest-back surface
+     --panel           Card / cell fill — opaque bento panels
+     --panel-hover     Panel fill on hover / raised state
+   LINES
+     --line            Structural seam — bento frame, grid gaps, the one border
+     --hairline        Soft divider inside cells & reading surfaces (row rules,
+                       table lines, chart gridlines)
+   TEXT (emphasis ramp, strongest → faintest)
+     --ink             Primary — headings & strong body
+     --ink-2           Secondary text / emphasis (incl. hover borders & dots)
+     --muted           Muted body text
+     --faint           Faint labels, captions, quiet marks
+   ACCENT
+     --accent          Brand accent — links, active states
+     --accent-hover    Accent hover / pressed
+     --accent-glow     Focus glow/ring — DERIVED: --accent at 16% light / 22%
+                       dark (color-mix)
+     --on-accent       Text / icon on an accent fill (usually white)
+   STATUS
+     --status-warning  Warning tint — callouts
+     --status-success  Success tint — callouts
+   SHADOW
+     --shadow-rgb      Shadow color as an R,G,B triplet, fed into rgba() shadows
+   CHROME
+     --bar-bg          Sticky-bar backdrop (translucent) — DERIVED: --bg at 82%
+
    Gray tokens are drawn from Tailwind's "stone" scale (light theme) and
    Mantine's "dark" scale (dark theme, below), with a few values interpolated
    between scale steps where the canonical shades didn't land at the right
