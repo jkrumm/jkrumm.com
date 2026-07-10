@@ -75,6 +75,7 @@
      (astro.config.mjs → fonts[].cssVariable). */
   --mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
   --sans: var(--font-sans), system-ui, sans-serif;
+  --display: var(--font-display), system-ui, sans-serif;
 
   /* Layout */
   --maxw: 1180px;
@@ -264,7 +265,7 @@ html.theme-anim *::after {
 .prose h2,
 .prose h3,
 .prose h4 {
-  font-family: var(--mono);
+  font-family: var(--display);
   color: var(--ink);
   letter-spacing: -0.01em;
   line-height: 1.3;
@@ -351,7 +352,7 @@ html.theme-anim *::after {
 }
 
 .prose th {
-  font-family: var(--mono);
+  font-family: var(--display);
   font-size: 0.78em;
   letter-spacing: 0.08em;
   text-transform: uppercase;

@@ -2,6 +2,42 @@ import { defineConfig, fontProviders } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import expressiveCode from 'astro-expressive-code';
 import mdx from '@astrojs/mdx';
+import { FALLBACK, MONO_CANDIDATES, PROPORTIONAL_CANDIDATES, STORAGE_KEY } from './src/dev-toolbar/font-candidates.ts';
+
+// Dev-only anti-FOUT guard for Font Lab — mirrors the "Set theme + `.js`
+// before first paint" inline script in BaseLayout.astro, but for whichever
+// --font-mono candidate is currently applied in Font Lab. Injected as early
+// as possible in <head> (see injectScript('head-inline', ...) below) so a
+// persisted pick starts loading before first paint, instead of only after
+// the dev toolbar's own (necessarily async) entrypoint script initializes.
+// Built once here from the same candidate data Font Lab's UI uses, so the
+// two never drift; only ever injected when command === 'dev' (see below) —
+// never part of a production build.
+function buildFontFlickerGuardScript() {
+  const table = [...MONO_CANDIDATES, ...PROPORTIONAL_CANDIDATES].map((c) => ({
+    id: c.id,
+    family: c.family,
+    spacing: c.spacing,
+    fallback: FALLBACK[c.spacing],
+    href: c.source.href,
+  }));
+  return `(function () {
+  try {
+    var id = localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
+    if (!id) return;
+    var table = ${JSON.stringify(table)};
+    var c = null;
+    for (var i = 0; i < table.length; i++) { if (table[i].id === id) { c = table[i]; break; } }
+    if (!c) return;
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = c.href;
+    document.head.appendChild(link);
+    var targetVar = c.spacing === 'mono' ? '--font-mono' : '--font-display';
+    document.documentElement.style.setProperty(targetVar, "'" + c.family + "', " + c.fallback);
+  } catch (e) {}
+})();`;
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -69,6 +105,29 @@ export default defineConfig({
         },
       },
     },
+
+    // Dev-only Font Lab toolbar app — live-preview candidate mono/proportional
+    // fonts (loaded dev-only from Google Fonts/jsDelivr — see
+    // src/dev-toolbar/font-candidates.ts) and swap --font-mono across the
+    // site. Same dev-only guarantee as Color Lab above. Also injects the
+    // anti-FOUT guard script (defined above) so a persisted pick doesn't
+    // flash the default font on reload/navigation.
+    {
+      name: 'font-lab-dev-toolbar',
+      hooks: {
+        'astro:config:setup': ({ addDevToolbarApp, command, injectScript }) => {
+          addDevToolbarApp({
+            id: 'font-lab',
+            name: 'Font Lab',
+            icon: 'file-search',
+            entrypoint: new URL('./src/dev-toolbar/font-lab.ts', import.meta.url),
+          });
+          if (command === 'dev') {
+            injectScript('head-inline', buildFontFlickerGuardScript());
+          }
+        },
+      },
+    },
   ],
 
   // Native Astro font pipeline — self-hosted, subset and preloaded at build
@@ -83,6 +142,15 @@ export default defineConfig({
       styles: ['normal'],
       subsets: ['latin'],
       fallbacks: ['ui-monospace', 'SFMono-Regular', 'monospace'],
+    },
+    {
+      provider: fontProviders.fontsource(),
+      name: 'Manrope',
+      cssVariable: '--font-display',
+      weights: [400, 500, 600, 700],
+      styles: ['normal'],
+      subsets: ['latin'],
+      fallbacks: ['system-ui', 'sans-serif'],
     },
     {
       provider: fontProviders.fontsource(),
