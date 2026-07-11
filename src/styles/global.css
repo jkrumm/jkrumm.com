@@ -76,6 +76,17 @@
   --mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
   --sans: var(--font-sans), system-ui, sans-serif;
   --display: var(--font-display), system-ui, sans-serif;
+  /* Hubot Sans dialed to 88% on its own wdth axis — tighter, more
+     compact-technical than its 100% default. Set once here (font-stretch
+     inherits) rather than repeated on every --display consumer; fonts
+     without a wdth axis (JetBrains Mono, Nunito Sans) just ignore it. */
+  --font-display-stretch: 88%;
+  /* Global font-weight offset for --display consumers with an explicit
+     font-weight in the same rule — those weights are wrapped in calc() so
+     this token can nudge them uniformly (see the conversions in component
+     styles). -100 dialed in after A/B testing in Font Lab: base 500/600/700
+     weights render at 400/500/600, lighter/leaner alongside the 88% width. */
+  --font-display-weight-offset: -100;
 
   /* Layout */
   --maxw: 1180px;
@@ -168,6 +179,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--sans);
+  font-stretch: var(--font-display-stretch);
 }
 
 a {
@@ -275,19 +287,19 @@ html.theme-anim *::after {
 .prose h2 {
   margin-top: 2.2em;
   font-size: 1.6em;
-  font-weight: 700;
+  font-weight: calc(700 + var(--font-display-weight-offset));
 }
 
 .prose h3 {
   margin-top: 1.8em;
   font-size: 1.3em;
-  font-weight: 600;
+  font-weight: calc(600 + var(--font-display-weight-offset));
 }
 
 .prose h4 {
   margin-top: 1.5em;
   font-size: 1.1em;
-  font-weight: 600;
+  font-weight: calc(600 + var(--font-display-weight-offset));
 }
 
 .prose a {

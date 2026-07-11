@@ -206,7 +206,7 @@ import { roles, resumeHref } from '@/data/experience.ts';
   .tl-title {
     font-family: var(--display);
     font-size: clamp(16px, 2vw, 20px);
-    font-weight: 600;
+    font-weight: calc(600 + var(--font-display-weight-offset));
     margin: 0;
   }
 
@@ -344,7 +344,7 @@ import { roles, resumeHref } from '@/data/experience.ts';
 
   .tl-ladder__row[data-current='true'] .tl-ladder__title {
     color: var(--accent);
-    font-weight: 600;
+    font-weight: calc(600 + var(--font-display-weight-offset));
   }
 
   .tl-scope {

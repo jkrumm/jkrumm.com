@@ -20,7 +20,10 @@ function buildFontFlickerGuardScript() {
     spacing: c.spacing,
     fallback: FALLBACK[c.spacing],
     href: c.source.href,
+    fontStretch: c.fontStretch ?? '100%',
   }));
+  const stretchKey = `${STORAGE_KEY}-stretch`;
+  const weightOffsetKey = `${STORAGE_KEY}-weight-offset`;
   return `(function () {
   try {
     var id = localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
@@ -35,6 +38,20 @@ function buildFontFlickerGuardScript() {
     document.head.appendChild(link);
     var targetVar = c.spacing === 'mono' ? '--font-mono' : '--font-display';
     document.documentElement.style.setProperty(targetVar, "'" + c.family + "', " + c.fallback);
+    if (c.spacing === 'proportional') {
+      var stretch = c.fontStretch;
+      try {
+        var savedStretch = JSON.parse(localStorage.getItem(${JSON.stringify(stretchKey)}) || 'null');
+        if (savedStretch && savedStretch.id === c.id && typeof savedStretch.value === 'number') stretch = savedStretch.value + '%';
+      } catch (e2) {}
+      document.documentElement.style.setProperty('--font-display-stretch', stretch);
+      var weightOffset = 0;
+      try {
+        var savedWeight = JSON.parse(localStorage.getItem(${JSON.stringify(weightOffsetKey)}) || 'null');
+        if (savedWeight && savedWeight.id === c.id && typeof savedWeight.value === 'number') weightOffset = savedWeight.value;
+      } catch (e3) {}
+      document.documentElement.style.setProperty('--font-display-weight-offset', String(weightOffset));
+    }
   } catch (e) {}
 })();`;
 }
@@ -145,9 +162,14 @@ export default defineConfig({
     },
     {
       provider: fontProviders.fontsource(),
-      name: 'Manrope',
+      name: 'Hubot Sans',
       cssVariable: '--font-display',
-      weights: [400, 500, 600, 700],
+      // A range, not discrete values — this is what actually loads Hubot
+      // Sans as a variable font (one file, continuous wght 200-900) instead
+      // of four pinned static-per-weight instances. Fontsource's remote
+      // provider syntax for a variable range is a single-element array
+      // string, per Astro's Fonts guide ("Using variable fonts").
+      weights: ['200 900'],
       styles: ['normal'],
       subsets: ['latin'],
       fallbacks: ['system-ui', 'sans-serif'],

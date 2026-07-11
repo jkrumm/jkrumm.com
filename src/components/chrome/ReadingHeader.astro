@@ -58,7 +58,7 @@ const { category, width = 'var(--reading-maxw)' } = Astro.props;
   }
 
   .reading-header__mark {
-    font-weight: 700;
+    font-weight: calc(700 + var(--font-display-weight-offset));
     font-size: 14px;
     color: var(--ink);
   }

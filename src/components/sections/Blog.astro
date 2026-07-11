@@ -103,7 +103,7 @@ const recentDelays = [120, 170, 220, 270];
 
   .feature__title {
     margin: 0 0 14px;
-    font: 600 clamp(20px, 2vw, 26px) var(--display);
+    font: calc(600 + var(--font-display-weight-offset)) clamp(20px, 2vw, 26px) var(--display);
     line-height: 1.15;
     letter-spacing: -0.01em;
   }
@@ -156,7 +156,7 @@ const recentDelays = [120, 170, 220, 270];
   }
 
   .recent__title {
-    font: 500 16px var(--display);
+    font: calc(500 + var(--font-display-weight-offset)) 16px var(--display);
     color: inherit;
     transition: color 0.2s;
   }

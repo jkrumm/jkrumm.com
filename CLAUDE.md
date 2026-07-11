@@ -13,6 +13,13 @@ not derivable from the code live here.
 - **Motion** (`motion.dev`) — the only client dependency. Vanilla
   `animate`/`inView`/`scroll` from `motion` (never `motion/react`).
 - **Astro Fonts API** + `@astrojs/sitemap` + hand-rolled SEO (`BaseHead`/JSON-LD).
+- **Fonts** — `--font-mono` (JetBrains Mono, real code only), `--font-display`
+  (Hubot Sans, headings/nav/labels/chrome — variable, loaded as a true range
+  `weights: ['200 900']` not discrete instances; tuned via `--font-display-stretch:
+  88%` and `--font-display-weight-offset: -100` in `global.css`), `--font-sans`
+  (Nunito Sans, body text). Live-tune via the dev-only **Font Lab** toolbar app
+  (`src/dev-toolbar/font-lab.ts`) — width/weight sliders drive the same tokens
+  production reads.
 
 **Runtime pin (gotcha).** Astro 7 needs Node ≥ 22.12; this machine defaults to
 older Node, so every `astro` command is pinned to Bun's runtime

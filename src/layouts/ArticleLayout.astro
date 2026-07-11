@@ -262,7 +262,7 @@ const showToc = toc.length >= 2;
   .related__link {
     display: block;
     padding: 12px 0;
-    font: 500 15px var(--display);
+    font: calc(500 + var(--font-display-weight-offset)) 15px var(--display);
     color: var(--ink);
     border-top: 1px solid var(--hairline);
     transition: color 0.2s;
@@ -314,7 +314,7 @@ const showToc = toc.length >= 2;
 
   .article-meta__title {
     margin: 0 0 16px;
-    font: 700 clamp(28px, 4vw, 40px) var(--display);
+    font: calc(700 + var(--font-display-weight-offset)) clamp(28px, 4vw, 40px) var(--display);
     letter-spacing: -0.02em;
     line-height: 1.15;
     color: var(--ink);
@@ -372,7 +372,7 @@ const showToc = toc.length >= 2;
   }
 
   .article-nav__title {
-    font: 500 14px var(--display);
+    font: calc(500 + var(--font-display-weight-offset)) 14px var(--display);
     line-height: 1.3;
     color: var(--ink);
     /* Keep neighbour cards a single row tall regardless of title length. */

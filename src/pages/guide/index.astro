@@ -113,7 +113,7 @@ if (count > 0) {
   }
 
   .chapter__title {
-    font: 500 clamp(16px, 1.8vw, 19px) var(--display);
+    font: calc(500 + var(--font-display-weight-offset)) clamp(16px, 1.8vw, 19px) var(--display);
     letter-spacing: -0.01em;
     color: var(--ink);
     transition: color 0.2s;

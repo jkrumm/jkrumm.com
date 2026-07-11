@@ -22,6 +22,17 @@ export interface FontCandidate {
   fontsourcePackage: string;
   weights: number[];
   blurb: string;
+  /** CSS `font-stretch` value for a variable font's width (`wdth`) axis —
+   * only set on candidates that tune width away from the default 100%. The
+   * source stylesheet must request the matching `wdth` value/range (Google
+   * Fonts css2 axis tags are alphabetical, e.g. `wdth,wght@88,400`) or the
+   * browser has no narrower instance to select. */
+  fontStretch?: string;
+  /** Live-tunable variable axis ranges, [min, max] — presence of `wdth`/`wght`
+   * renders a width/weight slider on this candidate's Font Lab card. Only
+   * meaningful when the source stylesheet requests a continuous range on
+   * that axis. */
+  axes?: { wdth?: [number, number]; wght?: [number, number] };
 }
 
 export const STORAGE_KEY = 'jk-font-lab';
@@ -101,7 +112,10 @@ export const MONO_CANDIDATES: FontCandidate[] = [
 // Ordered roughly floor → ceiling on character/severity: IBM Plex Sans/DM
 // Sans/Source Sans 3 (too neutral), then the middle zone (Instrument Sans,
 // Manrope, Plus Jakarta Sans, Onest — geometric character without going
-// full grotesk), then Space Grotesk/Fira Sans/Geist Sans (more aggressive).
+// full grotesk), then the engineered/technical cluster (Hubot Sans,
+// Geologica, Hanken Grotesk, Familjen Grotesk, Archivo — brand-tech/data-
+// company DNA, more structured than the middle zone but less quirky than
+// Space Grotesk), then Space Grotesk/Fira Sans/Geist Sans (most aggressive).
 export const PROPORTIONAL_CANDIDATES: FontCandidate[] = [
   {
     id: 'ibm-plex-sans',
@@ -151,7 +165,7 @@ export const PROPORTIONAL_CANDIDATES: FontCandidate[] = [
     source: { href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap' },
     fontsourcePackage: '@fontsource-variable/manrope',
     weights: [400, 500, 600, 700],
-    blurb: 'Current display font — modern geometric neo-grotesque, expressive yet composed.',
+    blurb: 'Modern geometric neo-grotesque, expressive yet composed. Previous --font-display default, replaced by Hubot Sans.',
   },
   {
     id: 'plus-jakarta-sans',
@@ -172,6 +186,64 @@ export const PROPORTIONAL_CANDIDATES: FontCandidate[] = [
     fontsourcePackage: '@fontsource-variable/onest',
     weights: [400, 500, 600, 700],
     blurb: 'Soft-geometric hybrid (sits between Arial and Montserrat) — characterful but restrained. Middle-zone pick.',
+  },
+  {
+    id: 'hubot-sans',
+    label: 'Hubot Sans',
+    spacing: 'proportional',
+    family: 'Hubot Sans',
+    // Continuous 2D range on both axes — matches astro.config.mjs's
+    // weights: ['200 900'], which is what actually loads Hubot Sans as a
+    // true variable font (one file, both axes live) rather than pinned
+    // per-weight static instances. Same range here so the Font Lab sliders
+    // can interpolate the whole space, not just the production default.
+    source: { href: 'https://fonts.googleapis.com/css2?family=Hubot+Sans:wdth,wght@75..125,200..900&display=swap' },
+    fontsourcePackage: '@fontsource-variable/hubot-sans',
+    weights: [200, 900],
+    fontStretch: '88%',
+    axes: { wdth: [75, 125], wght: [200, 900] },
+    blurb:
+      "GitHub's engineered geometric sidekick to Mona Sans — technical precision, closest open-source match to a Palantir/data-company heading font. Shipped --font-display default, tuned to 88% on its real wdth axis (75-125% per github.com/github/hubot-sans). Also has an ital axis (0-1, a hard on/off switch, not a graded slider) — not exposed here since the site has no italic headings.",
+  },
+  {
+    id: 'geologica',
+    label: 'Geologica',
+    spacing: 'proportional',
+    family: 'Geologica',
+    source: { href: 'https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&display=swap' },
+    fontsourcePackage: '@fontsource-variable/geologica',
+    weights: [400, 500, 600, 700],
+    blurb: "Has a variable Sharpness axis (not exposed here) from calm grotesk to angular/blueprint-technical — this preview is the mid-sharpness default cut.",
+  },
+  {
+    id: 'hanken-grotesk',
+    label: 'Hanken Grotesk',
+    spacing: 'proportional',
+    family: 'Hanken Grotesk',
+    source: { href: 'https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap' },
+    fontsourcePackage: '@fontsource-variable/hanken-grotesk',
+    weights: [400, 500, 600, 700],
+    blurb: 'Subtly geometric, industrial-stoic character — engineered feel without going as angular as Space Grotesk.',
+  },
+  {
+    id: 'familjen-grotesk',
+    label: 'Familjen Grotesk',
+    spacing: 'proportional',
+    family: 'Familjen Grotesk',
+    source: { href: 'https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&display=swap' },
+    fontsourcePackage: '@fontsource-variable/familjen-grotesk',
+    weights: [400, 500, 600, 700],
+    blurb: "Helvetica-like bones with squared curves and taut apertures — reads as 'engineered system', not 'designer font'.",
+  },
+  {
+    id: 'archivo',
+    label: 'Archivo',
+    spacing: 'proportional',
+    family: 'Archivo',
+    source: { href: 'https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap' },
+    fontsourcePackage: '@fontsource-variable/archivo',
+    weights: [400, 500, 600, 700],
+    blurb: 'Technical workhorse built for digital interfaces, with a width axis (not exposed here) — data-dense, developer-tool DNA.',
   },
   {
     id: 'space-grotesk',

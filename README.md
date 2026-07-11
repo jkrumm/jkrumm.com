@@ -10,7 +10,7 @@ scroll-progress, active-section tracking and replayable reveal animations.
 - **[Astro 7](https://astro.build)** (static output) — zero client JS except one small behavior script.
 - **[Bun](https://bun.sh)** — package manager + task runner.
 - **[Motion](https://motion.dev)** — `inView`/`scroll` power the reveals and the progress line.
-- **Astro Fonts API** — JetBrains Mono + Nunito Sans, self-hosted and subset at build time (no CLS).
+- **Astro Fonts API** — JetBrains Mono (code), Hubot Sans (headings/UI), Nunito Sans (body), self-hosted and subset at build time (no CLS).
 - **`@astrojs/sitemap`** + hand-rolled `BaseHead` / JSON-LD for SEO.
 
 No UI framework (React/Vue) — the design is static markup plus one imperative

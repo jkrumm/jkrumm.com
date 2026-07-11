@@ -78,7 +78,7 @@ import { navSections } from '@/data/nav';
 
   .hero__statement {
     font-family: var(--display);
-    font-weight: 700;
+    font-weight: calc(700 + var(--font-display-weight-offset));
     font-size: clamp(22px, 3vw, 34px);
     line-height: 1.2;
     letter-spacing: -0.02em;
@@ -138,6 +138,6 @@ import { navSections } from '@/data/nav';
   }
 
   .nav-cell__title {
-    font: 500 clamp(15px, 1.5vw, 18px) var(--display);
+    font: calc(500 + var(--font-display-weight-offset)) clamp(15px, 1.5vw, 18px) var(--display);
   }
 </style>

@@ -27,7 +27,7 @@ const { cite } = Astro.props;
 
   .pull-quote__mark {
     display: block;
-    font: 700 3em/1 var(--display);
+    font: calc(700 + var(--font-display-weight-offset)) 3em/1 var(--display);
     color: var(--accent);
     opacity: 0.35;
   }

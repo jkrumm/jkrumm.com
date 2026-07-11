@@ -54,7 +54,7 @@ import { SOCIAL } from '@/consts';
   }
 
   .contact__statement {
-    font: 600 clamp(18px, 2.2vw, 28px) / 1.15 var(--display);
+    font: calc(600 + var(--font-display-weight-offset)) clamp(18px, 2.2vw, 28px) / 1.15 var(--display);
     letter-spacing: -0.02em;
     max-width: 760px;
     margin: 0;
@@ -80,7 +80,7 @@ import { SOCIAL } from '@/consts';
   }
 
   .contact__link-value {
-    font: 600 clamp(18px, 1.8vw, 22px) var(--display);
+    font: calc(600 + var(--font-display-weight-offset)) clamp(18px, 1.8vw, 22px) var(--display);
   }
 
   .contact__link-arrow {
