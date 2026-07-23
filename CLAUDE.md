@@ -80,3 +80,17 @@ the skill's off-stage-surfaces subsection before building another listing page.
 Edit typed modules in `src/data/`; the layout doesn't change. Design tokens (all
 colors/type/spacing, bar heights, max width) are CSS variables in
 `src/styles/global.css`.
+
+## Images / CDN
+
+- **Content/article images** → CDN URLs (`blog/` prefix, readable names,
+  uploaded via the `/img` skill), passed straight into `Figure.astro`'s `src`
+  prop — it's a bare `<img src>`, no `astro:assets` pipeline. Don't add files
+  to `public/` for these.
+- **Anything scrapers/unfurlers read** (OG images, RSS) must use an `f:jpg`
+  rendition, never `@jpg` — Cloudflare ignores `Vary: Accept`, so a
+  format-negotiated URL can get cache-poisoned to AVIF for old clients.
+- `public/` stays for the favicon, small SVG diagrams, and the current OG
+  image (`og.png`, wired via `SITE.ogImage` in `src/consts.ts`, resolved
+  absolute in `BaseHead.astro`). Migrating `og.png` to the CDN
+  (`rs:fill:1200:630/f:jpg`) is an optional follow-up, not done yet.
