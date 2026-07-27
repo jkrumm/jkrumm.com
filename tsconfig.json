@@ -1,7 +1,10 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "design_handoff_portfolio"],
+  // `scripts/` is Bun-runtime tooling (Bun globals, top-level await, no DOM lib)
+  // that never ships. Type-checking it against the site's Astro config only
+  // produces noise — it is run by Bun, which type-strips it directly.
+  "exclude": ["dist", "design_handoff_portfolio", "scripts"],
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
