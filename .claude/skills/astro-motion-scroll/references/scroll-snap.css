@@ -1,7 +1,15 @@
 /* ============================================================================
+   HISTORICAL — DO NOT COPY INTO THE SITE.
+   ----------------------------------------------------------------------------
+   Snap was reverted July 2026 and the #jk-scroll container was deleted in the
+   2026-07-27 borderless redesign, along with SectionShell and Plus. The site
+   uses DOCUMENT scroll with no snap. This file is kept only as the record of
+   what the snap stage looked like.
+   ============================================================================
+
    Full-viewport scroll-snap that clears fixed chrome bars.
    ----------------------------------------------------------------------------
-   Distilled from the WORKING code in this repo:
+   Distilled from the then-WORKING code in this repo:
      - src/pages/index.astro           → #jk-scroll (the scroll stage)
      - src/components/primitives/SectionShell.astro → .section
      - src/components/primitives/Plus.astro         → corner "+" centering

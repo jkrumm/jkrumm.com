@@ -6,12 +6,13 @@
  *   <Chart type="line" data={series} x="month" y="deploys" caption="…" />
  *
  * Margins are explicit because linkedom (the build-time DOM) has no font metrics
- * for Plot's auto-layout. Colors are literal palette values (the site is
- * light-only), matched to the design tokens.
+ * for Plot's auto-layout. Colors are sentinel literals from chart-palette.ts,
+ * rewritten to CSS vars post-render via swapToCssVars so the chart follows
+ * light/dark theme — see that file's header for why.
  */
 import * as Plot from '@observablehq/plot';
 import { renderPlotToSvg } from '@/utils/plot';
-import { FAINT, ACCENT, RANGE } from '@/utils/chart-palette';
+import { FAINT, ACCENT, RANGE, RANGE_CSS_VARS, swapToCssVars } from '@/utils/chart-palette';
 
 interface Props {
   type?: 'line' | 'bar' | 'area' | 'dot';
@@ -72,17 +73,18 @@ const svg = renderPlotToSvg({
   marks: [Plot.ruleY([0], { stroke: FAINT, strokeOpacity: 0.5 }), ...marks],
 });
 
+const themedSvg = swapToCssVars(svg);
 const legend = seriesDomain;
 ---
 
 <figure class="chart">
-  <div class="chart__plot" set:html={svg} />
+  <div class="chart__plot" set:html={themedSvg} />
   {
     legend.length > 0 && (
       <ul class="chart__legend">
         {legend.map((label, index) => (
           <li class="chart__legend-item">
-            <span class="chart__swatch" style={`background:${RANGE[index % RANGE.length]}`} />
+            <span class="chart__swatch" style={`background:${RANGE_CSS_VARS[index % RANGE_CSS_VARS.length]}`} />
             {label}
           </li>
         ))}
@@ -109,10 +111,10 @@ const legend = seriesDomain;
     color: var(--ink-2);
   }
 
-  /* Soften Plot's grid lines to the site's hairline weight. */
+  /* Soften Plot's grid lines to the site's divider weight. */
   .chart__plot :global([aria-label='y-grid'] line),
   .chart__plot :global([aria-label='y-axis grid'] line) {
-    stroke: var(--hairline);
+    stroke: var(--divider);
   }
 
   .chart__legend {
@@ -128,8 +130,8 @@ const legend = seriesDomain;
     display: flex;
     align-items: center;
     gap: 8px;
-    font: 11px var(--display);
-    letter-spacing: 0.04em;
+    font-family: var(--mono);
+    font-size: var(--text-xs);
     color: var(--muted);
   }
 
@@ -137,12 +139,13 @@ const legend = seriesDomain;
     width: 10px;
     height: 10px;
     flex: none;
+    border-radius: 2px;
   }
 
   .chart__caption {
     margin-top: 12px;
-    font: 11px var(--display);
-    letter-spacing: 0.04em;
+    font-size: var(--text-sm);
+    line-height: 1.5;
     color: var(--faint);
   }
 </style>

@@ -1,185 +1,268 @@
 /* ============================================================================
-   Design tokens — single source of truth for the portfolio.
+   Design tokens — single source of truth.
 
-   Token map below documents each token's ROLE only. Per-theme hex VALUES live
-   once, at the :root (light) and [data-theme='dark'] blocks — edit them there;
-   keeping values out of this map means they never live in two places.
+   The site is BORDERLESS. Separation comes from whitespace, an ink ramp, and
+   right-aligned tabular metadata — in that order. `border` is zeroed at the
+   reset (see § Reset) so every border is an explicit, visible opt-in, and the
+   site-wide budget is two hairlines: the rule beside each Writing year group,
+   and the footer top edge. A third is a bug.
+
+   Colour values are ported from basalt-ui v1.2.0 (see docs/basalt-astro.md for
+   what was adopted, what was kept, and why). Per-theme hex values live once, at
+   the :root (light) and [data-theme='dark'] blocks — the map below documents
+   ROLES only, so a value never lives in two places.
 
    SURFACES
-     --bg              Page background — furthest-back surface
-     --panel           Card / cell fill — opaque bento panels
-     --panel-hover     Panel fill on hover / raised state
-   LINES
-     --line            Structural seam — bento frame, grid gaps, the one border
-     --hairline        Soft divider inside cells & reading surfaces (row rules,
-                       table lines, chart gridlines)
+     --bg              Page canvas — furthest-back surface
+     --panel           Raised surface (media tiles, code blocks)
+     --panel-hover     Row hover plate
+   LINES — basalt splits one role into three. Porting the NAME instead of the
+   ROLE is the classic mistake here; read these before reaching for one.
+     --divider         The soft rule inside a surface. The ONLY hairline the
+                       design permits, and only twice (see above).
+     --ring            Consumed exclusively inside --shadow-card / --shadow-ring.
+                       Never reference it directly.
+   DEPTH — replaces the border. The 1px ring lives INSIDE the shadow value, so
+   nothing needs a `border` property to read as an edge.
+     --shadow-ring     Media edge: a hairline ring, no drop
+     --shadow-card     Lifted surface: whisper shadow + ring
    TEXT (emphasis ramp, strongest → faintest)
-     --ink             Primary — headings & strong body
-     --ink-2           Secondary text / emphasis (incl. hover borders & dots)
-     --muted           Muted body text
-     --faint           Faint labels, captions, quiet marks
-   ACCENT
-     --accent          Brand accent — links, active states
-     --accent-hover    Accent hover / pressed
-     --accent-glow     Focus glow/ring — DERIVED: --accent at 16% light / 22%
-                       dark (color-mix)
-     --on-accent       Text / icon on an accent fill (usually white)
+     --ink             Titles, headings, <strong>. The PRIMARY tier.
+     --ink-2           Body copy and descriptions. Body is secondary, on purpose
+                       — promoting body to --ink flattens the hierarchy.
+     --muted           Supporting text
+     --faint           Meta: dates, years, stack lines, captions
+   ACCENT — two roles, two colours. They are not interchangeable.
+     --accent          INK role: links, focus ring, the active-nav dot. Inverts
+                       across schemes.
+     --accent-hover    Accent, pressed
+     --accent-glow     Focus glow — DERIVED from --accent
+     --accent-fill     SURFACE role: a filled control carrying a label. The SAME
+                       colour in both schemes (a fill is squeezed from both
+                       sides), always paired with --on-accent.
+     --on-accent       Label on an accent FILL. White in both schemes.
    STATUS
-     --status-warning  Warning tint — callouts
-     --status-success  Success tint — callouts
-   SHADOW
-     --shadow-rgb      Shadow color as an R,G,B triplet, fed into rgba() shadows
-   CHROME
-     --bar-bg          Sticky-bar backdrop (translucent) — DERIVED: --bg at 82%
-
-   Gray tokens are drawn from Tailwind's "stone" scale (light theme) and
-   Mantine's "dark" scale (dark theme, below), with a few values interpolated
-   between scale steps where the canonical shades didn't land at the right
-   contrast level (e.g. --panel, dark --hairline).
+     --status-success / --status-warning / --status-error  + derived --tint-*
    ========================================================================== */
 :root {
   color-scheme: light;
 
-  /* Surfaces */
-  --bg: color-mix(in srgb, #f4f4f5 50%, #e4e4e7);
-  --panel: #f4f4f5;
-  --panel-hover: #fafafa;
+  /* Surfaces — adopted from basalt as a SET; the ramp's contrast is
+     derive-guaranteed, so mixing in half of another ramp breaks it. */
+  --bg: #f2f2f5;
+  --panel: #fafafd;
+  --panel-hover: color-mix(in srgb, #262629 5%, transparent);
 
   /* Lines */
-  --line: color-mix(in srgb, #e4e4e7 50%, #d4d4d8);
-  --hairline: #e5e5e5;
+  --divider: color-mix(in srgb, #262629 12%, transparent);
+  --ring: color-mix(in srgb, #262629 10%, transparent);
 
-  /* Ink / text */
-  --ink: #262626;
-  --ink-2: #404040;
-  --muted: #525252;
-  --faint: #737373;
+  /* Depth */
+  --shadow-ring: 0 0 0 1px var(--ring);
+  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.05), 0 0 0 1px var(--ring);
+
+  /* Ink */
+  --ink: #262629;
+  --ink-2: #404043;
+  --muted: #525255;
+  --faint: #737376;
 
   /* Accent */
   --accent: #0084d1;
   --accent-hover: #0069a8;
   --accent-glow: color-mix(in srgb, var(--accent) 16%, transparent);
+  --accent-fill: #0077bd;
   --on-accent: #ffffff;
 
   /* Status */
-  --status-warning: #b5750f;
   --status-success: #2f7a4f;
+  --status-warning: #b5750f;
+  --status-error: #b53f3f;
+  --tint-success: color-mix(in srgb, var(--status-success) 12%, transparent);
+  --tint-warning: color-mix(in srgb, var(--status-warning) 12%, transparent);
+  --tint-error: color-mix(in srgb, var(--status-error) 12%, transparent);
 
-  /* Shadow */
-  --shadow-rgb: 28, 25, 23;
+  /* Charts — four categorical series. Observable Plot renders to static SVG at
+     BUILD time (linkedom, no CSSOM), so it cannot read a custom property: it is
+     handed sentinel hexes and Chart.astro rewrites them to these vars in the
+     emitted markup. That indirection is the only reason a chart can follow the
+     theme at all — see src/utils/chart-palette.ts. --chart-1 tracks --accent. */
+  --chart-1: #0084d1;
+  --chart-2: #908983;
+  --chart-3: #a8763f;
+  --chart-4: #5a8c6e;
 
-  /* Chrome — derived: --bg at 82% opacity (auto-follows --bg across themes) */
-  --bar-bg: color-mix(in srgb, var(--bg) 82%, transparent);
-
-  /* Typography — the CSS variables come from Astro's font pipeline
-     (astro.config.mjs → fonts[].cssVariable). */
+  /* ── Typography ────────────────────────────────────────────────────────
+     Families come from Astro's font pipeline (astro.config.mjs →
+     fonts[].cssVariable). --font-mono is for DATA ONLY: dates, years,
+     versions, stack lines, code. Never for decoration. */
   --mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
   --sans: var(--font-sans), system-ui, sans-serif;
   --display: var(--font-display), system-ui, sans-serif;
-  /* Hubot Sans dialed to 88% on its own wdth axis — tighter, more
-     compact-technical than its 100% default. Set once here (font-stretch
-     inherits) rather than repeated on every --display consumer; fonts
-     without a wdth axis (JetBrains Mono, Nunito Sans) just ignore it. */
+
+  /* Hubot Sans is variable on both wdth and wght. Width is dialed to 88% once
+     here (font-stretch inherits); fonts without a wdth axis ignore it. The
+     weight offset is a Font Lab knob — it nudges every --w-* token at once, so
+     the ladder stays proportional. Default 0: the weights below are literal. */
   --font-display-stretch: 88%;
-  /* Global font-weight offset for --display consumers with an explicit
-     font-weight in the same rule — those weights are wrapped in calc() so
-     this token can nudge them uniformly (see the conversions in component
-     styles). -100 dialed in after A/B testing in Font Lab: base 500/600/700
-     weights render at 400/500/600, lighter/leaner alongside the 88% width. */
-  --font-display-weight-offset: -100;
+  --font-display-weight-offset: 0;
 
-  /* Layout */
-  --maxw: 1180px;
-  /* Reading/index surfaces are calmer than the 1180px bento stage. */
-  --reading-maxw: 42rem;
-  --index-maxw: 960px;
-  --bar-top: 60px;
-  --bar-bottom: 56px;
+  /* Weight ladder. Three steps, and hierarchy is carried by these plus the ink
+     ramp — never by size (the size ceiling is 24px, site-wide). */
+  --w-body: 400;
+  --w-med: calc(500 + var(--font-display-weight-offset));
+  --w-strong: calc(620 + var(--font-display-weight-offset));
 
-  /* Placeholder fills (replaced by real imagery later) */
-  --stripe-portrait: repeating-linear-gradient(135deg, #eae7e3 0 9px, #f4f2ef 9px 18px);
-  --stripe-photo: repeating-linear-gradient(135deg, #e7e3de 0 10px, #f1eeea 10px 20px);
+  /* Size ladder. Fixed list — anything not on it is a bug. */
+  --text-xs: 13px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+
+  /* ── Layout ────────────────────────────────────────────────────────────
+     --page-top is BOTH the page's top padding and the sidebar's sticky
+     offset, so retuning the breathing room retunes the rail with it. */
+  --sidebar-w: 212px;
+  --gutter: 64px;
+  --content-w: 680px;
+  /* Reading surfaces widen; the guide/blog indexes use the shell unchanged. */
+  --reading-w: 720px;
+  --page-top: 128px;
+  --page-inset: 24px;
+
+  /* ── Spacing ladder ────────────────────────────────────────────────────
+     Four steps, by NESTING DEPTH. Every vertical gap on the site is one of
+     these — a component that reaches for a raw px value is a bug, because
+     that is exactly how the rhythm drifted the first time (the sections had
+     accumulated 4/12/20/28/32/36/56px of ad-hoc gaps and margins).
+
+     Read them as a containment ladder:
+       section  ──96──  section
+         └ label ──24── body
+             └ group ──32── group      (a multi-line row, a sub-list, a year
+             │                          group — anything that owns >1 line)
+                 └ block ──24── block  (inside one group: a form field, the
+                 │                      lines of a row)
+                     └ row ──8── row   (single-line rows in a list)
+
+     GOTCHA: a `.plate` row carries `padding-block` for its hover plate, and
+     that padding is part of the visual gap. Such lists set
+     `gap: calc(<token> - 2 * <padding>)` rather than the token directly, so
+     what you SEE is the token. Never eyeball it back to a raw number. */
+  --space-section: 96px; /* section ↔ section */
+  --space-group: 32px; /* group ↔ group inside a section */
+  --space-block: 24px; /* label → body, and block ↔ block inside a group */
+  --space-row: 8px; /* single-line row ↔ row */
 
   /* Motion */
   --ease-reveal: cubic-bezier(0.2, 0.7, 0.2, 1);
-
-  /* Spacing — shared bento card/cell padding scale. Vertical is always ≤
-     horizontal so cards read compact; pick the tier by visual weight. */
-  --space-bar-y: clamp(14px, 2vw, 24px);
-  --space-bar-x: clamp(20px, 3vw, 40px);
-  --space-card-y: clamp(18px, 2vw, 26px);
-  --space-card-x: clamp(24px, 2.6vw, 34px);
-  --space-hero-y: clamp(20px, 2.4vw, 30px);
-  --space-hero-x: clamp(26px, 3.2vw, 42px);
+  --dur-hover: 150ms;
 }
 
 /* ============================================================================
-   Dark theme — neutral gray, drawn from Mantine's "dark" scale, zero warmth
-   (see the header comment above re: interpolated steps).
-   Overrides only the color tokens; layout/type/spacing/motion inherit from
-   :root. Applied via [data-theme="dark"] on <html> by the blocking inline
-   script in BaseLayout.astro (set before first paint). Surfaces step
-   lightest→darkest: line > hairline > panel-hover > panel > bg, so the
-   fail-toward-line hairlines read as light seams on the dark panels (inverse
-   of the light theme).
+   Dark theme — overrides colour only; layout/type/spacing/motion inherit.
+   Applied via [data-theme='dark'] on <html> by the pre-paint inline script in
+   BaseLayout.astro.
+
+   Note the two deliberate NON-inversions: --accent-fill and --on-accent are
+   identical in both schemes. A fill is squeezed from both sides — it must clear
+   a contrast floor against its white label in light AND against the dark canvas
+   — so it holds still while the ink-role --accent inverts around it.
    ========================================================================== */
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* Surfaces */
-  --bg: color-mix(in srgb, #27272a 75%, #18181b);
-  --panel: #27272a;
-  --panel-hover: color-mix(in srgb, #3f3f46 50%, #27272a);
+  --bg: #27272a;
+  --panel: #2b2b2e;
+  --panel-hover: color-mix(in srgb, #ffffff 7%, transparent);
 
-  /* Lines */
-  --line: #3f3f46;
-  --hairline: color-mix(in srgb, #52525c 50%, #3f3f46);
+  --divider: color-mix(in srgb, #ffffff 12%, transparent);
+  /* The dark ring is an INSET white mix, a different construction from the
+     light outset hairline — the two can't share one expression. */
+  --ring: color-mix(in srgb, #ffffff 9%, transparent);
+  --shadow-ring: inset 0 0 0 1px var(--ring);
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.4), inset 0 0 0 1px var(--ring);
 
-  /* Ink / text */
-  --ink: #e5e5e5;
-  --ink-2: color-mix(in srgb, #e5e5e5 50%, #d4d4d4);
-  --muted: #d4d4d4;
-  --faint: #a1a1a1;
+  --ink: #e5e5e9;
+  --ink-2: #dddde1;
+  --muted: #d4d4d8;
+  --faint: #a1a1a4;
 
-  /* Accent */
   --accent: #8ec5ff;
   --accent-hover: #51a2ff;
   --accent-glow: color-mix(in srgb, var(--accent) 22%, transparent);
-  --on-accent: #000000;
 
-  /* Status */
-  --status-warning: #e0a83a;
   --status-success: #56c07a;
+  --status-warning: #e0a83a;
+  --status-error: #e06c6c;
 
-  /* Shadow */
-  --shadow-rgb: 0, 0, 0;
-
-  /* --bar-bg derives from --bg (see :root) — no dark override needed. */
-
-  /* Placeholder fills — neutral dark variants so the stripe placeholders don't glow */
-  --stripe-portrait: repeating-linear-gradient(135deg, #262626 0 9px, #1f1f1f 9px 18px);
-  --stripe-photo: repeating-linear-gradient(135deg, #2a2a2a 0 10px, #202020 10px 20px);
+  /* Lifted off the dark canvas, not the light values dimmed — a chart rendered
+     in the light palette on --bg #27272a reads as a foreign widget pasted in. */
+  --chart-1: #8ec5ff;
+  --chart-2: #a8a29e;
+  --chart-3: #d8a25f;
+  --chart-4: #7fb894;
 }
 
+/* ============================================================================
+   Reset — borderlessness is ENFORCED here, not left to discipline. `border: 0
+   solid` means a border needs an explicit width to exist, so the bento reflex
+   can't grow back by accident. The heading scale is killed for the same reason:
+   every heading opts back into a size and weight for its role.
+   ========================================================================== */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+  border: 0 solid;
 }
 
-html,
+html {
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+  /* Anchored sections clear the top of the viewport by one block step. */
+  scroll-padding-top: var(--space-block);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   margin: 0;
-  height: 100%;
+  background: var(--bg);
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: var(--text-md);
+  line-height: 1.6;
+  font-stretch: var(--font-display-stretch);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: var(--accent-glow);
 }
 
-body {
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--sans);
-  font-stretch: var(--font-display-stretch);
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
 }
 
 a {
@@ -187,29 +270,185 @@ a {
   text-decoration: none;
 }
 
-/* Hide the scroll stage's scrollbar while keeping it scrollable */
-#jk-scroll {
-  scrollbar-width: none;
+img,
+svg {
+  display: block;
+  max-width: 100%;
 }
-#jk-scroll::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+
+/* Every number in the site aligns in a column without needing a table. */
+time,
+.mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'zero' 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--accent-glow);
+}
+
+/* ============================================================================
+   The shell — one grid, every surface. The sidebar rail sits in its own named
+   column; everything else opts into `main`. `.bleed` escapes to full width for
+   media that should break the measure.
+
+   `align-self: start` on the rail is load-bearing: without it the grid
+   stretches the sidebar to full row height and `position: sticky` silently
+   does nothing.
+   ========================================================================== */
+.shell {
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(0, 1fr)
+    [side-start] var(--sidebar-w) [side-end]
+    var(--gutter)
+    [main-start] minmax(0, var(--content-w)) [main-end]
+    minmax(0, 1fr) [full-end];
+  padding-block: var(--page-top) 0;
+  padding-inline: var(--page-inset);
+}
+
+.shell > * {
+  grid-column: main;
+  min-width: 0;
+}
+
+.shell > .sidebar {
+  grid-column: side;
+  position: sticky;
+  top: var(--page-top);
+  align-self: start;
+}
+
+.shell > .bleed {
+  grid-column: full;
+}
+
+/* Sections are spaced by the grid, so no child carries a vertical margin and
+   nothing can double up or collapse.
+
+   `grid-template-columns: minmax(0, 1fr)` is load-bearing, not decoration:
+   without it the implicit column is sized `auto`, which resolves to the widest
+   child's MIN-CONTENT — so one long code line or a wide table silently stretches
+   the track past its container and the whole page overflows. Under mobile
+   emulation Chrome then grows the layout viewport to match, which makes every
+   measurement agree that nothing is wrong. */
+.stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-section);
+  align-content: start;
+}
+
+/* ── Below 900px: one column, rail becomes the first static block ────────── */
+@media (max-width: 900px) {
+  :root {
+    --page-top: 64px;
+    --space-section: 72px;
+    --content-w: 100%;
+    /* ArticleLayout sets `--content-w: var(--reading-w)` inline on its own
+       `.shell`, which beats the `--content-w` above — so the reading width has
+       to be clamped too or every article lays out at 720px on a phone. Chrome's
+       mobile shrink-to-fit hides that: innerWidth silently grows to match the
+       overflow, so the page looks fine and every measurement agrees with it. */
+    --reading-w: 100%;
+  }
+
+  .shell {
+    grid-template-columns: [full-start] minmax(0, 1fr) [full-end];
+  }
+
+  .shell > *,
+  .shell > .bleed {
+    grid-column: full;
+  }
+
+  .shell > .sidebar {
+    grid-column: full;
+    position: static;
+    margin-bottom: 48px;
+  }
+}
+
+/* ============================================================================
+   Hover language — one vocabulary, applied three ways, pointer devices only.
+
+   1. `.plate` — the bleed plate. Negative inline margin equal to the padding,
+      so the hover surface extends past the text column and NOTHING reflows.
+   2. `.u` — links. An always-on faint underline that darkens. Colour and
+      geometry never change; a link that changes colour on hover reads as a
+      different link.
+   3. `.dim-group` — the sidebar nav only. Siblings recede, the hovered item
+      returns to full ink.
+   ========================================================================== */
+.plate {
+  margin-inline: -12px;
+  padding-inline: 12px;
+  border-radius: 8px;
+  transition: background var(--dur-hover) ease;
+}
+
+.u {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--divider);
+  transition: text-decoration-color var(--dur-hover) ease;
+}
+
+@media (hover: hover) {
+  .plate:hover {
+    background: var(--panel-hover);
+  }
+
+  .u:hover {
+    text-decoration-color: var(--muted);
+  }
+
+  .dim-group:hover a {
+    color: var(--faint);
+  }
+
+  .dim-group a:hover {
+    color: var(--ink);
+  }
+}
+
+/* External-link affordance. Applied via a class so it never lands on an
+   internal anchor by accident. */
+.ext::after {
+  content: '↗';
+  display: inline-block;
+  margin-left: 0.3em;
+  font-size: 0.85em;
+  color: var(--faint);
 }
 
 /* ============================================================================
    Scroll-reveal — progressive enhancement.
-   Content is visible by default. An inline <head> script adds `.js` to <html>
-   before first paint, which hides `.reveal` elements so Motion can animate
-   them in on scroll. If JS never runs, nothing is ever hidden.
-   Motion writes inline opacity/transform, which overrides the hidden state.
+   Content is visible by default. The pre-paint inline script adds `.js` to
+   <html>, which hides `.reveal` so Motion can animate it in. If JS never runs,
+   nothing is ever hidden. Motion writes inline opacity/transform, overriding
+   the hidden state.
+
+   Unlike the old bento, a `.reveal` may now wrap anything — there is no
+   line-coloured backdrop left to flash through.
    ========================================================================== */
 .reveal {
   opacity: 1;
   transform: none;
 }
+
 html.js .reveal {
   opacity: 0;
-  transform: translateY(14px);
+  transform: translateY(8px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -220,10 +459,10 @@ html.js .reveal {
 }
 
 /* ============================================================================
-   Theme crossfade — only active during a deliberate switch (the inline script
-   adds `html.theme-anim` for ~480ms, then removes it). Never permanent, so it
-   can't flash on first paint. Excludes transform/opacity so it never collides
-   with Motion reveals. Reduced motion never gets the class → instant switch.
+   Theme crossfade — only during a deliberate switch (the inline script adds
+   `html.theme-anim` for ~480ms, then removes it). Never permanent, so it can't
+   flash on first paint. Excludes transform/opacity so it never collides with a
+   Motion reveal. Reduced motion never gets the class → instant switch.
    ========================================================================== */
 html.theme-anim,
 html.theme-anim *,
@@ -231,48 +470,27 @@ html.theme-anim *::before,
 html.theme-anim *::after {
   transition:
     background-color 0.42s var(--ease-reveal),
-    border-color 0.42s var(--ease-reveal),
     color 0.42s var(--ease-reveal),
     fill 0.42s var(--ease-reveal),
     box-shadow 0.42s var(--ease-reveal) !important;
 }
 
-/* Shiki dual-theme: default to light vars, swap to dark under [data-theme].
-   Note: this project renders Markdown/MDX code blocks via astro-expressive-code
-   (see astro.config.mjs), not Astro's native Shiki renderer, so `.astro-code`
-   does not currently appear in rendered output — kept for parity/forward
-   compatibility in case a raw Shiki/`<Code>` usage is introduced later. */
-.astro-code,
-.astro-code span {
-  color: var(--shiki-light);
-  background-color: var(--shiki-light-bg);
-}
-[data-theme='dark'] .astro-code,
-[data-theme='dark'] .astro-code span {
-  color: var(--shiki-dark);
-  background-color: var(--shiki-dark-bg);
-}
-
-/* Keyboard focus ring */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
 /* ============================================================================
-   Prose — the long-form reading surface (guide/blog articles). A different
-   surface from the bento homepage: normal borders/blockquote rules are fine
-   here (the fail-toward-line invariant governs the bento grid only).
+   Prose — the long-form reading surface (guide/blog articles).
+
+   Same law as the rest of the site: body is --ink-2 and only headings and
+   <strong> are promoted to --ink; the size ceiling holds at 20px. Reading gets
+   more leading (1.75) and a wider measure than the homepage rows.
    ========================================================================== */
 .prose {
   font-family: var(--sans);
   font-size: 17px;
-  line-height: 1.7;
+  line-height: 1.75;
   color: var(--ink-2);
 }
 
 .prose > * + * {
-  margin-top: 1.3em;
+  margin-top: 1.35em;
 }
 
 .prose h2,
@@ -281,63 +499,83 @@ html.theme-anim *::after {
   font-family: var(--display);
   color: var(--ink);
   letter-spacing: -0.01em;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .prose h2 {
-  margin-top: 2.2em;
-  font-size: 1.6em;
-  font-weight: calc(700 + var(--font-display-weight-offset));
+  margin-top: 2.4em;
+  font-size: var(--text-lg);
+  font-weight: var(--w-strong);
 }
 
 .prose h3 {
-  margin-top: 1.8em;
-  font-size: 1.3em;
-  font-weight: calc(600 + var(--font-display-weight-offset));
+  margin-top: 2em;
+  font-size: var(--text-md);
+  font-weight: var(--w-strong);
 }
 
 .prose h4 {
-  margin-top: 1.5em;
-  font-size: 1.1em;
-  font-weight: calc(600 + var(--font-display-weight-offset));
+  margin-top: 1.6em;
+  font-size: var(--text-md);
+  font-weight: var(--w-med);
+  color: var(--muted);
+}
+
+.prose strong {
+  color: var(--ink);
+  font-weight: var(--w-med);
 }
 
 .prose a {
   color: var(--accent);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  transition: text-decoration-color var(--dur-hover) ease;
 }
 
 .prose a:hover,
 .prose a:focus-visible {
-  text-decoration: underline;
+  text-decoration-color: var(--accent);
 }
 
+/* A quote is set by measure and ink, not by a rule. */
 .prose blockquote {
-  margin: 0;
-  padding: 0.2em 0 0.2em 1.2em;
-  border-left: 3px solid var(--accent);
+  margin: 2em 0;
+  padding: 0;
   color: var(--muted);
-  font-style: italic;
+  font-size: 1.05em;
+  line-height: 1.6;
+  max-width: 32em;
 }
 
 .prose code {
   font-family: var(--mono);
-  font-size: 0.88em;
+  font-size: 0.87em;
   background: var(--panel);
-  border: 1px solid var(--hairline);
-  border-radius: 0;
+  border-radius: 4px;
   padding: 0.15em 0.4em;
+  box-shadow: var(--shadow-ring);
 }
 
 .prose pre code {
   background: none;
-  border: none;
   padding: 0;
+  box-shadow: none;
+}
+
+/* Expressive Code blocks are surfaces, not bordered boxes — the edge is the
+   same ring every other object on the site uses. EC's own border is set to
+   transparent in astro.config.mjs so the two can't fight. */
+.prose .expressive-code .frame {
+  border-radius: 8px;
+  box-shadow: var(--shadow-ring);
 }
 
 .prose ul,
 .prose ol {
-  padding-left: 1.4em;
+  padding-left: 1.3em;
 }
 
 .prose li::marker {
@@ -345,61 +583,65 @@ html.theme-anim *::after {
 }
 
 .prose li + li {
-  margin-top: 0.4em;
+  margin-top: 0.45em;
 }
 
+/* The one place a rule earns its keep in prose: a deliberate section break. */
 .prose hr {
-  border: none;
-  border-top: 1px solid var(--line);
+  margin: 3em auto;
+  width: 64px;
+  border-top: 1px solid var(--divider);
 }
 
 .prose img {
-  max-width: 100%;
-  display: block;
+  border-radius: 8px;
+  box-shadow: var(--shadow-ring);
 }
 
 .prose table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.95em;
+  font-size: 0.94em;
 }
 
 .prose th {
-  font-family: var(--display);
-  font-size: 0.78em;
-  letter-spacing: 0.08em;
+  font-family: var(--mono);
+  font-size: 0.8em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--faint);
+  font-weight: var(--w-body);
   text-align: left;
-  padding: 0.6em 0.8em;
-  border-bottom: 1px solid var(--line);
+  padding: 0.5em 0.8em;
 }
 
 .prose td {
-  padding: 0.6em 0.8em;
-  border-bottom: 1px solid var(--hairline);
+  padding: 0.5em 0.8em;
+  border-top: 1px solid var(--divider);
 }
 
 /* GFM footnotes (Sätteri default pipeline) */
 .prose sup a[data-footnote-ref] {
   color: var(--accent);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: var(--w-med);
 }
 
 .prose .footnotes {
-  margin-top: 2.5em;
+  margin-top: 3em;
   padding-top: 1.5em;
-  border-top: 1px solid var(--line);
-  font-size: 0.85em;
+  border-top: 1px solid var(--divider);
+  font-size: 0.88em;
   color: var(--muted);
 }
 
 .prose .footnotes h2 {
-  font-size: 0.78em;
-  letter-spacing: 0.14em;
+  font-family: var(--mono);
+  font-size: 0.8em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faint);
+  font-weight: var(--w-body);
   margin-top: 0;
   margin-bottom: 1em;
 }

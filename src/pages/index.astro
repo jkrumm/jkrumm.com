@@ -1,44 +1,23 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import PageBox from '@/components/primitives/PageBox.astro';
-import CompactHeader from '@/components/chrome/CompactHeader.astro';
-import StickyFooter from '@/components/chrome/StickyFooter.astro';
-import Home from '@/components/sections/Home.astro';
-import Blog from '@/components/sections/Blog.astro';
-import Experience from '@/components/sections/Experience.astro';
-import Stack from '@/components/sections/Stack.astro';
+import Sidebar from '@/components/chrome/Sidebar.astro';
+import SiteFooter from '@/components/chrome/SiteFooter.astro';
 import Projects from '@/components/sections/Projects.astro';
-import Photography from '@/components/sections/Photography.astro';
+import Experience from '@/components/sections/Experience.astro';
+import Writing from '@/components/sections/Writing.astro';
 import Contact from '@/components/sections/Contact.astro';
 import { SITE } from '@/consts';
 ---
 
 <BaseLayout title={SITE.title} ogType="profile" jsonLd="home">
-  <main id="jk-scroll">
-    <PageBox>
-      <CompactHeader />
-      <Home />
-      <Blog />
-      <Experience />
-      <Stack />
+  <div class="shell">
+    <Sidebar />
+    <main class="stack">
       <Projects />
-      <Photography />
+      <Experience />
+      <Writing />
       <Contact />
-      <StickyFooter />
-    </PageBox>
-  </main>
+    </main>
+    <SiteFooter />
+  </div>
 </BaseLayout>
-
-<style>
-  #jk-scroll {
-    height: 100svh;
-    overflow-y: auto;
-    scroll-behavior: smooth;
-    background: var(--bg);
-    font-family: var(--sans);
-    /* Float the PageBox off every viewport edge: 10px top/bottom + side gutter.
-       The fixed CompactHeader pins to top:10px and the sticky footer resolves
-       against this padded edge, so both align with the floated box. */
-    padding: 10px clamp(12px, 3vw, 24px);
-  }
-</style>

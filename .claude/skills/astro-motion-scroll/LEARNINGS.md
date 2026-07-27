@@ -1461,3 +1461,109 @@ Entry format:
   files, 7 pages. Pattern (explicit `animated` flag on every sync path, instant on
   mount/external-resync, animated only on direct user action) is the template for
   any other segmented-control/toggle this site adds.
+
+## 2026-07-27 — Borderless redesign: the bento is deleted, `#jk-scroll` is retired
+
+- **Context:** owner's brief was three clauses — "get rid of all those borders,
+  way simpler, better overview". The answer was not a border audit. The whole
+  continuous-bento model went, and with it the inner scroll container it needed.
+  Design reference: `docs/inspiration.md` (teardown of 14 sites + the decision
+  taken on each open tension).
+- **What the bento cost.** It looked like one invariant ("fail toward
+  line-color") but it was a tax on every subsequent edit:
+  - **Reveals were constrained by the backdrop.** `.reveal` could only wrap
+    content *inside* an opaque `--panel` cell, because opacity 0 over
+    `var(--line)` flashed line-colour and `translateY` detached the element and
+    exposed the 1px hairline gap. Travel had to stay ≈14px so it fit inside cell
+    padding. Every new section had to relearn this.
+  - **`#jk-scroll` metastasised.** One `overflow-y:auto` container forced
+    `{root: scroller}` on every observer, `{container: scroller}` on every
+    `scroll()`, two opaque 10px gap caps, a fixed-header alignment hack,
+    hidden-scrollbar rules, and a rect-difference formula for every geometry
+    measurement. None of that is layout — it was all container tax.
+  - **The frame duplicated itself.** `IndexLayout` carried an independent copy of
+    the fail-toward-line frame, so deleting `PageBox` wouldn't have touched it.
+    Two copies of an invariant is zero invariants.
+  - **Structure was being asked to do a job whitespace does better.** Six
+    sections of hairlines, chips with borders, 1px gaps, per-row cells — a lot of
+    texture, and the actual verdict from looking at it was "no overview".
+- **What replaced it (the techniques that carry separation now), ranked:**
+  1. **Whitespace ladder.** `--space-section` 96 / `--space-block` 24 /
+     `--space-row` 8, applied as grid/flex `gap` so children carry no vertical
+     margin and nothing doubles or collapses. Three numbers do all the structural
+     work.
+  2. **Ink ramp.** `--ink` titles/`<strong>` · `--ink-2` **body** · `--muted`
+     supporting · `--faint` meta. Body is deliberately the *secondary* tier —
+     promoting it to `--ink` flattens the hierarchy, which is the thing that made
+     the bento need boxes.
+  3. **Right-aligned tabular metadata.** `time` and `.mono` carry
+     `tabular-nums` + `'zero' 0`, so a Writing/Experience/footer list reads as a
+     table with no table and no rules.
+  4. **Ring, not border.** Where an object genuinely needs an edge (media, code,
+     the avatar): `box-shadow: var(--shadow-ring)` — outset in light, **inset** in
+     dark. One token, two constructions.
+  5. **Bleed-plate hover.** `.plate` = negative inline margin equal to the
+     padding, so the hover surface extends past the text column and text never
+     reflows. Plus `.u` (always-on faint underline that darkens) and `.dim-group`
+     (siblings recede). One vocabulary, three applications, all inside
+     `@media (hover: hover)`. No scale, no translate, no per-row shadow.
+  6. **Weight + a 24px ceiling.** Heading scale killed at the reset
+     (`h1..h6{font-size:inherit;font-weight:inherit}`); the ladder is 13/14/16/
+     20/24 and hierarchy is carried by `--w-body`/`--w-med`/`--w-strong`. Section
+     labels are quieter than the rows beneath them.
+- **Worked — enforce, don't document.** `*,*::before,*::after { border: 0 solid }`
+  in the reset means a border only exists where something opts in with an explicit
+  width. The previous model relied on discipline ("never add a separator border")
+  and lost. Same trick on the heading scale. Site-wide hairline budget is now
+  **2**: the `flex:1` rule beside each Writing year group, and the footer top
+  edge. A third is a bug.
+- **Worked — one grid for every surface.** `.shell` with named columns
+  `side`/`main`/`full`; `.shell > *` defaults to `main`, `.sidebar` takes `side`,
+  `.bleed` escapes to `full`. Articles widen by overriding `--content-w:
+  var(--reading-w)` on their own shell rather than building a second frame — which
+  is exactly the mistake `IndexLayout` made under the bento.
+- **Gotcha — `align-self: start` on the sticky rail is load-bearing.** Without it
+  the grid stretches the sidebar to full row height and `position: sticky`
+  silently does nothing (no error, no warning). Same trap the retired
+  sticky-scroll-reveal rail had; it is now the single most likely way to break
+  the layout.
+- **RETIRED — "fail toward line-color."** The frame/band/grid
+  `background: var(--line)` + 1px-gap hairline construction, the opaque-cell rule,
+  the `box-shadow` (not border) sticky-bar separator, and the `--line` /
+  `--hairline` / `--bar-*` / `--maxw` tokens are all gone. Deleted components:
+  `PageBox`, `SectionShell`, `Grid`, `Cell`, `SectionHeader`, `Chip`,
+  `CompactHeader`, `StickyFooter`. The "three surface modes" split (homepage stage
+  vs two off-stage surfaces) is gone with them — there is one shell. The Home,
+  Stack, Photography and Blog sections went too (the rail carries identity now,
+  the stack is two lines of mono text, photos ship only when real), along with
+  `data/nav.ts` → `data/profile.ts`, `data/stack.ts` and `data/photos.ts`.
+- **RETIRED — `#jk-scroll`.** Document scroll only. Observers take `root: null`
+  (or no root), Motion `scroll()` takes no `container`. Reinstating one produces
+  an observer that never fires, with no error — which is why the rule is stated as
+  a prohibition rather than a preference.
+- **Reveal travel is now 8px**, and it lives in two places that must stay in sync:
+  `y: [8, 0]` in `portfolio.ts` and `translateY(8px)` under `html.js .reveal` in
+  `global.css`. A `.reveal` may now wrap **anything** — there is no line-coloured
+  backdrop to flash through and no hairline gap for the translate to expose.
+- **Motion budget, stated explicitly for the first time:** reveals + scroll-spy,
+  both in `portfolio.ts` (112 lines, down from 524). The sole scroll-linked
+  effect on the site is the **CSS-only** article progress line
+  (`animation-timeline: scroll(root block)`, longhands not the shorthand so a
+  minifier can't fold and drop the timeline). Zero scroll-linked JS on the
+  homepage — no hero collapse, no bar fade, no JS progress bar.
+- **Docs rewritten in the same pass** (they encoded the bento as law and would
+  have re-added borders on the next task): `CLAUDE.md` § Layout model + § Scroll &
+  animation work, `.claude/rules/animation.md` (two of seven invariants were
+  outright false — observer rooting and reveal-over-opaque-cell — plus a new
+  motion-budget invariant), `SKILL.md` §5 and every deleted-file reference,
+  `references/reveal-lifecycle.ts` (document scroll, 8px travel),
+  `references/scroll-interaction-patterns.md` (§4 marked retired, container
+  references adapted), and historical banners on `scroll-snap.css` /
+  `scroll-narrative.md`. `README.md` structure tree too.
+- **Verdict / decision:** the layout invariant is now *enforced at the reset*
+  instead of *documented as a rule*, which is the whole lesson. When something on
+  this site looks like it needs a line, it needs whitespace or an ink step. The
+  open follow-up recorded in `docs/inspiration.md` §7 is paco's CSS-only
+  `[data-animate]{--stagger:N}` reveal, which would delete the Motion `inView`
+  path entirely — deliberately deferred so the redesign didn't also rewrite the
+  progressive-enhancement contract.

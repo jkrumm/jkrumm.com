@@ -5,6 +5,14 @@ CSS scroll-driven animations, the Motion `scroll()` API, and a production patter
 catalog) done 2026-07-05 while rebuilding the Experience section. Sources cited
 inline. This is the reference behind SKILL.md §6.
 
+> **Two things dated 2026-07-27 (the borderless redesign).** The site moved to
+> **document scroll** — the `#jk-scroll` container is deleted, so `scroll()` takes
+> no `container` and observers take no `root`; read every `container: scroller` /
+> `scroller.scrollTop` below as `window` / `window.scrollY`. And §4's
+> sticky-scroll-reveal is **no longer shipped** — Experience is now a plain
+> two-track date/content grid with no JS. §4 is a worked reference for a future
+> pinned section, not a description of the current site.
+
 ---
 
 ## 0. The one principle (memorize this)
@@ -130,7 +138,8 @@ import { scroll, animate, inView } from "motion";
   Prefer for heavy transform/opacity scrubs.
 
 **Options:** `{ container, target, axis:'y'|'x', offset, trackContentSize }`.
-- `container` — the scrolling element (**always `#jk-scroll` here**, never window).
+- `container` — the scrolling element. **Omit it here** — the site uses document
+  scroll; the `#jk-scroll` container it used to point at is deleted.
 - `target` — a child; progress = its position within the container. Tracked by
   **layout position — CSS transforms on it/ancestors are ignored**.
 - `offset` — `[startIntersection, endIntersection]`, default `["start start",
@@ -154,14 +163,20 @@ swaps leak observers otherwise).
 
 ---
 
-## 4. The house pattern shipped on Experience (sticky-scroll-reveal)
+## 4. The sticky-scroll-reveal pattern (RETIRED — reference only)
 
-Files: `src/components/sections/Experience.astro` (markup + CSS),
+> Retired from Experience 2026-07-06 and fully deleted 2026-07-27. No file below
+> still contains this code. Kept as the worked example for a future pinned
+> section; adapt the container references to document scroll, and the `--line`
+> gap styling to the borderless model (SKILL.md §5).
+
+Former files: `src/components/sections/Experience.astro` (markup + CSS),
 `src/scripts/portfolio.ts` (the "Experience: sticky-scroll-reveal" block),
 `src/data/experience.ts` (content).
 
-**Structure (desktop ≥900px + motion):** a 2-col CSS grid `.role-split` (bento:
-`background:var(--line); gap:1px`), columns `clamp(56px,7%,88px) minmax(0,1fr)`.
+**Structure (desktop ≥900px + motion):** a 2-col CSS grid `.role-split` (then a
+bento band: `background:var(--line); gap:1px` — that token is gone; today the
+split would be a plain `gap`), columns `clamp(56px,7%,88px) minmax(0,1fr)`.
 - **Left `.role-rail`** — a **slim side-beam** (~64px column): a thin centered
   spine (`.role-beam` + `[data-role-beam-fill]` scaleY) with one dot per role
   (`.role-dot`, space-between). `position:sticky; top:var(--pin-top);
@@ -180,12 +195,12 @@ Files: `src/components/sections/Experience.astro` (markup + CSS),
 
 **JS geometry** (`portfolio.ts`): measure once + on resize.
 ```
-pinTop      = 10 + --bar-top + 16            // mirrors CSS --pin-top; read the
-                                             //   simple token, NOT the calc() custom
-sectionTop  = roleSplit rect.top − scroller rect.top + scroller.scrollTop
-pinStart    = sectionTop − pinTop            // scrollTop where the rail pins
+pinTop      = <the sticky top offset>        // read a simple px token (e.g.
+                                             //   --page-top), NOT a calc() custom
+sectionTop  = roleSplit rect.top + window.scrollY          // document scroll
+pinStart    = sectionTop − pinTop            // scrollY where the rail pins
 track       = roleSplit.offsetHeight − roleRail.offsetHeight   // pinned travel = wrapper − sticky
-p           = clamp((scroller.scrollTop − pinStart) / track, 0, 1)
+p           = clamp((window.scrollY − pinStart) / track, 0, 1)
 activeIndex = min(floor(p·STEPS), STEPS−1)   // beam: roleBeam.style.transform = scaleY(p)
 ```
 `track = wrapper − sticky` (NOT − viewport) is the core sticky-pin identity. Here

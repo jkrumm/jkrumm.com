@@ -41,6 +41,13 @@ const { title = SITE.title, description = SITE.description, ogType = 'website', 
         function stored() {
           try { return localStorage.getItem(KEY); } catch (e) { return null; }
         }
+        // `?__theme=light|dark` pins the scheme for this page load without
+        // touching localStorage. Used by scripts/shots.sh so a screenshot run
+        // is deterministic regardless of the machine's system preference.
+        function forced() {
+          var m = /[?&]__theme=(light|dark)\b/.exec(location.search);
+          return m ? m[1] : null;
+        }
         function apply(pref) {
           var resolved = pref === 'light' || pref === 'dark' ? pref : system();
           d.setAttribute('data-theme', resolved);
@@ -48,9 +55,9 @@ const { title = SITE.title, description = SITE.description, ogType = 'website', 
           var m = document.querySelector('meta[name="theme-color"]');
           // Literal dark/light --bg — runs pre-paint, before any stylesheet is
           // parsed, so it can't read the CSS var. Keep in sync with global.css.
-          if (m) m.setAttribute('content', resolved === 'dark' ? '#1f1f1f' : '#f5f5f4');
+          if (m) m.setAttribute('content', resolved === 'dark' ? '#27272a' : '#f2f2f5');
         }
-        apply(stored() || 'system');
+        apply(forced() || stored() || 'system');
         window.__theme = {
           get: function () { return stored() || 'system'; },
           resolved: function () { return d.getAttribute('data-theme') || 'light'; },

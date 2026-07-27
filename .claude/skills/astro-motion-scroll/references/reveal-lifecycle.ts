@@ -10,6 +10,11 @@
  *   on the next soft-swap navigation. So we (re)initialise on `astro:page-load`
  *   and tear everything down on `astro:before-swap`. Every side effect pushes a
  *   cleanup fn onto `teardown`; cleanup() drains it. No leaks, no double-binding.
+ *
+ * The second rule: the page uses DOCUMENT scroll. There is no inner scroll
+ * container — the old `#jk-scroll` is deleted — so observers take no `root` and
+ * Motion `scroll()` takes no `container`. Passing one gives you an observer that
+ * never fires, with no error.
  */
 
 import { animate, inView, scroll } from 'motion';
@@ -21,19 +26,15 @@ const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function init(): void {
-  const scroller = document.getElementById('jk-scroll');
-  if (!scroller) return;
-
   // ---- Reveals: ONCE-ONLY, not replay ---------------------------------------
-  // See references/scroll-snap.css and the skill's "Repo decisions" section for
-  // why replay-on-re-entry was removed. Short version: on a snap layout, replay
-  // faded content out/in at every section boundary (double-motion jank) and left
-  // it displaced (translateY) when a section snapped mid-animation. Reveal once,
-  // let it settle at its true centred position.
+  // Replay-on-re-entry was removed: it faded content out/in at every section
+  // boundary (double-motion jank) and left content displaced (translateY) when
+  // re-triggering mid-scroll. Reveal once, let it settle at its true position.
   //
   // Hidden state is applied in CSS (`html.js .reveal`), NOT here — that avoids
   // FOUC. This code only animates FROM hidden TO shown. Motion writes inline
-  // opacity/transform, which wins over the CSS hidden state.
+  // opacity/transform, which wins over the CSS hidden state. The 8px travel must
+  // match `translateY(8px)` in global.css.
   if (!prefersReducedMotion()) {
     const MAX_STAGGER = 220; // ms cap so the last element never lags far behind
     const stopReveals = inView(
@@ -46,44 +47,45 @@ function init(): void {
           Math.min(Number(target.dataset.delay ?? 0), MAX_STAGGER) / 1000;
         animate(
           target,
-          { opacity: [0, 1], y: [20, 0] },
+          { opacity: [0, 1], y: [8, 0] },
           { duration: 0.55, delay, ease: [0.2, 0.7, 0.2, 1] },
         );
       },
-      // Root the observer in the inner scroll container, NOT the window — the
-      // page scrolls inside #jk-scroll, so window-rooted observers never fire.
-      { root: scroller, amount: 0.2 },
+      // No `root` — document scroll. (`root: null` is equivalent and explicit.)
+      { amount: 0.2 },
     );
     // inView returns a stop() function — register it for teardown.
     teardown.push(stopReveals);
   }
 
   // ---- Scroll-linked value via Motion `scroll()` ----------------------------
-  // scroll() also returns a stop function. Note `container: scroller` — the
-  // scroll progress is measured on the inner container, not the document.
+  // NOTE: nothing on the site currently uses this — the only scroll-linked
+  // effect is the CSS-only article progress line (`animation-timeline:
+  // scroll(root block)`). Prefer CSS-only; reach for `scroll()` only for a
+  // pinned/scrubbed section (SKILL.md §6). No `container` option: document
+  // scroll is the default.
   const progress = document.querySelector<HTMLElement>('[data-progress]');
   if (progress) {
-    const stopScroll = scroll(
-      (value: number) => {
-        // Animate transform only. scaleX(0..1) is compositor-friendly.
-        progress.style.transform = `scaleX(${value})`;
-      },
-      { container: scroller },
-    );
+    const stopScroll = scroll((value: number) => {
+      // Animate transform only. scaleX(0..1) is compositor-friendly.
+      progress.style.transform = `scaleX(${value})`;
+    });
     teardown.push(stopScroll);
   }
 
   // ---- Plain IntersectionObserver (when you need raw threshold control) ------
   // Motion's inView is a thin IO wrapper; hand-roll IO only when you need custom
-  // threshold arrays / rootMargin it doesn't expose. Same rule: root: scroller,
-  // and register disconnect() for teardown.
-  const sections = [...scroller.querySelectorAll<HTMLElement>('[data-section]')];
+  // threshold arrays / rootMargin it doesn't expose — the scroll-spy does,
+  // because "active" is the section with the highest intersectionRatio and that
+  // comparison needs several crossings per section. Same rule: `root: null`, and
+  // register disconnect() for teardown.
+  const sections = [...document.querySelectorAll<HTMLElement>('[data-section]')];
   if (sections.length) {
     const io = new IntersectionObserver(
       (entries) => {
         // ... update active-section UI from entries ...
       },
-      { root: scroller, threshold: [0.12, 0.3, 0.5, 0.75] },
+      { root: null, threshold: [0.12, 0.3, 0.5, 0.75] },
     );
     sections.forEach((s) => io.observe(s));
     teardown.push(() => io.disconnect());

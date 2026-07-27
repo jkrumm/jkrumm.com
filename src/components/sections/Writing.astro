@@ -1,0 +1,133 @@
+---
+/**
+ * Writing — blog posts and guides in one year-grouped list.
+ *
+ * The year row carries one of the site's TWO permitted hairlines: a `flex: 1`
+ * 1px rule beside the year label. It earns its keep because it is what makes
+ * the list scannable at a glance. The rows themselves have none — a right
+ * aligned tabular date plus 8px gaps already reads as a table.
+ */
+import { getCollection } from 'astro:content';
+import Section from '@/components/primitives/Section.astro';
+
+const isPublished = (entry: { data: { status: string } }) =>
+  import.meta.env.PROD ? entry.data.status === 'published' : true;
+
+const [blog, guide] = await Promise.all([getCollection('blog'), getCollection('guide')]);
+
+const entries = [
+  ...blog.filter(isPublished).map((e) => ({ ...e, base: 'blog' as const })),
+  ...guide.filter(isPublished).map((e) => ({ ...e, base: 'guide' as const })),
+]
+  .sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf())
+  .slice(0, 6);
+
+/** Newest year first, entries already sorted within each. */
+const byYear = entries.reduce<Map<number, typeof entries>>((acc, entry) => {
+  const year = entry.data.publishedDate.getUTCFullYear();
+  acc.set(year, [...(acc.get(year) ?? []), entry]);
+  return acc;
+}, new Map());
+
+/** `07 Jul` — a numeric `07/07` is ambiguous across locales and reads as noise. */
+const dayMonth = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  timeZone: 'UTC',
+});
+---
+
+<Section id="writing" label="Writing" actionLabel="All writing →" actionHref="/blog">
+  <div class="groups">
+    {
+      [...byYear].map(([year, items], groupIndex) => (
+        <div class="group reveal" data-delay={groupIndex * 60}>
+          <div class="year-row">
+            <span class="year mono">{year}</span>
+            <i class="rule" aria-hidden="true" />
+          </div>
+          <ul>
+            {items.map((entry) => (
+              <li>
+                <a class="row plate" href={`/${entry.base}/${entry.id}`}>
+                  <span class="title">{entry.data.title}</span>
+                  <time
+                    class="date"
+                    datetime={entry.data.publishedDate.toISOString().slice(0, 10)}
+                  >
+                    {dayMonth.format(entry.data.publishedDate)}
+                  </time>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+</Section>
+
+<style>
+  .groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-group);
+  }
+
+  /* The year row is a label, and the first title's plate padding adds to this
+     gap — 8 + 4 lands on the label step without overshooting it. */
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-row);
+  }
+
+  .year-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .year {
+    font-size: var(--text-xs);
+    color: var(--faint);
+  }
+
+  /* Permitted hairline 1 of 2. */
+  .rule {
+    height: 1px;
+    flex: 1;
+    background: var(--divider);
+  }
+
+  ul {
+    --plate-y: 4px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--space-row) - 2 * var(--plate-y));
+  }
+
+  .row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 32px;
+    padding-block: var(--plate-y);
+  }
+
+  .title {
+    font-family: var(--display);
+    font-size: var(--text-md);
+    font-weight: var(--w-med);
+    color: var(--ink);
+    line-height: 1.4;
+  }
+
+  .date {
+    font-size: var(--text-sm);
+    color: var(--faint);
+    white-space: nowrap;
+  }
+</style>

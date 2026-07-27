@@ -1,92 +1,84 @@
 ---
 /**
- * Slim sticky reading-surface header — shared by ArticleLayout and the guide/
- * blog index pages. JK+ brand (→ home) on the left, an uppercase mono category
- * label on the right. Keeps every non-homepage page on one calm, consistent
- * chrome. `width` aligns the bar to the page's content column.
+ * Slim off-stage header — shared by ArticleLayout and the guide/blog index
+ * pages. No bar, no background, no border: a back-link on the left and the
+ * section label + theme toggle on the right, spaced by the page rhythm.
+ *
+ * It IS a `.shell` grid, so the back-link lands in the same `side` column the
+ * sidebar rail occupies below it and the right cluster lines up with `main` —
+ * no duplicated layout math. Below 900px the shell collapses and this becomes
+ * a plain flex row.
  */
 import ThemeToggle from '@/components/chrome/ThemeToggle.astro';
 
 interface Props {
-  /** Uppercase mono label shown top-right, e.g. "GUIDE" or "BLOG". */
+  /** Uppercase label shown on the right, e.g. "GUIDE" or "BLOG". */
   category: string;
-  /** Max-width of the bar, matched to the page's content column. */
+  /** Back-link target — the collection index on articles, home elsewhere. */
+  backHref?: string;
+  /** Back-link text, arrow supplied by the component. */
+  backLabel?: string;
+  /** Main-column width, when the surface widens past --content-w. */
   width?: string;
 }
 
-const { category, width = 'var(--reading-maxw)' } = Astro.props;
+const { category, backHref = '/', backLabel = 'Home', width } = Astro.props;
 ---
 
-<header class="reading-header">
-  <div class="reading-header__bar" style={`max-width:${width}`}>
-    <a href="/" class="reading-header__brand">
-      <span class="reading-header__mark">JK<span class="reading-header__plus">+</span></span>
-      <span class="reading-header__name">Johannes Krumm</span>
-    </a>
-    <div class="reading-header__right">
-      <span class="reading-header__category">{category}</span>
-      <ThemeToggle />
-    </div>
+<header class="reading-header shell" style={width ? `--content-w: ${width}` : undefined}>
+  <a href={backHref} class="reading-header__back u">
+    <span aria-hidden="true">&larr;</span>
+    {backLabel}
+  </a>
+  <div class="reading-header__right">
+    <span class="reading-header__category mono">{category}</span>
+    <ThemeToggle />
   </div>
 </header>
 
 <style>
+  /* Overrides `.shell`'s --page-top: the header is the page's first line, and
+     the surface below it supplies the real top breathing room. */
   .reading-header {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: var(--bar-bg);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 1px 0 var(--line);
-  }
-
-  .reading-header__bar {
-    margin: 0 auto;
-    display: flex;
+    padding-block: 40px 0;
     align-items: center;
-    justify-content: space-between;
-    height: 56px;
-    padding: 0 clamp(20px, 5vw, 32px);
   }
 
-  .reading-header__brand {
-    display: flex;
+  .reading-header__back {
+    grid-column: side;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-family: var(--display);
-  }
-
-  .reading-header__mark {
-    font-weight: calc(700 + var(--font-display-weight-offset));
-    font-size: 14px;
-    color: var(--ink);
-  }
-
-  .reading-header__plus {
-    color: var(--accent);
-  }
-
-  .reading-header__name {
-    font-size: 13px;
-    color: var(--ink-2);
-    transition: color 0.2s;
-  }
-
-  .reading-header__brand:hover .reading-header__name {
-    color: var(--ink);
-  }
-
-  .reading-header__category {
-    font: 11px var(--display);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--accent);
+    justify-self: start;
+    font-size: var(--text-sm);
+    color: var(--muted);
   }
 
   .reading-header__right {
     display: flex;
     align-items: center;
-    gap: 14px;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .reading-header__category {
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  @media (max-width: 900px) {
+    .reading-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-block: 24px 0;
+    }
+
+    .reading-header__right {
+      flex: none;
+    }
   }
 </style>

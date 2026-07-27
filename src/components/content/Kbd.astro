@@ -1,7 +1,8 @@
 ---
 /**
  * Inline keyboard-key label. Used both as an explicit `<Kbd>` tag and mapped
- * from the markdown `kbd` element.
+ * from the markdown `kbd` element. Reads as a physical key via the same
+ * panel + ring treatment `.prose code` uses — no border.
  */
 ---
 
@@ -10,13 +11,14 @@
 <style>
   .kbd {
     display: inline-block;
-    padding: 0.1em 0.5em;
-    font: 0.85em var(--mono);
+    padding: 0.15em 0.45em;
+    font-family: var(--mono);
+    font-size: 0.85em;
     line-height: 1.4;
     color: var(--ink-2);
     background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 3px;
+    border-radius: 4px;
+    box-shadow: var(--shadow-ring);
     vertical-align: baseline;
   }
 </style>

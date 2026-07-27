@@ -1,0 +1,155 @@
+---
+/**
+ * Experience — a two-track grid: a fixed date column, then the content.
+ *
+ * The old version was the densest border cluster in the repo (a timeline spine,
+ * node rings, a circular chevron, ladder dots and connectors, and a border-top
+ * per entry) wrapped in a JS accordion. All of it is gone: three companies with
+ * a two-to-three rung ladder each is about ten lines of text, so hiding it
+ * behind a click bought nothing. The full detail lives at /resume.
+ *
+ * Dates use the open-ended microformat from src/data/experience.ts (`2019 –`,
+ * `2014 – 18`) in mono tabular numerals, so the column aligns without a table.
+ */
+import Section from '@/components/primitives/Section.astro';
+import { education, resumeHref, roles } from '@/data/experience';
+---
+
+<Section id="experience" label="Experience" actionLabel="View full resume →" actionHref={resumeHref}>
+  <ol class="roles">
+    {
+      roles.map((role, i) => (
+        <li class="entry reveal" data-delay={i * 60}>
+          <span class="period mono">{role.period}</span>
+          <div class="body">
+            <h3 class="company">
+              {role.company}
+              <span class="location"> · {role.location}</span>
+            </h3>
+            <ol class="ladder">
+              {role.positions.map((position) => (
+                <li>
+                  <span class="since mono">{position.since}</span>
+                  <span class="role-title">{position.title}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+
+  <ol class="roles education reveal" data-delay="180">
+    {
+      education.map((item) => (
+        <li class="entry">
+          <span class="period mono">{item.period}</span>
+          <div class="body">
+            {/* Without this the degree reads as a fourth job. */}
+            <p class="kind">Education</p>
+            <h3 class="company">{item.degree}</h3>
+            <p class="institution">{item.institution}</p>
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+</Section>
+
+<style>
+  ol {
+    list-style: none;
+  }
+
+  /* A role is a group (company + its ladder), so entries sit --space-group
+     apart — and the education list is a sibling group, spaced by Section's
+     own body gap rather than a margin of its own. */
+  .roles {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-group);
+  }
+
+  .entry {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: var(--space-block);
+  }
+
+  .period {
+    font-size: var(--text-sm);
+    color: var(--faint);
+    line-height: 1.5;
+    padding-top: 1px;
+    white-space: nowrap;
+  }
+
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .company {
+    font-family: var(--display);
+    font-size: var(--text-md);
+    font-weight: var(--w-med);
+    color: var(--ink);
+    line-height: 1.4;
+  }
+
+  .location {
+    color: var(--faint);
+    font-weight: var(--w-body);
+  }
+
+  /* The ladder is a plain nested list — the year does the structural work that
+     a dot-and-connector spine used to do, and reads better. */
+  .ladder {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .ladder li {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .since {
+    font-size: var(--text-xs);
+    color: var(--faint);
+    min-width: 2.6em;
+  }
+
+  .role-title {
+    font-size: var(--text-sm);
+    color: var(--ink-2);
+  }
+
+  .institution {
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+
+  .kind {
+    font-family: var(--mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 2px;
+  }
+
+  /* Stacked, the period becomes a caption above its entry rather than a
+     column beside it — so the gap drops to the row step. The group spacing
+     between entries stays on the ladder. */
+  @media (max-width: 560px) {
+    .entry {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+  }
+</style>

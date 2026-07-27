@@ -1,0 +1,82 @@
+---
+/**
+ * A top-level homepage section: the anchor target, the scroll-spy target, and
+ * the label.
+ *
+ * The label is deliberately QUIETER than the rows beneath it (--muted, --w-med,
+ * 16px) — it is a signpost, not a headline. Making it louder than its own
+ * content is the fastest way to make a borderless page feel shouty.
+ *
+ * Spacing between sections is owned by the parent `.stack` grid, so this
+ * component carries no vertical margin. Inside, the two steps of the ladder
+ * differ, which is why the slot needs its own wrapper: label → body is
+ * --space-block (24), but body group → group is --space-group (32). One flex
+ * container can only express one of those, and collapsing them to a single
+ * value is what made the page feel arrhythmic.
+ */
+interface Props {
+  id: string;
+  label: string;
+  /** Optional right-aligned escape hatch, e.g. "View full resume →". */
+  actionLabel?: string;
+  actionHref?: string;
+}
+
+const { id, label, actionLabel, actionHref } = Astro.props;
+---
+
+<section id={id} data-section>
+  <header class="head">
+    <h2 class="label">{label}</h2>
+    {
+      actionLabel && actionHref && (
+        <a class="action u" href={actionHref}>
+          {actionLabel}
+        </a>
+      )
+    }
+  </header>
+  <div class="body">
+    <slot />
+  </div>
+</section>
+
+<style>
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-block);
+  }
+
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-group);
+  }
+
+  .head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .label {
+    font-family: var(--display);
+    font-size: var(--text-md);
+    font-weight: var(--w-med);
+    color: var(--muted);
+  }
+
+  .action {
+    font-size: var(--text-sm);
+    color: var(--faint);
+    white-space: nowrap;
+  }
+
+  @media (hover: hover) {
+    .action:hover {
+      color: var(--ink-2);
+    }
+  }
+</style>

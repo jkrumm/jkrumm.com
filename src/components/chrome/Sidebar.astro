@@ -1,0 +1,222 @@
+---
+/**
+ * The identity rail — sticky on desktop, the first static block on mobile.
+ *
+ * It carries everything the old fixed header + sticky footer did (identity,
+ * navigation, active-section feedback, theme toggle) with no chrome of its own:
+ * no bar, no border, no backdrop. It is just the left column of the document.
+ *
+ * Sticky positioning depends on `align-self: start`, which lives on
+ * `.shell > .sidebar` in global.css — without it the grid stretches this to
+ * full row height and `position: sticky` silently does nothing.
+ */
+import ThemeToggle from '@/components/chrome/ThemeToggle.astro';
+import { navItems, profile, profileLinks } from '@/data/profile';
+---
+
+<aside class="sidebar">
+  <a class="avatar" href="/" aria-label="Home">
+    {
+      profile.avatar ? (
+        <img src={profile.avatar} alt={profile.avatarAlt} width="56" height="56" />
+      ) : (
+        <span class="avatar-fallback" aria-hidden="true">
+          JK
+        </span>
+      )
+    }
+  </a>
+
+  <div class="identity">
+    <h1 class="name">{profile.name}</h1>
+    <p class="title">{profile.title}</p>
+  </div>
+
+  <p class="bio">{profile.bio}</p>
+
+  <nav class="nav dim-group" aria-label="Sections" data-allow-bleed>
+    {
+      navItems.map((item) => (
+        <a data-nav-link href={`#${item.id}`}>
+          <span class="dot" aria-hidden="true" />
+          {item.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  <nav class="links dim-group" aria-label="Elsewhere">
+    {
+      profileLinks.map((link) => (
+        <a
+          class:list={['u', { ext: link.external }]}
+          href={link.href}
+          target={link.external ? '_blank' : undefined}
+          rel={link.external ? 'me noopener' : undefined}
+        >
+          {link.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  <ThemeToggle />
+</aside>
+
+<style>
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: var(--space-block);
+  }
+
+  /* Soft-square, not a circle — it reads as a considered object rather than a
+     social-media avatar. The edge is a ring baked into a shadow, never a border. */
+  .avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--panel);
+    box-shadow: var(--shadow-ring);
+  }
+
+  .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-fallback {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    font-family: var(--display);
+    font-size: var(--text-md);
+    font-weight: var(--w-med);
+    color: var(--faint);
+    letter-spacing: 0.04em;
+  }
+
+  .identity {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /* Name and title sit at the SAME size, separated by an ink step and one
+     weight step. A size jump here would be the loudest thing on the page; the
+     title is long enough that matching the name's weight too made it shout. */
+  .name,
+  .title {
+    font-family: var(--display);
+    font-size: var(--text-lg);
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+  }
+
+  .name {
+    color: var(--ink);
+    font-weight: var(--w-strong);
+  }
+
+  .title {
+    color: var(--faint);
+    font-weight: var(--w-med);
+  }
+
+  .bio {
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    color: var(--muted);
+  }
+
+  .nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nav a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-block: 4px;
+    font-family: var(--display);
+    font-size: var(--text-md);
+    font-weight: var(--w-med);
+    color: var(--muted);
+    transition: color var(--dur-hover) ease;
+  }
+
+  /* The active marker is a 6px dot — one of the only three places accent is
+     spent site-wide. No pill, no left border, no background. */
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: transparent;
+    transition: background var(--dur-hover) ease;
+  }
+
+  .nav a[aria-current='true'] {
+    color: var(--ink);
+  }
+
+  .nav a[aria-current='true'] .dot {
+    background: var(--accent);
+  }
+
+  /* Column gaps are chrome, not vertical rhythm — they follow the site's 16px
+     inline convention (Section's head, the Writing year row) rather than the
+     spacing ladder, which only governs stacking. */
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 16px;
+    row-gap: 4px;
+  }
+
+  .links a {
+    font-size: var(--text-sm);
+    color: var(--muted);
+    transition: color var(--dur-hover) ease;
+  }
+
+  /* `.dim-group:hover a` in global.css would otherwise fight the active state. */
+  @media (hover: hover) {
+    .nav.dim-group:hover a[aria-current='true'] {
+      color: var(--ink);
+    }
+  }
+
+  /* ── Mobile: the rail unrolls. Nav becomes a horizontal scroller that bleeds
+     to the viewport edge; labels always stay visible (no pill, no popover). ── */
+  @media (max-width: 900px) {
+    .bio {
+      max-width: 48ch;
+    }
+
+    /* 16px, not the ladder: laid out horizontally these are inline chrome, and
+       at 24px the fourth item fell off the right edge of a 390px viewport. */
+    .nav {
+      flex-direction: row;
+      gap: 16px;
+      width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin-inline: calc(-1 * var(--page-inset));
+      padding-inline: var(--page-inset);
+    }
+
+    .nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav a {
+      white-space: nowrap;
+    }
+  }
+</style>

@@ -1,86 +1,69 @@
 /**
- * Experience section content — the lede overview and the role timeline.
+ * Experience — the career ladder and education.
+ *
+ * Renders as a two-track grid (`96px date | 1fr content`) with the dates in
+ * mono tabular numerals. The `period` strings use the open-ended microformat:
+ * `2019 –` for a current role, `2017 – 18` for a closed one. Keep them literal
+ * — they are typeset, not parsed.
  */
-export const overview = {
-  summary:
-    'I design architecture, lead delivery, and mentor engineers — turning ambiguous problems into systems teams can build on.',
-  focus: 'Architecture & Leadership',
-  coreStack: 'TypeScript · Node · Cloud',
-};
 
-/** A single title held within a company (a rung of the promotion ladder). */
+/** A title held within a company — a rung of the ladder, newest first. */
 export interface Position {
   title: string;
-  period: string;
+  /** Start year only; the row above it implies the end. */
+  since: string;
 }
 
 export interface Role {
-  /** Overall span at the company (e.g. the widest range of its positions). */
+  /** Open-ended microformat, e.g. `2019 –` or `2014 – 18`. */
   period: string;
-  current?: boolean;
-  /** Current / most-senior title — headlines a single-title entry, secondary on a ladder entry. */
-  title: string;
-  /** Clean company name (no leading separator — the template adds one where needed). */
   company: string;
-  scope: string;
-  highlights: string[];
-  stack: string[];
-  /**
-   * Optional promotion ladder, NEWEST FIRST (including the current title). When
-   * present the entry renders as a company node: the company headlines the row
-   * and the expanded body opens with this ladder before the shared tenure
-   * narrative. Omit it for a plain single-title role.
-   *
-   * NOTE: placeholder content — replace titles/dates (and collapse or split
-   * companies) with the real history; the layout stays the same.
-   */
-  positions?: Position[];
+  location: string;
+  /** Newest first. A single-entry ladder renders as a plain title line. */
+  positions: Position[];
+  current?: boolean;
 }
 
 export const roles: Role[] = [
   {
-    period: '2020 — NOW',
+    period: '2019 –',
+    company: 'IU International University',
+    location: 'Munich',
     current: true,
-    title: 'Tech Lead',
-    company: 'Product company, Munich',
     positions: [
-      { title: 'Tech Lead', period: '2023 — NOW' },
-      { title: 'Senior Full-Stack Developer', period: '2020 — 2023' },
+      { title: 'Tech Lead', since: '2023' },
+      { title: 'Senior Developer', since: '2020' },
+      { title: 'Mid-level Developer', since: '2019' },
     ],
-    scope:
-      'Own the architecture of a full-stack platform. Lead a cross-functional team, set engineering standards, and keep releases boring.',
-    highlights: [
-      'Own end-to-end architecture decisions',
-      'Lead a cross-functional team and set engineering standards',
-      'Mentor engineers',
-    ],
-    stack: ['TypeScript', 'Node', 'Cloud', 'Architecture'],
   },
   {
-    period: '2017 — 2020',
-    title: 'Senior Full-Stack Developer',
-    company: 'SaaS scale-up',
-    scope:
-      'Built and scaled core product features end-to-end, from data model to UI, and introduced type-safe APIs across the stack.',
-    highlights: [
-      'Built and scaled core product features end-to-end',
-      'Introduced type-safe APIs across the stack',
-      'Owned features from data model to UI',
+    period: '2017 – 18',
+    company: 'SqueTrade',
+    location: 'San Francisco',
+    positions: [
+      { title: 'Data Engineer', since: '2018' },
+      { title: 'Intern', since: '2017' },
     ],
-    stack: ['TypeScript', 'React', 'Node', 'Postgres', 'API Design'],
   },
   {
-    period: '2014 — 2017',
-    title: 'Full-Stack Developer',
-    company: 'Digital agency',
-    scope:
-      'Delivered web products for a range of clients — the foundation for a systems-first way of building.',
-    highlights: [
-      'Delivered web products for a diverse client base',
-      'Built a systems-first approach to development',
-      'Full-stack delivery from concept to launch',
-    ],
-    stack: ['TypeScript', 'React', 'Node', 'CSS', 'Testing'],
+    period: '2014 – 18',
+    company: 'Edelweiss',
+    location: 'Munich',
+    positions: [{ title: 'Frontend Developer', since: '2014' }],
+  },
+];
+
+export interface Education {
+  period: string;
+  degree: string;
+  institution: string;
+}
+
+export const education: Education[] = [
+  {
+    period: '2014 – 18',
+    degree: 'B.Sc. Computer Science and Economics',
+    institution: 'Hochschule München',
   },
 ];
 

@@ -88,18 +88,22 @@ export default defineConfig({
       customizeTheme(theme) {
         theme.name = theme.type;
       },
+      // Bound to the site's live tokens so code blocks follow the theme for
+      // free. `--line` was retired with the bento — a code block is a surface
+      // with a ring, not a bordered box, so the border is transparent and the
+      // edge comes from `--shadow-ring` on `.expressive-code` (global.css).
       styleOverrides: {
-        borderRadius: '0',
-        borderColor: 'var(--line)',
-        codeBackground: 'var(--bg)',
+        borderRadius: '8px',
+        borderColor: 'transparent',
+        codeBackground: 'var(--panel)',
         codeFontFamily: 'var(--mono)',
         codeFontSize: '13px',
         uiFontFamily: 'var(--mono)',
         frames: {
           editorTabBarBackground: 'var(--panel)',
           editorActiveTabBackground: 'var(--panel)',
-          editorBackground: 'var(--bg)',
-          terminalBackground: 'var(--bg)',
+          editorBackground: 'var(--panel)',
+          terminalBackground: 'var(--panel)',
         },
       },
     }),

@@ -1,0 +1,96 @@
+---
+/**
+ * The footer spec sheet — a build manifest rather than a sitemap.
+ *
+ * Four label/value rows: the commit this build came from (linked to GitHub),
+ * when it was built, where the source lives, and what it is built with. It is
+ * the highest-signal, lowest-clutter personality move available here, and it
+ * costs one `git log` at build time.
+ *
+ * Carries the SECOND (and last) permitted hairline on the site: its top edge.
+ */
+import { SOCIAL } from '@/consts';
+import { getBuildCommit } from '@/utils/content';
+
+const commit = getBuildCommit();
+const built = commit?.date ?? new Date();
+
+const stamp = new Intl.DateTimeFormat('en-GB', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  timeZone: 'UTC',
+}).format(built);
+
+const rows: { label: string; value: string; href?: string }[] = [
+  ...(commit
+    ? [
+        {
+          label: 'Commit',
+          value: commit.sha,
+          href: `${SOCIAL.github}/jkrumm.com/commit/${commit.sha}`,
+        },
+      ]
+    : []),
+  { label: 'Last updated', value: stamp },
+  { label: 'Source', value: 'github.com/jkrumm', href: SOCIAL.github },
+  { label: 'Built with', value: 'Astro · Bun · Motion' },
+];
+---
+
+<footer class="foot">
+  <dl>
+    {
+      rows.map((row) => (
+        <div class="row">
+          <dt>{row.label}</dt>
+          <dd class="mono">
+            {row.href ? (
+              <a class="u" href={row.href} target="_blank" rel="noopener">
+                {row.value}
+              </a>
+            ) : (
+              row.value
+            )}
+          </dd>
+        </div>
+      ))
+    }
+  </dl>
+</footer>
+
+<style>
+  .foot {
+    margin-top: var(--space-section);
+    padding-block: 28px 64px;
+    /* Permitted hairline 2 of 2. */
+    border-top: 1px solid var(--divider);
+  }
+
+  dl {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+  }
+
+  /* Label left, value right — the empty middle column is the separator. */
+  .row {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    align-items: baseline;
+    gap: 16px;
+  }
+
+  dt {
+    font-size: var(--text-xs);
+    color: var(--faint);
+  }
+
+  dd {
+    grid-column: 3;
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
+</style>

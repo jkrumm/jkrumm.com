@@ -1,0 +1,61 @@
+---
+/**
+ * Placeholder surface for sections that exist in the nav but not yet in
+ * content. Same header, same `.shell` grid, same ink ramp as every other
+ * off-stage page — an honest empty room, not a special one.
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ReadingHeader from '@/components/chrome/ReadingHeader.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Uppercase label shown in the header, e.g. "PHOTOGRAPHY". */
+  category: string;
+  heading: string;
+  note: string;
+}
+
+const { title, description, category, heading, note } = Astro.props;
+---
+
+<BaseLayout title={title} description={description} jsonLd="page">
+  <ReadingHeader category={category} />
+
+  <main class="shell stub-shell">
+    <div class="stub">
+      <h1 class="stub__title">{heading}</h1>
+      <p class="stub__note">{note}</p>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .stub-shell {
+    padding-block: 64px var(--space-section);
+  }
+
+  .stub {
+    display: grid;
+    gap: var(--space-block);
+  }
+
+  .stub__title {
+    font-family: var(--display);
+    font-size: var(--text-xl);
+    font-weight: var(--w-strong);
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .stub__note {
+    max-width: 48ch;
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 900px) {
+    .stub-shell {
+      padding-block: 40px var(--space-section);
+    }
+  }
+</style>

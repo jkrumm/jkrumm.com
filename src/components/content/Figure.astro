@@ -2,7 +2,7 @@
 /**
  * The manual-SVG/image vehicle for prose content — a plain <img> (no
  * astro:assets pipeline, src is a bare path) wrapped in a <figure> with an
- * optional caption and credit line.
+ * optional caption and credit line. The image gets a ring, not a border.
  */
 interface Props {
   src: string;
@@ -20,7 +20,12 @@ const { src, alt, caption, credit } = Astro.props;
     (caption || credit) && (
       <figcaption class="figure__caption">
         {caption}
-        {credit && <span class="figure__credit">{caption ? ' — ' : ''}{credit}</span>}
+        {credit && (
+          <span class="figure__credit">
+            {caption ? ' — ' : ''}
+            {credit}
+          </span>
+        )}
       </figcaption>
     )
   }
@@ -35,13 +40,15 @@ const { src, alt, caption, credit } = Astro.props;
     display: block;
     max-width: 100%;
     height: auto;
-    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: var(--shadow-ring);
   }
 
   .figure__caption {
-    margin-top: 0.6em;
-    font: 12px var(--display);
-    color: var(--muted);
+    margin-top: 0.8em;
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    color: var(--faint);
   }
 
   .figure__credit {

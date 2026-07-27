@@ -14,7 +14,16 @@ export async function getStaticPaths() {
   );
 
   const link = (entry: CollectionEntry<'blog'> | undefined) =>
-    entry ? { href: `/blog/${entry.id}`, title: entry.data.title } : null;
+    entry
+      ? {
+          href: `/blog/${entry.id}`,
+          title: entry.data.title,
+          meta: entry.data.publishedDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+          }),
+        }
+      : null;
 
   return entries.map((entry, index) => {
     const currentTags = new Set(entry.data.tags ?? []);
@@ -43,11 +52,17 @@ export async function getStaticPaths() {
   });
 }
 
+interface ArticleLink {
+  href: string;
+  title: string;
+  meta?: string;
+}
+
 interface Props {
   entry: CollectionEntry<'blog'>;
-  prev: { href: string; title: string } | null;
-  next: { href: string; title: string } | null;
-  related: { href: string; title: string }[];
+  prev: ArticleLink | null;
+  next: ArticleLink | null;
+  related: ArticleLink[];
 }
 
 const { entry, prev, next, related } = Astro.props;
@@ -66,6 +81,7 @@ const readingTime = getReadingTime(entry.body ?? '');
   readingTime={readingTime}
   backHref="/blog"
   backLabel="Blog"
+  tags={entry.data.tags}
   prev={prev}
   next={next}
   headings={headings}

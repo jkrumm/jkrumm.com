@@ -1,8 +1,9 @@
 ---
 /**
- * A large emphasized pull-quote — visually distinct from the accent-left-
- * border `.prose blockquote`. Slot is the quote text; an optional citation
- * line runs below in mono/muted.
+ * A pull-quote — set by measure and ink, not by a rule or an oversized glyph.
+ * It sits at the top of the size ladder (--text-xl), narrows to a short
+ * measure and promotes to --ink; the surrounding prose is --ink-2, so it lifts
+ * without any chrome. Slot is the quote text; optional citation runs below.
  */
 interface Props {
   cite?: string;
@@ -12,38 +13,31 @@ const { cite } = Astro.props;
 ---
 
 <figure class="pull-quote">
-  <span class="pull-quote__mark" aria-hidden="true">&ldquo;</span>
   <blockquote class="pull-quote__text">
     <slot />
   </blockquote>
-  {cite && <figcaption class="pull-quote__cite">{cite}</figcaption>}
+  {cite && <figcaption class="pull-quote__cite mono">{cite}</figcaption>}
 </figure>
 
 <style>
   .pull-quote {
-    margin: 0;
-    padding: 0.2em 0 0.2em 0.2em;
-  }
-
-  .pull-quote__mark {
-    display: block;
-    font: calc(700 + var(--font-display-weight-offset)) 3em/1 var(--display);
-    color: var(--accent);
-    opacity: 0.35;
+    margin: 2.5em 0;
   }
 
   .pull-quote__text {
-    margin: -0.6em 0 0;
-    font: 600 1.4em/1.4 var(--sans);
+    margin: 0;
+    max-width: 22em;
+    font-size: var(--text-xl);
+    font-weight: var(--w-med);
+    line-height: 1.4;
     letter-spacing: -0.01em;
     color: var(--ink);
   }
 
   .pull-quote__cite {
-    margin-top: 0.6em;
-    font: 12px var(--display);
-    letter-spacing: 0.04em;
-    color: var(--muted);
+    margin-top: 0.9em;
+    font-size: var(--text-sm);
+    color: var(--faint);
   }
 
   .pull-quote__cite::before {

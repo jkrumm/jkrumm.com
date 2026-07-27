@@ -1,8 +1,11 @@
-# Pinned / scroll-scrubbed "narrative" section — PROVISIONAL
+# Pinned / scroll-scrubbed "narrative" section — HISTORICAL
 
-> **Status: PROVISIONAL — validate in Phase 2.** Not yet built or verified in
-> this repo. Seeded from research (2026-07-05, via `/research`). Update this file
-> and append to `LEARNINGS.md` once a real POC lands.
+> **Status: HISTORICAL, superseded twice.** Seeded from research (2026-07-05, via
+> `/research`) against the mandatory-snap stage, which was reverted, and the
+> `#jk-scroll` inner scroll container, which was deleted in the 2026-07-27
+> borderless redesign. **Nothing in this file describes the current site**: there
+> is no snap, no scroll container, and no scroll-linked JS. Read it as a
+> `view-timeline` POC record only.
 
 ## The pattern
 

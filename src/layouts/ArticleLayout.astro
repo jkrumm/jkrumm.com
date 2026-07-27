@@ -1,17 +1,22 @@
 ---
 /**
- * Reading surface for the guide + blog collections — a normal-scroll article
- * page, NOT the bento `#jk-scroll` stage. Wraps `BaseLayout` for head/SEO/fonts
- * and adds a CSS-only scroll-progress line, a slim sticky reading header, a
- * Home / {collection} / {title} breadcrumb, an optional in-article contents
- * list, the prose column, and a related + prev/next + back-link footer.
+ * Reading surface for the guide + blog collections. Same `.shell` grid as every
+ * other page: the contents list sits in the sticky `side` rail (where the
+ * homepage keeps its identity rail), the article runs down `main` widened to
+ * --reading-w. No boxes, no rules — hierarchy is weight, ink and whitespace.
+ *
+ * The only scroll-linked effect on the site lives here: a CSS-only reading
+ * progress line driven by `animation-timeline: scroll(root block)`, zero JS.
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ReadingHeader from '@/components/chrome/ReadingHeader.astro';
+import RowList from '@/components/primitives/RowList.astro';
 
 interface ArticleLink {
   href: string;
   title: string;
+  /** Right-hand mono meta for the related list — a date or a chapter number. */
+  meta?: string;
 }
 
 interface Heading {
@@ -23,13 +28,15 @@ interface Heading {
 interface Props {
   title: string;
   description: string;
-  /** Uppercase mono section label shown top-right, e.g. "GUIDE" or "BLOG". */
+  /** Uppercase section label shown in the header, e.g. "GUIDE" or "BLOG". */
   category: string;
   publishedDate: Date;
   updatedDate: Date;
   readingTime: number;
   backHref: string;
   backLabel: string;
+  /** Topic tags, shown in the meta line. */
+  tags?: string[];
   /** Adjacent articles for foot navigation; null at the ends of the sequence. */
   prev?: ArticleLink | null;
   next?: ArticleLink | null;
@@ -48,6 +55,7 @@ const {
   readingTime,
   backHref,
   backLabel,
+  tags = [],
   prev = null,
   next = null,
   headings = [],
@@ -58,45 +66,36 @@ const dateFormat: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short'
 const publishedLabel = publishedDate.toLocaleDateString('en-US', dateFormat);
 const showUpdated = updatedDate.getTime() !== publishedDate.getTime();
 const updatedLabel = showUpdated ? updatedDate.toLocaleDateString('en-US', dateFormat) : null;
+const iso = (date: Date) => date.toISOString().slice(0, 10);
 
 // Contents list: section headings only (skip h1 + the sr-only footnotes label).
 const toc = headings.filter((h) => (h.depth === 2 || h.depth === 3) && h.slug !== 'footnote-label');
 const showToc = toc.length >= 2;
+
+const neighbours = [
+  prev ? { ...prev, dir: 'Previous' } : null,
+  next ? { ...next, dir: 'Next' } : null,
+].filter((link) => link !== null);
 ---
 
 <BaseLayout title={`${title} — Johannes Krumm`} description={description} ogType="article">
   <div class="reading-progress" aria-hidden="true"></div>
-  <ReadingHeader category={category} />
+  <ReadingHeader
+    category={category}
+    backHref={backHref}
+    backLabel={backLabel}
+    width="var(--reading-w)"
+  />
 
-  <main class="reading-column">
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/" class="breadcrumb__link">Home</a>
-      <span class="breadcrumb__sep" aria-hidden="true">/</span>
-      <a href={backHref} class="breadcrumb__link">{backLabel}</a>
-      <span class="breadcrumb__sep" aria-hidden="true">/</span>
-      <span class="breadcrumb__current" aria-current="page">{title}</span>
-    </nav>
-
-    <div class="article-meta">
-      <h1 class="article-meta__title">{title}</h1>
-      <div class="article-meta__row">
-        <span>{category}</span>
-        <span>{publishedLabel}</span>
-        <span>{readingTime} MIN READ</span>
-        {showUpdated && <span>Updated {updatedLabel}</span>}
-      </div>
-    </div>
-
+  <div class="shell article-shell">
     {
       showToc && (
-        <nav class="toc" aria-label="Table of contents">
-          <p class="toc__label">Contents</p>
-          <ol class="toc__list">
+        <nav class="sidebar toc" aria-label="Table of contents">
+          <p class="toc__label mono">Contents</p>
+          <ol class="toc__list dim-group">
             {toc.map((heading) => (
               <li class:list={['toc__item', heading.depth === 3 && 'toc__item--sub']}>
-                <a href={`#${heading.slug}`} class="toc__link">
-                  {heading.text}
-                </a>
+                <a href={`#${heading.slug}`}>{heading.text}</a>
               </li>
             ))}
           </ol>
@@ -104,50 +103,71 @@ const showToc = toc.length >= 2;
       )
     }
 
-    <slot />
+    <article class="stack">
+      <header class="head">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="/" class="u">Home</a>
+          <span aria-hidden="true">/</span>
+          <a href={backHref} class="u">{backLabel}</a>
+        </nav>
+        <h1 class="head__title">{title}</h1>
+        <p class="head__meta">
+          <time datetime={iso(publishedDate)}>{publishedLabel}</time>
+          <span aria-hidden="true">·</span>
+          <span class="mono">{readingTime} min</span>
+          {
+            tags.length > 0 && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>{tags.join(', ')}</span>
+              </>
+            )
+          }
+          {
+            showUpdated && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>
+                  Updated <time datetime={iso(updatedDate)}>{updatedLabel}</time>
+                </span>
+              </>
+            )
+          }
+        </p>
+      </header>
 
-    <footer class="article-footer">
-      {
-        related.length > 0 && (
-          <nav class="related" aria-label="Related articles">
-            <p class="related__label">Related</p>
-            <ul class="related__list">
-              {related.map((item) => (
-                <li>
-                  <a href={item.href} class="related__link">
-                    {item.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )
-      }
-      {
-        (prev || next) && (
-          <nav class="article-nav" aria-label="More articles">
-            {prev ? (
-              <a href={prev.href} class="article-nav__link article-nav__link--prev">
-                <span class="article-nav__dir">&larr; Previous</span>
-                <span class="article-nav__title">{prev.title}</span>
-              </a>
-            ) : (
-              <span class="article-nav__spacer" />
-            )}
-            {next ? (
-              <a href={next.href} class="article-nav__link article-nav__link--next">
-                <span class="article-nav__dir">Next &rarr;</span>
-                <span class="article-nav__title">{next.title}</span>
-              </a>
-            ) : (
-              <span class="article-nav__spacer" />
-            )}
-          </nav>
-        )
-      }
-      <a href={backHref} class="article-footer__back">&larr; All {backLabel}</a>
-    </footer>
-  </main>
+      <slot />
+
+      <footer class="foot">
+        {
+          related.length > 0 && (
+            <div class="foot__block">
+              <p class="foot__label mono">Related</p>
+              <RowList label="Related articles" groups={[{ rows: related }]} />
+            </div>
+          )
+        }
+        {
+          neighbours.length > 0 && (
+            <div class="foot__block">
+              <p class="foot__label mono">Keep reading</p>
+              <ul class="neighbours">
+                {neighbours.map((link) => (
+                  <li>
+                    <a class="neighbour plate" href={link.href}>
+                      <span class="neighbour__title">{link.title}</span>
+                      <span class="neighbour__dir mono">{link.dir}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+        <a href={backHref} class="foot__back u">All {backLabel}</a>
+      </footer>
+    </article>
+  </div>
 </BaseLayout>
 
 <style>
@@ -184,229 +204,143 @@ const showToc = toc.length >= 2;
     }
   }
 
-  .reading-column {
-    max-width: var(--reading-maxw);
-    margin: 0 auto;
-    padding: clamp(32px, 6vw, 64px) clamp(20px, 5vw, 32px) clamp(48px, 8vw, 96px);
-    background: var(--bg);
+  /* The reading measure is wider than the site's default column; the header
+     above is passed the same value so both edges line up. */
+  .article-shell {
+    --content-w: var(--reading-w);
+    padding-block: 64px var(--space-section);
   }
 
-  /* In-article contents list. */
+  /* ------------------------------- Contents ------------------------------- */
   .toc {
-    margin-bottom: clamp(32px, 5vw, 48px);
-    padding: 20px 22px;
-    background: var(--panel);
-    border: 1px solid var(--hairline);
+    /* Long contents lists scroll inside the rail rather than past the fold. */
+    max-height: calc(100vh - var(--page-top) - 48px);
+    overflow-y: auto;
   }
 
   .toc__label {
-    margin: 0 0 12px;
-    font: 11px var(--display);
-    letter-spacing: 0.14em;
+    margin-bottom: var(--space-row);
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--faint);
   }
 
   .toc__list {
-    margin: 0;
-    padding: 0;
+    display: grid;
+    gap: 6px;
     list-style: none;
-    counter-reset: toc;
-  }
-
-  .toc__item {
-    padding: 5px 0;
+    font-size: var(--text-sm);
+    line-height: 1.45;
   }
 
   .toc__item--sub {
-    padding-left: 20px;
+    padding-left: 12px;
   }
 
-  .toc__link {
-    font: 13px var(--display);
-    line-height: 1.4;
-    color: var(--ink-2);
-    transition: color 0.2s;
-  }
-
-  .toc__item--sub .toc__link {
-    color: var(--muted);
-  }
-
-  .toc__link:hover {
-    color: var(--accent);
-  }
-
-  /* Related articles (foot). */
-  .related {
-    margin-bottom: 28px;
-  }
-
-  .related__label {
-    margin: 0 0 14px;
-    font: 11px var(--display);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+  .toc__list a {
     color: var(--faint);
+    transition: color var(--dur-hover) ease;
   }
 
-  .related__list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .related__link {
-    display: block;
-    padding: 12px 0;
-    font: calc(500 + var(--font-display-weight-offset)) 15px var(--display);
+  .toc__list a[aria-current='true'] {
     color: var(--ink);
-    border-top: 1px solid var(--hairline);
-    transition: color 0.2s;
   }
 
-  .related__link:hover {
-    color: var(--accent);
+  /* --------------------------------- Head --------------------------------- */
+  .head {
+    display: grid;
+    gap: var(--space-block);
   }
 
   .breadcrumb {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: baseline;
     gap: 8px;
-    margin-bottom: clamp(20px, 3vw, 28px);
-    font: 11px var(--display);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .breadcrumb__link {
+    font-size: var(--text-sm);
     color: var(--faint);
-    transition: color 0.2s;
   }
 
-  .breadcrumb__link:hover {
-    color: var(--accent);
-  }
-
-  .breadcrumb__sep {
-    color: var(--faint);
-    opacity: 0.6;
-  }
-
-  .breadcrumb__current {
-    color: var(--ink-2);
-    /* Long titles truncate rather than wrap the crumb onto many lines. */
-    max-width: min(100%, 32ch);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .article-meta {
-    margin-bottom: clamp(28px, 4vw, 40px);
-    padding-bottom: clamp(20px, 3vw, 28px);
-    border-bottom: 1px solid var(--line);
-  }
-
-  .article-meta__title {
-    margin: 0 0 16px;
-    font: calc(700 + var(--font-display-weight-offset)) clamp(28px, 4vw, 40px) var(--display);
-    letter-spacing: -0.02em;
-    line-height: 1.15;
+  .head__title {
+    font-family: var(--display);
+    font-size: var(--text-xl);
+    font-weight: var(--w-strong);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
     color: var(--ink);
   }
 
-  .article-meta__row {
+  .head__meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
-    font: 11px var(--display);
+    align-items: baseline;
+    gap: 8px;
+    font-size: var(--text-sm);
+    color: var(--faint);
+  }
+
+  /* -------------------------------- Footer -------------------------------- */
+  .foot {
+    display: grid;
+    gap: var(--space-block);
+  }
+
+  /* A label belongs to its list, so it sits a row-step away, not a block-step. */
+  .foot__block {
+    display: grid;
+    gap: var(--space-row);
+  }
+
+  .foot__label {
+    font-size: var(--text-xs);
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--faint);
   }
 
-  .article-footer {
-    margin-top: clamp(40px, 6vw, 64px);
-    padding-top: clamp(24px, 3vw, 32px);
-    border-top: 1px solid var(--line);
+  .neighbours {
+    display: grid;
+    gap: var(--space-row);
+    list-style: none;
   }
 
-  .article-nav {
+  .neighbour {
     display: flex;
+    justify-content: space-between;
+    align-items: baseline;
     gap: 16px;
-    margin-bottom: 28px;
+    min-height: 44px;
+    padding-block: 8px;
   }
 
-  .article-nav__link {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1 1 0;
-    min-width: 0;
-    padding: 16px 18px;
-    border: 1px solid var(--line);
-    transition:
-      border-color 0.2s,
-      background-color 0.2s;
+  .neighbour__title {
+    font-size: var(--text-md);
+    font-weight: var(--w-med);
+    color: var(--ink);
   }
 
-  .article-nav__link:hover {
-    border-color: var(--accent);
-    background: var(--panel);
-  }
-
-  .article-nav__link--next {
-    text-align: right;
-  }
-
-  .article-nav__dir {
-    font: 11px var(--display);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+  .neighbour__dir {
+    flex: none;
+    font-size: var(--text-sm);
     color: var(--faint);
   }
 
-  .article-nav__title {
-    font: calc(500 + var(--font-display-weight-offset)) 14px var(--display);
-    line-height: 1.3;
-    color: var(--ink);
-    /* Keep neighbour cards a single row tall regardless of title length. */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .foot__back {
+    justify-self: start;
+    font-size: var(--text-sm);
+    color: var(--muted);
   }
 
-  .article-nav__link:hover .article-nav__title {
-    color: var(--accent);
-  }
-
-  .article-nav__spacer {
-    flex: 1 1 0;
-  }
-
-  .article-footer__back {
-    display: inline-block;
-    font: 12px var(--display);
-    letter-spacing: 0.06em;
-    color: var(--accent);
-  }
-
-  .article-footer__back:hover {
-    text-decoration: underline;
-  }
-
-  @media (max-width: 560px) {
-    .article-nav {
-      flex-direction: column;
+  @media (max-width: 900px) {
+    .article-shell {
+      --content-w: 100%;
+      padding-block: 40px var(--space-section);
     }
 
-    .article-nav__link--next {
-      text-align: left;
+    .toc {
+      max-height: none;
+      overflow: visible;
     }
   }
 </style>

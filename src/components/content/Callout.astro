@@ -1,9 +1,11 @@
 ---
 /**
- * Admonition box for prose content — a left accent bar, panel background and
- * a mono uppercase label, with the slot rendered as regular prose. Warn/success
- * tints source from global --status-* tokens; --callout-accent is only a
- * component-local indirection for how those colors get threaded in.
+ * Admonition block for prose — a quiet surface with a glyph + uppercase mono
+ * label. All four types share one treatment (--panel + --shadow-ring, the
+ * same "surface with a ring" the site uses for code blocks and media) so a
+ * callout reads as a sibling of a code block, not a new visual language. No
+ * border: the reset zeroes it deliberately, the ring lives inside the shadow.
+ * Type differentiation survives only in the label ink + glyph colour.
  */
 interface Props {
   type?: 'note' | 'info' | 'warn' | 'success';
@@ -23,7 +25,9 @@ const label = title ?? type;
 ---
 
 <div class:list={['callout', `callout--${type}`]}>
-  <p class="callout__label"><span class="callout__glyph" aria-hidden="true">{glyphs[type]}</span>{label}</p>
+  <p class="callout__label mono">
+    <span class="callout__glyph" aria-hidden="true">{glyphs[type]}</span>{label}
+  </p>
   <div class="callout__body">
     <slot />
   </div>
@@ -31,37 +35,33 @@ const label = title ?? type;
 
 <style>
   .callout {
-    --callout-accent: var(--accent);
-    padding: 0.9em 1.2em;
+    --callout-ink: var(--faint);
+    padding: 1em 1.2em;
+    border-radius: 8px;
     background: var(--panel);
-    border-left: 3px solid var(--callout-accent);
-  }
-
-  .callout--note {
-    --callout-accent: var(--faint);
+    box-shadow: var(--shadow-ring);
   }
 
   .callout--info {
-    --callout-accent: var(--accent);
+    --callout-ink: var(--ink);
   }
 
   .callout--warn {
-    --callout-accent: var(--status-warning);
+    --callout-ink: var(--status-warning);
   }
 
   .callout--success {
-    --callout-accent: var(--status-success);
+    --callout-ink: var(--status-success);
   }
 
   .callout__label {
-    margin: 0;
     display: flex;
     align-items: center;
     gap: 0.5em;
-    font: calc(600 + var(--font-display-weight-offset)) 11px var(--display);
-    letter-spacing: 0.08em;
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--callout-accent);
+    color: var(--callout-ink);
   }
 
   .callout__glyph {

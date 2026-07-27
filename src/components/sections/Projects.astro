@@ -1,0 +1,140 @@
+---
+/**
+ * Projects — four featured rows, then the minor tools.
+ *
+ * Not cards. The two tiers are separated by DENSITY alone: a featured row is a
+ * three-line GROUP (--space-group apart), a minor row is a single ROW
+ * (--space-row apart). Giving the minor list a tint or a container would be a
+ * second visual language for what is really just "less important", and that is
+ * how the bento grew last time.
+ *
+ * Both lists carry a `.plate` hover, whose padding is part of the visual gap —
+ * hence --plate-y and the `calc()` on each list gap. See the spacing ladder in
+ * global.css; do not "simplify" these back to a literal number.
+ */
+import Section from '@/components/primitives/Section.astro';
+import { featured, minor } from '@/data/projects';
+---
+
+<Section id="projects" label="Projects">
+  <ul class="featured">
+    {
+      featured.map((project, i) => (
+        <li class="reveal" data-delay={i * 60}>
+          <a
+            class="row plate"
+            href={project.href}
+            target={project.external ? '_blank' : undefined}
+            rel={project.external ? 'noopener' : undefined}
+          >
+            <span class="head">
+              <span class:list={['name', { ext: project.external }]}>{project.name}</span>
+              {project.year && <span class="year mono">{project.year}</span>}
+            </span>
+            <span class="desc">{project.description}</span>
+            <span class="stack mono">{project.stack.join(' · ')}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+
+  <ul class="minor reveal" data-delay="120">
+    {
+      minor.map((project) => (
+        <li>
+          <a class="row-min plate" href={project.href} target="_blank" rel="noopener">
+            <span class="name-min mono">{project.name}</span>
+            <span class="desc-min">{project.description}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Section>
+
+<style>
+  ul {
+    list-style: none;
+  }
+
+  .featured {
+    --plate-y: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--space-group) - 2 * var(--plate-y));
+  }
+
+  .row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-block: var(--plate-y);
+  }
+
+  .head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .name {
+    font-family: var(--display);
+    font-size: var(--text-md);
+    font-weight: var(--w-med);
+    color: var(--ink);
+  }
+
+  .year {
+    font-size: var(--text-sm);
+    color: var(--faint);
+    white-space: nowrap;
+  }
+
+  .desc {
+    font-size: var(--text-md);
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+
+  .stack {
+    font-size: var(--text-xs);
+    color: var(--faint);
+    margin-top: 1px;
+  }
+
+  /* ── Minor tools: same grammar, one line, tighter. ─────────────────────── */
+  .minor {
+    --plate-y: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--space-row) - 2 * var(--plate-y));
+  }
+
+  .row-min {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding-block: var(--plate-y);
+  }
+
+  .name-min {
+    font-size: var(--text-sm);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  .desc-min {
+    font-size: var(--text-sm);
+    color: var(--faint);
+    line-height: 1.5;
+  }
+
+  @media (max-width: 560px) {
+    .row-min {
+      flex-direction: column;
+      gap: 1px;
+    }
+  }
+</style>
