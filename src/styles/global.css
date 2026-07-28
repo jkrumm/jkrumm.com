@@ -20,12 +20,12 @@
    ROLE is the classic mistake here; read these before reaching for one.
      --divider         The soft rule inside a surface. The ONLY hairline the
                        design permits, and only twice (see above).
-     --ring            Consumed exclusively inside --shadow-card / --shadow-ring.
-                       Never reference it directly.
+     --ring            Consumed exclusively inside --shadow-ring. Never
+                       reference it directly.
    DEPTH — replaces the border. The 1px ring lives INSIDE the shadow value, so
-   nothing needs a `border` property to read as an edge.
+   nothing needs a `border` property to read as an edge. There is exactly ONE
+   depth token: a borderless page has no lifted-card tier to express.
      --shadow-ring     Media edge: a hairline ring, no drop
-     --shadow-card     Lifted surface: whisper shadow + ring
    TEXT (emphasis ramp, strongest → faintest)
      --ink             Titles, headings, <strong>. The PRIMARY tier.
      --ink-2           Body copy and descriptions. Body is secondary, on purpose
@@ -35,14 +35,17 @@
    ACCENT — two roles, two colours. They are not interchangeable.
      --accent          INK role: links, focus ring, the active-nav dot. Inverts
                        across schemes.
-     --accent-hover    Accent, pressed
      --accent-glow     Focus glow — DERIVED from --accent
      --accent-fill     SURFACE role: a filled control carrying a label. The SAME
                        colour in both schemes (a fill is squeezed from both
                        sides), always paired with --on-accent.
      --on-accent       Label on an accent FILL. White in both schemes.
-   STATUS
-     --status-success / --status-warning / --status-error  + derived --tint-*
+   STATUS — the Callout LABEL only. There is no tinted status fill anywhere on
+   the site; a callout is a --panel surface with a ring, like a code block.
+     --status-success / --status-warning / --status-error
+   CHARTS
+     --chart-1..4      Categorical series. Baked into build-time SVG by
+                       src/utils/chart-palette.ts, not read at runtime.
    ========================================================================== */
 :root {
   color-scheme: light;
@@ -59,7 +62,6 @@
 
   /* Depth */
   --shadow-ring: 0 0 0 1px var(--ring);
-  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.05), 0 0 0 1px var(--ring);
 
   /* Ink */
   --ink: #262629;
@@ -69,7 +71,6 @@
 
   /* Accent */
   --accent: #0084d1;
-  --accent-hover: #0069a8;
   --accent-glow: color-mix(in srgb, var(--accent) 16%, transparent);
   --accent-fill: #0077bd;
   --on-accent: #ffffff;
@@ -78,9 +79,6 @@
   --status-success: #2f7a4f;
   --status-warning: #b5750f;
   --status-error: #b53f3f;
-  --tint-success: color-mix(in srgb, var(--status-success) 12%, transparent);
-  --tint-warning: color-mix(in srgb, var(--status-warning) 12%, transparent);
-  --tint-error: color-mix(in srgb, var(--status-error) 12%, transparent);
 
   /* Charts — four categorical series. Observable Plot renders to static SVG at
      BUILD time (linkedom, no CSSOM), so it cannot read a custom property: it is
@@ -182,7 +180,6 @@
      light outset hairline — the two can't share one expression. */
   --ring: color-mix(in srgb, #ffffff 9%, transparent);
   --shadow-ring: inset 0 0 0 1px var(--ring);
-  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.4), inset 0 0 0 1px var(--ring);
 
   --ink: #e5e5e9;
   --ink-2: #dddde1;
@@ -190,7 +187,6 @@
   --faint: #a1a1a4;
 
   --accent: #8ec5ff;
-  --accent-hover: #51a2ff;
   --accent-glow: color-mix(in srgb, var(--accent) 22%, transparent);
 
   --status-success: #56c07a;

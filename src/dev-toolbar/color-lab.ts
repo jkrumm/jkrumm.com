@@ -23,14 +23,31 @@ interface TokenGroup {
   swatchKind: SwatchKind;
 }
 
+// Mirrors the token role map at the top of global.css. Only tokens the site
+// actually RENDERS belong here — a row that edits a variable nothing reads is
+// worse than a missing row, because the swatch changes and the page doesn't.
+// That is what this list had become: --line, --hairline, --shadow-rgb and
+// --bar-bg all died with the bento, and four of seven groups edited nothing.
+//
+// Deliberately absent: --shadow-ring is a shadow VALUE, not a color, and is
+// composed from --ring — tune --ring and it follows. --accent-fill /
+// --on-accent are declared in global.css but unused by design (see CLAUDE.md
+// § Accent budget); nothing on the site is an accent fill.
 const GROUPS: TokenGroup[] = [
   { name: 'Surfaces', tokens: ['--bg', '--panel', '--panel-hover'], swatchKind: 'gray' },
-  { name: 'Lines', tokens: ['--line', '--hairline'], swatchKind: 'gray' },
+  { name: 'Lines', tokens: ['--divider', '--ring'], swatchKind: 'gray' },
   { name: 'Text', tokens: ['--ink', '--ink-2', '--muted', '--faint'], swatchKind: 'gray' },
-  { name: 'Accent', tokens: ['--accent', '--accent-hover', '--accent-glow', '--on-accent'], swatchKind: 'accent' },
-  { name: 'Status', tokens: ['--status-warning', '--status-success'], swatchKind: 'accent' },
-  { name: 'Shadow', tokens: ['--shadow-rgb'], swatchKind: null },
-  { name: 'Chrome', tokens: ['--bar-bg'], swatchKind: 'gray' },
+  { name: 'Accent', tokens: ['--accent', '--accent-glow'], swatchKind: 'accent' },
+  {
+    name: 'Status',
+    tokens: ['--status-success', '--status-warning', '--status-error'],
+    swatchKind: 'accent',
+  },
+  {
+    name: 'Charts',
+    tokens: ['--chart-1', '--chart-2', '--chart-3', '--chart-4'],
+    swatchKind: 'accent',
+  },
 ];
 
 const ALL_TOKENS: string[] = GROUPS.flatMap((group) => group.tokens);
@@ -45,30 +62,38 @@ interface TokenMeta {
 }
 
 const TOKEN_META: Record<string, TokenMeta> = {
-  '--bg': { role: 'Page background — the furthest-back surface' },
-  '--panel': { role: 'Card / cell fill — opaque bento panels' },
-  '--panel-hover': { role: 'Panel fill on hover / raised state' },
-  '--line': { role: 'Structural seam — bento frame, grid gaps, the one real border' },
-  '--hairline': { role: 'Soft divider inside cells & reading surfaces (row rules, table lines, chart gridlines)' },
-  '--ink': { role: 'Primary text — headings & strong body' },
-  '--ink-2': { role: 'Secondary text / emphasis' },
-  '--muted': { role: 'Muted body text' },
-  '--faint': { role: 'Faint labels, captions, quiet marks' },
-  '--accent': { role: 'Brand accent — links, active states' },
-  '--accent-hover': { role: 'Accent hover / pressed' },
-  '--accent-glow': { role: 'Accent focus glow / ring', derived: '= --accent · 16% light / 22% dark' },
-  '--on-accent': { role: 'Text / icon on an accent fill (usually white)' },
-  '--status-warning': { role: 'Warning tint — callouts' },
-  '--status-success': { role: 'Success tint — callouts' },
-  '--shadow-rgb': { role: 'Shadow color as an R,G,B triplet, fed into rgba() shadows' },
-  '--bar-bg': { role: 'Sticky-bar backdrop (translucent)', derived: '= --bg · 82%' },
+  '--bg': { role: 'Page canvas — the furthest-back surface' },
+  '--panel': { role: 'Raised surface — media tiles, code blocks, the avatar' },
+  '--panel-hover': { role: 'The .plate row-hover fill', derived: '= ink · 5% light / white · 7% dark' },
+  '--divider': {
+    role: 'The ONLY hairline the design permits, and only twice: beside each Writing year and the footer top edge',
+    derived: '= ink · 12% light / white · 12% dark',
+  },
+  '--ring': {
+    role: 'Edge of a surface — consumed ONLY inside --shadow-ring, never referenced directly',
+    derived: '= ink · 10% light / white · 9% dark',
+  },
+  '--ink': { role: 'Titles, headings, <strong> — the PRIMARY tier' },
+  '--ink-2': { role: 'Body copy and descriptions (body is secondary on purpose)' },
+  '--muted': { role: 'Supporting text — section labels, the rail bio' },
+  '--faint': { role: 'Meta — dates, years, stack lines, captions' },
+  '--accent': { role: 'INK role. Spent in 3 places: active-nav dot, :focus-visible, ::selection — plus prose links' },
+  '--accent-glow': { role: 'Focus glow', derived: '= --accent · 16% light / 22% dark' },
+  '--status-success': { role: 'Success — the Callout label only, never a fill' },
+  '--status-warning': { role: 'Warning — the Callout label only, never a fill' },
+  '--status-error': { role: 'Error — the Callout label only, never a fill' },
+  '--chart-1': { role: 'Chart series 1 / tracks --accent. Baked into build-time SVG — see chart-palette.ts' },
+  '--chart-2': { role: 'Chart series 2 — categorical, no CSS-token counterpart' },
+  '--chart-3': { role: 'Chart series 3 — categorical' },
+  '--chart-4': { role: 'Chart series 4 — categorical' },
 };
 
-// These tokens hold a raw "R, G, B" triplet or a full rgba()/color-mix()/
-// gradient string, not a hex color — <input type="color"> can only produce/
-// round-trip #rrggbb, so it's omitted for these and only the free-text input
-// is shown. (--accent-glow and --bar-bg derive via color-mix in global.css.)
-const RAW_VALUE_TOKENS = new Set(['--shadow-rgb', '--bar-bg', '--accent-glow']);
+// These tokens hold a color-mix() string rather than a hex color — <input
+// type="color"> can only produce/round-trip #rrggbb, so the picker is omitted
+// and only the free-text input is shown. All three are translucent by design:
+// a divider or ring that resolved to an opaque hex would stop adapting to the
+// surface underneath it, which is the whole reason they are mixes.
+const RAW_VALUE_TOKENS = new Set(['--divider', '--ring', '--panel-hover', '--accent-glow']);
 
 type FamilySource = { label: string; shades: Record<string, string> };
 

@@ -1,14 +1,14 @@
 ---
 /**
  * Admonition block for prose — a quiet surface with a glyph + uppercase mono
- * label. All four types share one treatment (--panel + --shadow-ring, the
+ * label. All five types share one treatment (--panel + --shadow-ring, the
  * same "surface with a ring" the site uses for code blocks and media) so a
  * callout reads as a sibling of a code block, not a new visual language. No
  * border: the reset zeroes it deliberately, the ring lives inside the shadow.
  * Type differentiation survives only in the label ink + glyph colour.
  */
 interface Props {
-  type?: 'note' | 'info' | 'warn' | 'success';
+  type?: 'note' | 'info' | 'warn' | 'success' | 'error';
   title?: string;
 }
 
@@ -19,6 +19,7 @@ const glyphs: Record<NonNullable<Props['type']>, string> = {
   info: 'ℹ',
   warn: '⚠',
   success: '✓',
+  error: '✕',
 };
 
 const label = title ?? type;
@@ -52,6 +53,10 @@ const label = title ?? type;
 
   .callout--success {
     --callout-ink: var(--status-success);
+  }
+
+  .callout--error {
+    --callout-ink: var(--status-error);
   }
 
   .callout__label {
