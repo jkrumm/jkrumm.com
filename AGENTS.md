@@ -143,6 +143,10 @@ Edit typed modules in `src/data/`; the layout doesn't change. Design tokens (all
 colors, type, spacing, the shell's column widths) are CSS variables in
 `src/styles/global.css`.
 
+The Activity section's GitHub heatmap falls back to the committed snapshot
+`src/data/github-activity.json` whenever the live build-time fetch fails; run
+`bun run activity` to refresh it against the real contribution graph.
+
 ## Images / CDN
 
 - **Content/article images** → CDN URLs (`blog/` prefix, readable names,

@@ -1,0 +1,109 @@
+---
+/**
+ * Activity — a build-time GitHub contribution heatmap, zero client JS.
+ *
+ * Data comes from `getGithubActivity` (live fetch, falling back to the
+ * committed `src/data/github-activity.json` snapshot on any failure — see
+ * `src/utils/github-activity.ts` and `bun run activity`). The grid is plain
+ * inline SVG: weeks as columns, 7 rows, rendered once at build time — no
+ * Plot, no runtime measurement, so a `viewBox` + `width: 100%` is enough to
+ * make it responsive.
+ *
+ * Intensity is the ink ramp, not colour: level 0 is a near-invisible tint,
+ * levels 1–4 step up `--ink`'s opacity. No green — that would spend the
+ * accent budget on decoration.
+ */
+import Section from '@/components/primitives/Section.astro';
+import { SOCIAL } from '@/consts';
+import { getGithubActivity, type ActivityData, type ActivityDay } from '@/utils/github-activity';
+import fallback from '@/data/github-activity.json';
+
+const GITHUB_HANDLE = 'jkrumm';
+const CELL = 11;
+const GAP = 3;
+const STEP = CELL + GAP;
+
+const activity = await getGithubActivity(GITHUB_HANDLE, fallback as ActivityData);
+
+// Group the flat, chronologically-sorted day list into weeks (Sunday-start
+// columns) for the grid — the source markup's own row/column structure isn't
+// something we depend on, only `date` + `level`.
+const weeks: (ActivityDay | null)[][] = [];
+for (const day of activity.days) {
+  const weekday = new Date(`${day.date}T00:00:00Z`).getUTCDay();
+  if (weekday === 0 || weeks.length === 0) weeks.push(new Array(7).fill(null));
+  weeks[weeks.length - 1][weekday] = day;
+}
+
+const width = weeks.length * STEP - GAP;
+const height = 7 * STEP - GAP;
+const totalLabel = activity.total.toLocaleString('en-US');
+---
+
+<Section id="activity" label="Activity" actionLabel="GitHub →" actionHref={SOCIAL.github}>
+  <div class="reveal">
+    <svg
+      class="heatmap"
+      viewBox={`0 0 ${width} ${height}`}
+      role="img"
+      aria-label={`${totalLabel} GitHub contributions in the last year`}
+    >
+      {
+        weeks.map((week, wi) =>
+          week.map(
+            (day, di) =>
+              day && (
+                <rect
+                  class="day"
+                  data-level={day.level}
+                  x={wi * STEP}
+                  y={di * STEP}
+                  width={CELL}
+                  height={CELL}
+                  rx="2"
+                />
+              ),
+          ),
+        )
+      }
+    </svg>
+    <p class="caption"><span class="mono">{totalLabel}</span> contributions in the last year</p>
+  </div>
+</Section>
+
+<style>
+  .heatmap {
+    width: 100%;
+    height: auto;
+  }
+
+  .day {
+    fill: var(--ink);
+  }
+
+  .day[data-level='0'] {
+    opacity: 0.08;
+  }
+
+  .day[data-level='1'] {
+    opacity: 0.28;
+  }
+
+  .day[data-level='2'] {
+    opacity: 0.48;
+  }
+
+  .day[data-level='3'] {
+    opacity: 0.68;
+  }
+
+  .day[data-level='4'] {
+    opacity: 0.9;
+  }
+
+  .caption {
+    margin-top: var(--space-row);
+    font-size: var(--text-sm);
+    color: var(--faint);
+  }
+</style>

@@ -33,6 +33,7 @@ const robotsContent = [
 <title>{title}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonicalURL} />
+<link rel="alternate" type="application/rss+xml" title={SITE.title} href={new URL('/rss.xml', Astro.site)} />
 <meta name="robots" content={robotsContent} />
 <!-- Mirrors --bg (light); the pre-paint script in BaseLayout swaps it to the
      dark --bg once the resolved theme is known. Keep both in sync with global.css. -->

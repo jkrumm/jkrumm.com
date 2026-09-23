@@ -1,0 +1,109 @@
+---
+/**
+ * Skills — a category label beside a wrapped run of icon+name links.
+ *
+ * Same two-track grid as Experience (`96px label | 1fr content`), but the
+ * right track holds an inline-wrapping row instead of a list — there is no
+ * per-item detail to stack. All groups render; unlike Experience there is no
+ * "full resume" escape hatch to defer to, and five short groups don't warrant
+ * a collapse.
+ *
+ * Hover reuses `.dim-group` (siblings recede to --faint, the hovered item
+ * returns to --ink) rather than `.plate` — these are dense inline links, not
+ * bleed rows, so a background plate would collide edge-to-edge.
+ */
+import Section from '@/components/primitives/Section.astro';
+import { skillGroups } from '@/data/skills';
+---
+
+<Section id="skills" label="Skills">
+  <div class="groups">
+    {
+      skillGroups.map((group, i) => (
+        <div class="entry reveal" data-delay={i * 60}>
+          <span class="category">{group.label}</span>
+          <ul class="items dim-group">
+            {group.items.map((skill) => (
+              <li>
+                <a
+                  class="skill"
+                  href={skill.href}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {skill.icon && (
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d={skill.icon.path} />
+                    </svg>
+                  )}
+                  <span class="name">{skill.name}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+</Section>
+
+<style>
+  /* One wrapper so the groups read as single-line rows (--space-row) rather
+     than inheriting Section's --space-group between direct children. */
+  .groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-row);
+  }
+
+  .entry {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    align-items: baseline;
+    gap: var(--space-block);
+  }
+
+  .category {
+    font-family: var(--display);
+    font-size: var(--text-sm);
+    color: var(--faint);
+    line-height: 1.5;
+    padding-top: 1px;
+  }
+
+  .items {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 16px;
+    row-gap: var(--space-row);
+  }
+
+  .skill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-2);
+  }
+
+  .icon {
+    width: 14px;
+    height: 14px;
+    /* Tracks the link colour so the icon dims with its label under
+       .dim-group; the opacity keeps it one step quieter than the name. */
+    fill: currentColor;
+    opacity: 0.7;
+  }
+
+  .name {
+    font-size: var(--text-sm);
+  }
+
+  @media (max-width: 560px) {
+    .entry {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+  }
+</style>

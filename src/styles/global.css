@@ -381,7 +381,7 @@ time,
    2. `.u` — links. An always-on faint underline that darkens. Colour and
       geometry never change; a link that changes colour on hover reads as a
       different link.
-   3. `.dim-group` — the sidebar nav only. Siblings recede, the hovered item
+   3. `.dim-group` — the sidebar nav and the Skills rows. Siblings recede, the hovered item
       returns to full ink.
    ========================================================================== */
 .plate {
