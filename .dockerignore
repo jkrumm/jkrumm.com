@@ -1,0 +1,9 @@
+.github
+.astro
+node_modules
+dist
+design_handoff_portfolio
+docs
+*.log
+.env*
+.DS_Store

@@ -1,0 +1,45 @@
+name: Deploy
+
+# jkrumm.com → VPS via RollHook, then purge the hostname from Cloudflare's edge.
+#
+# Auth: GitHub OIDC → RollHook exchanges for short-lived registry creds. RollHook
+# authorizes by the rollhook.allowed_repos label on the running container
+# (vps/apps/jkrumm-com/compose.yml). The only secret is the Cloudflare token —
+# Zone:Read + Cache Purge, nothing else. Edge-cache pattern: vps/docs/edge-cache.md.
+#
+# Daily schedule: the homepage GitHub heatmap is fetched at build time, so a
+# rebuild is the only way it moves. GitHub pauses schedules after 60 days with
+# no repo activity.
+
+on:
+  push:
+    branches: [master]
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy jkrumm-com
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          # Full history: articles' last-modified dates are `git log` per file.
+          fetch-depth: 0
+      - uses: jkrumm/rollhook-action@v1
+        with:
+          url: https://rollhook.jkrumm.com
+          image_name: jkrumm-com
+          cloudflare_purge_hosts: jkrumm.com
+          cloudflare_api_token: ${{ secrets.CLOUDFLARE_PURGE_TOKEN }}
