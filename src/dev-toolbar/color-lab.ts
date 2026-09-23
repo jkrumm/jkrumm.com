@@ -31,7 +31,7 @@ interface TokenGroup {
 //
 // Deliberately absent: --shadow-ring is a shadow VALUE, not a color, and is
 // composed from --ring — tune --ring and it follows. --accent-fill /
-// --on-accent are declared in global.css but unused by design (see CLAUDE.md
+// --on-accent are declared in global.css but unused by design (see AGENTS.md
 // § Accent budget); nothing on the site is an accent fill.
 const GROUPS: TokenGroup[] = [
   { name: 'Surfaces', tokens: ['--bg', '--panel', '--panel-hover'], swatchKind: 'gray' },

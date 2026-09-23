@@ -221,7 +221,7 @@ One hairline at `--text-4`, full-bleed (`grid-column: full`) with contents const
 
 ### Docs that must change in the same commit
 
-`/Users/jkrumm/SourceRoot/jkrumm.com/CLAUDE.md` § "Layout model (continuous bento)", `/Users/jkrumm/SourceRoot/jkrumm.com/.claude/rules/animation.md` (the "reveals only animate over an opaque cell" and "observers rooted in `#jk-scroll`" invariants are both wrong after this), and `/Users/jkrumm/SourceRoot/jkrumm.com/.claude/skills/astro-motion-scroll/SKILL.md` §5 + its LEARNINGS.md. They currently encode the bento as law and will actively fight the rebuild.
+`/Users/jkrumm/SourceRoot/jkrumm.com/AGENTS.md` § "Layout model (continuous bento)", `/Users/jkrumm/SourceRoot/jkrumm.com/.claude/rules/animation.md` (the "reveals only animate over an opaque cell" and "observers rooted in `#jk-scroll`" invariants are both wrong after this), and `/Users/jkrumm/SourceRoot/jkrumm.com/.claude/skills/astro-motion-scroll/SKILL.md` §5 + its LEARNINGS.md. They currently encode the bento as law and will actively fight the rebuild.
 
 ## 7. Open tensions
 

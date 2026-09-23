@@ -24,7 +24,7 @@
  *
  * Shoot `astro preview` (4321), not `astro dev` — the dev server injects the
  * Astro dev toolbar into the page, and Vite HMR can serve stale scoped styles
- * after a large multi-file edit (see CLAUDE.md § Validation). The production
+ * after a large multi-file edit (see AGENTS.md § Validation). The production
  * build is what actually ships, so it is what gets reviewed.
  */
 const BASE = process.env.BASE ?? 'http://localhost:4321';
