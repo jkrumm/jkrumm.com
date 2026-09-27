@@ -4,7 +4,7 @@
  *
  * MARKUP ONLY. There is no endpoint yet: the form posts nowhere and is marked
  * `inert`-free but explicitly disabled at the submit step, so it can't silently
- * swallow a real message. Wiring it to bun-email-api (the Resend wrapper with
+ * swallow a real message. Wiring it to email-gateway (the Resend wrapper with
  * AI spam detection) is the follow-up; when that lands, set `action` to the
  * endpoint and drop the notice plus the `disabled` attribute.
  *
@@ -52,7 +52,7 @@ import { SOCIAL } from '@/consts';
 
     <div class="foot">
       <button type="submit" disabled>Send</button>
-      <span class="notice">Not wired up yet — the endpoint lands with bun-email-api.</span>
+      <span class="notice">Not wired up yet — the endpoint lands with email-gateway.</span>
     </div>
   </form>
 </Section>

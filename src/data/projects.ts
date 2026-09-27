@@ -79,8 +79,8 @@ export const minor: MinorProject[] = [
     href: 'https://github.com/jkrumm/ntfy-mac',
   },
   {
-    name: 'bun-email-api',
-    description: 'Resend wrapper with AI spam detection',
-    href: 'https://github.com/jkrumm/bun-email-api',
+    name: 'email-gateway',
+    description: 'Resend + Proton mail gateway with AI triage',
+    href: 'https://github.com/jkrumm/email-gateway',
   },
 ];

@@ -87,6 +87,6 @@ no second frame.
 ## Known gaps
 
 The contact form is markup only — it posts nowhere and the submit is disabled
-until it is wired to `bun-email-api`. `/photos` is a stub: the Photography
+until it is wired to `email-gateway`. `/photos` is a stub: the Photography
 section ships only if there are real photos worth showing.
 ```
