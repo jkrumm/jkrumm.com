@@ -5,13 +5,51 @@
  * It carries everything the old fixed header + sticky footer did (identity,
  * navigation, active-section feedback, theme toggle) with no chrome of its own:
  * no bar, no border, no backdrop. It is just the left column of the document.
+ * Every surface on the site uses this ONE rail: the homepage passes nothing
+ * (defaults below), articles pass their table of contents as `sections`, and
+ * the guide/blog indexes + stub pages pass the site nav — `sections` is
+ * generic on purpose so there is one rail component, not three.
  *
  * Sticky positioning depends on `align-self: start`, which lives on
  * `.shell > .sidebar` in global.css — without it the grid stretches this to
- * full row height and `position: sticky` silently does nothing.
+ * full row height and `position: sticky` silently does nothing. The same rule
+ * also caps the rail's height to the viewport so a long `sections` list (a
+ * deep article TOC) scrolls inside `.nav` instead of pushing the rail taller
+ * than the screen — see `.nav`'s `overflow-y` below.
  */
 import ThemeToggle from '@/components/chrome/ThemeToggle.astro';
 import { navItems, profile, profileLinks } from '@/data/profile';
+
+export interface NavSection {
+  href: string;
+  label: string;
+  /** 3 = sub-item (an h3 inside an article TOC), indented one step. */
+  depth?: 2 | 3;
+}
+
+interface Props {
+  /** Defaults to the homepage section anchors. */
+  sections?: NavSection[];
+  /** Articles and index pages hide the bio to keep the rail short. */
+  bio?: boolean;
+}
+
+const {
+  sections = navItems.map((item) => ({ href: `#${item.id}`, label: item.label })),
+  bio = true,
+}: Props = Astro.props;
+
+// Site-nav items (`/guide`, `/blog`, …) get a static current-page dot — no
+// scroll-spy needed for a destination that isn't scrolled to. In-page anchors
+// (`#…`) are left to portfolio.ts's scroll-spy instead.
+const currentPath = Astro.url.pathname;
+
+// One <h1> per page: the name is the page heading only on the homepage;
+// everywhere else the page's own title is, and the name is a home link.
+const NameTag = currentPath === '/' ? 'h1' : 'p';
+const navLabel = sections.every((item) => item.href.startsWith('#')) ? 'Sections' : 'Site';
+// A destination already in the site nav isn't repeated under "Elsewhere".
+const links = profileLinks.filter((link) => !sections.some((item) => item.href === link.href));
 ---
 
 <aside class="sidebar">
@@ -28,26 +66,38 @@ import { navItems, profile, profileLinks } from '@/data/profile';
   </a>
 
   <div class="identity">
-    <h1 class="name">{profile.name}</h1>
+    <a class="name-link" href="/">
+      <NameTag class="name">{profile.name}</NameTag>
+    </a>
     <p class="title">{profile.title}</p>
   </div>
 
-  <p class="bio">{profile.bio}</p>
+  {bio && <p class="bio">{profile.bio}</p>}
 
-  <nav class="nav dim-group" aria-label="Sections" data-allow-bleed>
-    {
-      navItems.map((item) => (
-        <a data-nav-link href={`#${item.id}`}>
-          <span class="dot" aria-hidden="true" />
-          {item.label}
-        </a>
-      ))
-    }
-  </nav>
+  {
+    sections.length > 0 && (
+      <nav class="nav dim-group" aria-label={navLabel} data-allow-bleed>
+        {sections.map((item) => {
+          const isHash = item.href.startsWith('#');
+          return (
+            <a
+              data-nav-link={isHash || undefined}
+              href={item.href}
+              aria-current={!isHash && item.href === currentPath ? 'page' : undefined}
+              class:list={[{ sub: item.depth === 3 }]}
+            >
+              <span class="dot" aria-hidden="true" />
+              {item.label}
+            </a>
+          );
+        })}
+      </nav>
+    )
+  }
 
   <nav class="links dim-group" aria-label="Elsewhere">
     {
-      profileLinks.map((link) => (
+      links.map((link) => (
         <a
           class:list={['u', { ext: link.external }]}
           href={link.href}
@@ -59,6 +109,14 @@ import { navItems, profile, profileLinks } from '@/data/profile';
       ))
     }
   </nav>
+
+  {
+    Astro.slots.has('foot') && (
+      <div class="foot">
+        <slot name="foot" />
+      </div>
+    )
+  }
 
   <ThemeToggle />
 </aside>
@@ -106,6 +164,23 @@ import { navItems, profile, profileLinks } from '@/data/profile';
     gap: 2px;
   }
 
+  /* Plain ink, no arrow, no "Back" — the name is the way home on every
+     surface. Underline only appears on hover, borrowing `.u`'s colour step
+     rather than being always-on (which would read as a permanent label). */
+  .name-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  @media (hover: hover) {
+    .name-link:hover .name {
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+      text-decoration-color: var(--muted);
+    }
+  }
+
   /* Name and title sit at the SAME size, separated by an ink step and one
      weight step. A size jump here would be the loudest thing on the page; the
      title is long enough that matching the name's weight too made it shout. */
@@ -133,10 +208,31 @@ import { navItems, profile, profileLinks } from '@/data/profile';
     color: var(--muted);
   }
 
+  /* Every direct child keeps its natural size except `.nav`, which is the one
+     allowed to shrink and scroll internally — this is what lets a long
+     article TOC fit the rail's viewport-capped height (see `.shell > .sidebar`
+     in global.css) without squeezing the avatar/identity/links. */
+  .sidebar > * {
+    flex-shrink: 0;
+  }
+
   .nav {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    flex-shrink: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* A TOC sub-item (an h3 inside an article) indents one step. */
+  .nav a.sub {
+    padding-left: 12px;
   }
 
   .nav a {
@@ -161,11 +257,14 @@ import { navItems, profile, profileLinks } from '@/data/profile';
     transition: background var(--dur-hover) ease;
   }
 
-  .nav a[aria-current='true'] {
+  /* Matches BOTH `aria-current="true"` (scroll-spy, set by portfolio.ts) and
+     `aria-current="page"` (static, set here for a site-nav destination that
+     matches the current URL) — the same dot marks "active" either way. */
+  .nav a[aria-current] {
     color: var(--ink);
   }
 
-  .nav a[aria-current='true'] .dot {
+  .nav a[aria-current] .dot {
     background: var(--accent);
   }
 
@@ -185,9 +284,20 @@ import { navItems, profile, profileLinks } from '@/data/profile';
     transition: color var(--dur-hover) ease;
   }
 
+  /* Optional per-page action (e.g. /resume's "Download PDF") — a slot rather
+     than a fixed link, since only that surface has one. Styled like the
+     Elsewhere links above: quiet, no button, no accent. `:global()` is
+     required because a slotted child keeps the CALLER's scope, not this
+     component's — see Astro's scoped-CSS docs. */
+  .foot :global(a) {
+    display: inline-flex;
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+
   /* `.dim-group:hover a` in global.css would otherwise fight the active state. */
   @media (hover: hover) {
-    .nav.dim-group:hover a[aria-current='true'] {
+    .nav.dim-group:hover a[aria-current] {
       color: var(--ink);
     }
   }
@@ -200,19 +310,18 @@ import { navItems, profile, profileLinks } from '@/data/profile';
     }
 
     /* 16px, not the ladder: laid out horizontally these are inline chrome, and
-       at 24px the fourth item fell off the right edge of a 390px viewport. */
+       at 24px the fourth item fell off the right edge of a 390px viewport.
+       overflow-y/min-height reset: the desktop internal-scroll cap (for a long
+       article TOC) doesn't apply once the rail is a static, unbounded block. */
     .nav {
       flex-direction: row;
       gap: 16px;
       width: 100%;
       overflow-x: auto;
-      scrollbar-width: none;
+      overflow-y: visible;
+      min-height: auto;
       margin-inline: calc(-1 * var(--page-inset));
       padding-inline: var(--page-inset);
-    }
-
-    .nav::-webkit-scrollbar {
-      display: none;
     }
 
     .nav a {

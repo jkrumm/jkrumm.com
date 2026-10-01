@@ -72,9 +72,13 @@ export default defineConfig({
   vite: {
     server: {
       strictPort: true,
-      // Allow the Caddy-proxied dev host (https://jkrumm.test → localhost:7728).
-      // Vite rejects non-localhost Host headers by default.
-      allowedHosts: ['jkrumm.test'],
+      // Allow the Caddy-proxied dev hosts. Vite rejects non-localhost Host
+      // headers by default (403 on every request, which reads as a proxy fault
+      // rather than an app one). Two doors, both fronted by Caddy on the mini:
+      //   jkrumm.test          → local only
+      //   *.mini.jkrumm.com    → over the tailnet (leading dot matches any sub)
+      // See dotfiles scripts/caddy-tailnet.sh.
+      allowedHosts: ['jkrumm.test', '.mini.jkrumm.com'],
     },
   },
 
@@ -186,6 +190,17 @@ export default defineConfig({
       styles: ['normal'],
       subsets: ['latin'],
       fallbacks: ['system-ui', 'sans-serif'],
+    },
+    {
+      // Résumé PDF only (src/pages/resume/print) — a book serif for a
+      // printed document. The site itself never uses it.
+      provider: fontProviders.fontsource(),
+      name: 'Source Serif 4',
+      cssVariable: '--font-serif',
+      weights: ['200 900'],
+      styles: ['normal', 'italic'],
+      subsets: ['latin'],
+      fallbacks: ['Georgia', 'serif'],
     },
   ],
 });

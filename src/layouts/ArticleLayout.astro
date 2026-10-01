@@ -1,15 +1,20 @@
 ---
 /**
  * Reading surface for the guide + blog collections. Same `.shell` grid as every
- * other page: the contents list sits in the sticky `side` rail (where the
- * homepage keeps its identity rail), the article runs down `main` widened to
+ * other page: the SAME identity rail the homepage uses (`Sidebar`, bio hidden)
+ * sits in the sticky `side` column, carrying the table of contents in place of
+ * the homepage's section nav. The article runs down `main` widened to
  * --reading-w. No boxes, no rules — hierarchy is weight, ink and whitespace.
+ *
+ * No `ReadingHeader` here — the back-link + top-bar chrome it used to render
+ * is retired for every surface except `/resume`. The breadcrumb in the article
+ * head is the way back to the index.
  *
  * The only scroll-linked effect on the site lives here: a CSS-only reading
  * progress line driven by `animation-timeline: scroll(root block)`, zero JS.
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import ReadingHeader from '@/components/chrome/ReadingHeader.astro';
+import Sidebar from '@/components/chrome/Sidebar.astro';
 import RowList from '@/components/primitives/RowList.astro';
 
 interface ArticleLink {
@@ -28,8 +33,6 @@ interface Heading {
 interface Props {
   title: string;
   description: string;
-  /** Uppercase section label shown in the header, e.g. "GUIDE" or "BLOG". */
-  category: string;
   publishedDate: Date;
   updatedDate: Date;
   readingTime: number;
@@ -49,7 +52,6 @@ interface Props {
 const {
   title,
   description,
-  category,
   publishedDate,
   updatedDate,
   readingTime,
@@ -71,6 +73,15 @@ const iso = (date: Date) => date.toISOString().slice(0, 10);
 // Contents list: section headings only (skip h1 + the sr-only footnotes label).
 const toc = headings.filter((h) => (h.depth === 2 || h.depth === 3) && h.slug !== 'footnote-label');
 const showToc = toc.length >= 2;
+// Sidebar's `sections` prop — empty when the article is too short for a TOC,
+// so the rail still renders (identity + links + toggle) without a nav block.
+const tocSections = showToc
+  ? toc.map((heading) => ({
+      href: `#${heading.slug}`,
+      label: heading.text,
+      depth: heading.depth === 3 ? (3 as const) : undefined,
+    }))
+  : [];
 
 const neighbours = [
   prev ? { ...prev, dir: 'Previous' } : null,
@@ -80,28 +91,9 @@ const neighbours = [
 
 <BaseLayout title={`${title} — Johannes Krumm`} description={description} ogType="article">
   <div class="reading-progress" aria-hidden="true"></div>
-  <ReadingHeader
-    category={category}
-    backHref={backHref}
-    backLabel={backLabel}
-    width="var(--reading-w)"
-  />
 
   <div class="shell article-shell">
-    {
-      showToc && (
-        <nav class="sidebar toc" aria-label="Table of contents">
-          <p class="toc__label mono">Contents</p>
-          <ol class="toc__list dim-group">
-            {toc.map((heading) => (
-              <li class:list={['toc__item', heading.depth === 3 && 'toc__item--sub']}>
-                <a href={`#${heading.slug}`}>{heading.text}</a>
-              </li>
-            ))}
-          </ol>
-        </nav>
-      )
-    }
+    <Sidebar sections={tocSections} bio={false} />
 
     <article class="stack">
       <header class="head">
@@ -134,6 +126,24 @@ const neighbours = [
             )
           }
         </p>
+        {
+          showToc && (
+            // Mobile only (<900px, see the media query below): the rail's own
+            // TOC is hidden there, so a native <details> carries it instead —
+            // closed by default so a long contents list doesn't push the
+            // article below the fold. No JS.
+            <details class="mobile-toc">
+              <summary class="mobile-toc__summary mono">Contents</summary>
+              <ol class="mobile-toc__list">
+                {toc.map((heading) => (
+                  <li class:list={['mobile-toc__item', heading.depth === 3 && 'mobile-toc__item--sub']}>
+                    <a href={`#${heading.slug}`}>{heading.text}</a>
+                  </li>
+                ))}
+              </ol>
+            </details>
+          )
+        }
       </header>
 
       <slot />
@@ -211,40 +221,39 @@ const neighbours = [
     padding-block: 64px var(--space-section);
   }
 
-  /* ------------------------------- Contents ------------------------------- */
-  .toc {
-    /* Long contents lists scroll inside the rail rather than past the fold. */
-    max-height: calc(100vh - var(--page-top) - 48px);
-    overflow-y: auto;
+  /* --------------------------- Contents (mobile) --------------------------- */
+  /* Hidden ≥900px, where the TOC lives in the Sidebar rail instead — see the
+     media query below. Active-heading highlighting is Sidebar's `.nav`
+     (portfolio.ts's generalized scroll-spy); there is no second implementation
+     here. */
+  .mobile-toc {
+    display: none;
   }
 
-  .toc__label {
-    margin-bottom: var(--space-row);
+  .mobile-toc__summary {
+    cursor: pointer;
     font-size: var(--text-xs);
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--faint);
   }
 
-  .toc__list {
+  .mobile-toc__list {
     display: grid;
     gap: 6px;
+    margin-top: var(--space-row);
     list-style: none;
     font-size: var(--text-sm);
     line-height: 1.45;
+    color: var(--muted);
   }
 
-  .toc__item--sub {
+  .mobile-toc__item--sub {
     padding-left: 12px;
   }
 
-  .toc__list a {
-    color: var(--faint);
-    transition: color var(--dur-hover) ease;
-  }
-
-  .toc__list a[aria-current='true'] {
-    color: var(--ink);
+  .mobile-toc__list a {
+    color: inherit;
   }
 
   /* --------------------------------- Head --------------------------------- */
@@ -266,8 +275,11 @@ const neighbours = [
     font-family: var(--display);
     font-size: var(--text-xl);
     font-weight: var(--w-strong);
-    line-height: 1.25;
-    letter-spacing: -0.01em;
+    /* Normal width + a hair of relief, same reasoning as `.prose h2/h3/h4` in
+       global.css — big and open, not condensed. */
+    font-stretch: 100%;
+    line-height: 1.3;
+    letter-spacing: 0;
     color: var(--ink);
   }
 
@@ -338,9 +350,15 @@ const neighbours = [
       padding-block: 40px var(--space-section);
     }
 
-    .toc {
-      max-height: none;
-      overflow: visible;
+    .mobile-toc {
+      display: block;
+    }
+
+    /* The rail's own TOC nav is a poor fit below 900px — a deep list read as
+       a horizontal scroller (Sidebar's default mobile behaviour) instead of
+       scrolling with the article. The <details> above replaces it there. */
+    .article-shell :global(.sidebar .nav) {
+      display: none;
     }
   }
 </style>

@@ -2,14 +2,20 @@
 /**
  * Listing surface for the guide + blog index pages. It carries no frame of its
  * own — there is one layout on this site, the `.shell` grid, and one hairline
- * budget, spent inside the list itself. Stats live in the sticky `side` rail so
- * articles, indexes and the homepage all share a rail position.
+ * budget, spent inside the list itself. The rail is the SAME identity rail the
+ * homepage and articles use (`Sidebar`, bio hidden), carrying the site nav
+ * instead of a TOC or the homepage's section nav.
  *
- * Owns: the ReadingHeader, the masthead, the stat rail and the cross-link foot.
+ * No `ReadingHeader` here — its category label survives as the masthead
+ * eyebrow, and its back-link is gone: the rail's Home link (and the site nav
+ * itself) is the way around now.
+ *
+ * Owns: the masthead (eyebrow, title, intro, stats) and the cross-link foot.
  * The page supplies the list via the default slot.
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import ReadingHeader from '@/components/chrome/ReadingHeader.astro';
+import Sidebar from '@/components/chrome/Sidebar.astro';
+import { siteNavItems } from '@/data/profile';
 
 interface Stat {
   value: string;
@@ -19,13 +25,13 @@ interface Stat {
 interface Props {
   title: string;
   description: string;
-  /** ReadingHeader label, uppercase, e.g. "GUIDE" or "BLOG". */
+  /** Masthead eyebrow, uppercase, e.g. "GUIDE" or "BLOG". */
   category: string;
   /** Masthead headline. */
   heading: string;
   /** Masthead intro sentence. */
   intro: string;
-  /** Stat rows shown in the rail (count, reading time, date). */
+  /** Stat rows shown under the intro (count, reading time, date). */
   stats: Stat[];
   /** Footer cross-link to the sibling surface. */
   crossTeaser: string;
@@ -38,26 +44,28 @@ const { title, description, category, heading, intro, stats, crossTeaser, crossL
 ---
 
 <BaseLayout title={`${title} — Johannes Krumm`} description={description} ogType="website">
-  <ReadingHeader category={category} />
-
   <div class="shell index-shell">
-    <aside class="sidebar rail">
-      <dl class="stats">
-        {
-          stats.map((stat) => (
-            <div class="stat">
-              <dt class="stat__label">{stat.label}</dt>
-              <dd class="stat__value mono">{stat.value}</dd>
-            </div>
-          ))
-        }
-      </dl>
-    </aside>
+    <Sidebar sections={siteNavItems} bio={false} />
 
     <main class="stack">
       <header class="masthead">
+        <p class="masthead__eyebrow mono">{category}</p>
         <h1 class="masthead__title">{heading}</h1>
         <p class="masthead__intro">{intro}</p>
+        {
+          stats.length > 0 && (
+            <p class="masthead__stats">
+              {stats.map((stat, index) => (
+                <>
+                  {index > 0 && <span aria-hidden="true">·</span>}
+                  <span>
+                    <span class="mono">{stat.value}</span> {stat.label}
+                  </span>
+                </>
+              ))}
+            </p>
+          )
+        }
       </header>
 
       <slot />
@@ -73,36 +81,20 @@ const { title, description, category, heading, intro, stats, crossTeaser, crossL
 </BaseLayout>
 
 <style>
-  /* The header already supplied the page's first line of breathing room. */
   .index-shell {
     padding-block: 64px var(--space-section);
   }
 
-  .stats {
-    display: grid;
-    gap: var(--space-block);
-    margin: 0;
-  }
-
-  .stat {
-    display: grid;
-    gap: 2px;
-  }
-
-  .stat__label {
-    font-size: var(--text-xs);
-    color: var(--faint);
-  }
-
-  .stat__value {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--muted);
-  }
-
   .masthead {
     display: grid;
-    gap: var(--space-block);
+    gap: var(--space-row);
+  }
+
+  .masthead__eyebrow {
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
   }
 
   .masthead__title {
@@ -116,6 +108,17 @@ const { title, description, category, heading, intro, stats, crossTeaser, crossL
   .masthead__intro {
     max-width: 56ch;
     color: var(--ink-2);
+  }
+
+  /* Was a vertical stat list in the old rail; now an inline meta line under
+     the intro, same convention as ArticleLayout's `.head__meta`. */
+  .masthead__stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    font-size: var(--text-sm);
+    color: var(--faint);
   }
 
   .foot__cross {
@@ -139,20 +142,6 @@ const { title, description, category, heading, intro, stats, crossTeaser, crossL
   @media (max-width: 900px) {
     .index-shell {
       padding-block: 40px var(--space-section);
-    }
-
-    /* The rail reads as a footnote to the list on narrow screens, not a header.
-       Selector includes `.shell >` to outrank the global `.shell > .sidebar`
-       mobile margin, which is a specificity tie on its own. */
-    .shell > .rail {
-      order: 2;
-      margin: 48px 0 0;
-    }
-
-    .stats {
-      grid-auto-flow: column;
-      grid-auto-columns: max-content;
-      gap: 32px;
     }
   }
 </style>

@@ -1567,3 +1567,276 @@ Entry format:
   `[data-animate]{--stagger:N}` reveal, which would delete the Motion `inView`
   path entirely — deliberately deferred so the redesign didn't also rewrite the
   progressive-enhancement contract.
+
+## 2026-09-29 — Umami event wiring (analytics.ts, article-read via IntersectionObserver)
+- **Context:** new `src/scripts/analytics.ts` — a second lifecycle-managed script
+  (init on `astro:page-load`, teardown on `astro:before-swap`, same shape as
+  `portfolio.ts`) that fires Umami custom events, including `article-read` for
+  reaching the bottom of a guide/blog `<article>`.
+- **Didn't:** `IntersectionObserver(el, { threshold: [0, 1] })` to detect
+  "reached the bottom of `<article>`" — for any element TALLER than the
+  viewport (every real article), intersection ratio never reaches 1, so after
+  the initial observe() callback the observer never fires again on scroll. It
+  silently never reports "read". Verified via CDP: scrolling to the document
+  bottom produced zero additional IO callbacks.
+- **Worked:** a plain rAF-throttled `scroll` listener checking
+  `article.getBoundingClientRect().bottom <= innerHeight + 2` on each tick —
+  the same shape as the `scroll-depth` milestone check. Works regardless of
+  article height, mirrors the existing scroll-depth pattern instead of adding
+  a second technique.
+- **Gotcha (test harness, not app code):** CDP `scrollTo(0, y)` respects CSS
+  `scroll-behavior: smooth` (set globally on `html`), so `window.scrollY`
+  doesn't reflect the target position until the animation finishes — reading
+  it immediately after `scrollTo` in the same evaluate() call returns stale
+  values. Use `scrollTo({ top, behavior: 'instant' })` in any CDP/test script
+  that scrolls then immediately inspects scroll position.
+- **Verdict:** all 12 events (scroll-depth, section-view, article-read,
+  outbound, email-click, resume-download, theme-change, nav-click,
+  contact-submit, plus details-open/preview-hover which have no live markup
+  yet) verified via a `window.umami = { track: (...a) => __ev.push(a) }` CDP
+  stub — each fires exactly once per page view/interaction, including across
+  a soft `ClientRouter` swap (no double-firing, confirming teardown/re-init is
+  correct).
+
+## 2026-09-29 — Activity: Commits/Tokens switch, no new JS
+
+- **Context:** Added a second Activity view (AI token consumption, snapshot
+  `src/data/token-activity.json` from the Argo API) switchable against the
+  existing GitHub heatmap, with the constraint that switching must not
+  reflow.
+- **Worked:**
+  - **No JS switch at all.** Two `<input type="radio" name="…">` + `<label>`
+    pairs, visually hidden inputs (`clip-path: inset(50%)`), `input:checked +
+    label` for the active-segment look (same panel/shadow-ring/ink language as
+    `ThemeToggle`), and a container `:has(#id:checked)` rule to show/hide the
+    two view `<div>`s anywhere in the subtree. Arrow-key navigation between the
+    two options is native radio-group behavior — zero extra code.
+  - **Zero-reflow trick:** derive the tokens grid by `.map`-ing over the
+    already-built commits `weeks` structure (`commitWeeks.map(week =>
+    week.map(resolveTokenCell))`) instead of building it from the tokens date
+    list independently. Both grids get pixel-identical column/row geometry for
+    free, and "no data before the Argo floor" falls out naturally as `null`
+    cells (same as the existing days-before-range handling).
+  - Quantile buckets (25th/50th/75th percentile of non-zero days) instead of
+    fixed log thresholds — the token range shifts as usage grows, so hardcoded
+    breakpoints would drift stale.
+- **Gotcha (test harness, not app code):** a `scrollIntoView({ block: 'start'
+  })` in a CDP screenshot script races the site's global `scroll-behavior:
+  smooth` exactly like the `scrollTo` gotcha above — the section can still be
+  mid-scroll (or the `.reveal` transition still mid-flight) when
+  `captureScreenshot` fires, producing a washed-out, low-opacity capture that
+  looks like a real bug but isn't. Fix: `scrollIntoView({ behavior: 'instant'
+  })` plus a ~1s settle wait before capturing, same as any reveal-dependent
+  shot.
+- **Also a sips gotcha (test harness only):** macOS `sips -c H W --cropOffset
+  Y X` silently no-ops (returns the uncropped image) for most non-zero Y
+  offsets — origin appears bottom-left and only offset `0 0` behaved
+  predictably in testing. Used Python/Pillow (`Image.crop((left, top, right,
+  bottom))`, top-left origin) instead for any crop that isn't flush with an
+  image edge.
+- **Verdict:** shipped. `bun run build` green; screenshots confirm identical
+  grid geometry across both views, both themes, desktop (1440) and mobile
+  (390, no horizontal overflow).
+
+## 2026-09-29 — ReadingHeader retired: one Sidebar rail drives homepage nav, article TOC and site nav
+
+- **Context:** Replaced the "back-link + top-bar" `ReadingHeader.astro` chrome on
+  articles, guide/blog indexes and stub pages with the homepage's identity rail
+  (`Sidebar.astro`), generalized via two props (`sections?`, `bio?`) instead of
+  building three separate rails.
+- **Worked:**
+  - **Scroll-spy driven by the nav links, not a `[data-section]` marker.**
+    `portfolio.ts` now builds its observed target list from `a[data-nav-link]`
+    hrefs (`document.getElementById(href.slice(1))`), so the SAME code lights up
+    homepage sections and an article's h2/h3 headings — no second TOC-specific
+    implementation. Astro's built-in markdown pipeline already puts a
+    github-slugger `id` on every heading (matches `render(entry).headings[].slug`),
+    so no extra wiring was needed for headings to become valid scroll-spy targets.
+  - **"Last heading past a line" beats intersection-ratio for headings.** The old
+    scroll-spy picked the target with the highest `intersectionRatio` — works for
+    evenly-sized homepage sections, breaks for article sections (a heading's
+    section can run far taller than the viewport and never report a high ratio).
+    Replaced with: on every IntersectionObserver firing (any target crossing any
+    threshold), recompute over ALL targets — the active one is the last (in
+    document order) whose `getBoundingClientRect().top` has crossed a fixed line
+    near the top of the viewport (`innerHeight * 0.2`). This naturally gives "the
+    last heading wins at the bottom of the page" for free once every target's top
+    has crossed. Verified with a CDP script driving real scroll positions (see
+    below) — exact match at top/mid/bottom for both the homepage and an article.
+  - **A long `sections` list needs its OWN internal scroll, not a taller rail.**
+    `.shell > .sidebar` gets `max-height: calc(100vh - var(--page-top))`
+    (reset to `none` on mobile, where the rail is static/unbounded); inside
+    Sidebar, every direct child gets `flex-shrink: 0` EXCEPT `.nav`
+    (`flex-shrink: 1; min-height: 0; overflow-y: auto; scrollbar-width: none` +
+    `::-webkit-scrollbar{display:none}`). That combination lets a deep TOC scroll
+    inside the rail while the avatar/identity/links/toggle keep their natural
+    size — no squeezing, no pushing the sticky rail taller than the viewport.
+    `min-height: 0` on the flex item is load-bearing: without it a column flex
+    item's automatic minimum size blocks shrinking below its content height, so
+    the internal scroll silently never engages.
+  - **Astro implicit `Props` typing can lose to a destructuring default's
+    inferred type.** `const { sections = navItems.map(...) } = Astro.props`
+    (no explicit annotation) type-checked `sections` as the DEFAULT expression's
+    inferred shape (`{href,label}[]`, missing the optional `depth` field) rather
+    than the declared `NavSection[]` from the `Props` interface — `item.depth`
+    then failed to type-check inside the template even though `Props.sections?:
+    NavSection[]` was correct. Fix: annotate the destructuring explicitly
+    (`}: Props = Astro.props;`). This is the SAME situation the IndexLayout /
+    StubLayout / ArticleLayout destructures didn't hit — the difference is a
+    non-trivial *default value expression* (a `.map()`), not a plain literal
+    (`[]`, `null`). Explicit `: Props` on a destructure with a computed default
+    is worth doing preventively, not just when `astro check` catches it.
+  - **Astro scoped `<style>` can still reach into a child component via
+    `:global()`.** ArticleLayout hides the Sidebar's own `.nav` at <900px
+    (`.article-shell :global(.sidebar .nav) { display: none }`) and renders its
+    own native `<details>` "Contents" instead — the rail's horizontal-scroller
+    mobile nav (right for the homepage's 6 short items) is the wrong shape for a
+    deep TOC. No prop was added to Sidebar for this; the override lives entirely
+    in the consuming layout's scoped style, keeping Sidebar's prop surface at
+    exactly `sections`/`bio`.
+  - **A destructured, unused prop is dead surface — delete it, don't just stop
+    reading it.** `ArticleLayout`'s `category` prop existed only to feed
+    `ReadingHeader`; once that's gone it's fully removed from `Props`, the
+    destructure, AND the two `[...slug].astro` callers that passed it — `astro
+    check`/tsc won't flag an unused destructured var here (no `noUnusedLocals` in
+    `astro/tsconfigs/strict`), so nothing forces the cleanup automatically.
+    `IndexLayout`/`StubLayout`'s `category` was kept instead — repurposed as a
+    masthead/stub eyebrow label (the ReadingHeader used to render it), since that
+    information had no other home once the header was gone.
+- **Didn't:** Tried keeping the intersection-ratio scroll-spy algorithm and just
+  widening its target list to headings — rejected before implementing, reasoning
+  through the "last one wins at the bottom" requirement made clear that ratio
+  comparison can't express it for variable-height sections.
+- **Verdict / decision:** **Ships.** `astro check` 0/0/0 across the whole repo;
+  `astro build` green; a CDP script (navigate → scroll → read `aria-current`)
+  confirmed the scroll-spy fires correctly on both the homepage and an article,
+  including "last heading active at the bottom of the page." Screenshots (light
+  + dark, desktop + mobile) confirm: homepage rail pixel-identical to before: the
+  article rail's TOC pinned at the rail's top with the active dot; headings read
+  bigger/more open (`font-stretch: 100%` + a hair of letter-spacing/line-height,
+  both in `.prose h2/h3/h4` and `ArticleLayout`'s `.head__title`); mobile shows
+  the collapsed native `<details>` "Contents" instead of the rail's nav; no
+  horizontal overflow at 390px on any of the four shot routes. **Pattern to
+  keep:** one `Sidebar` component with a generic `sections`/`bio` prop pair
+  covers every rail on the site (homepage nav, article TOC, static site nav) —
+  don't build a second rail component for a new surface; extend what `sections`
+  can hold instead.
+
+## 2026-09-29 — Projects hover preview (CSS-only) + Experience native `<details>` accordion
+
+- **Context:** Two new interactive-but-no-JS surfaces built in parallel:
+  Projects got a hover/focus preview panel (details paragraph + optional image
+  + stack + link hint) over a hero + 2×2 grid; Experience became a
+  `<details>`/`<summary>` accordion per role (context + bold-lead highlights),
+  smooth-animated via `::details-content` + `interpolate-size: allow-keywords`.
+- **Worked:**
+  - **Hover-intent via asymmetric `transition-delay`, no JS.** Put
+    `transition-delay: 200ms` on the `:hover`/`:focus-visible` (entering) rule
+    and a short delay (60ms) on the base rule (leaving). CSS applies whichever
+    rule is currently active, so a sweep across the grid never trips the
+    200ms-delayed enter transition, but leaving is near-instant. No hover-intent
+    JS needed for this pattern.
+  - **The preview panel lives INSIDE the `<a>`.** `position: absolute` inside a
+    `position: relative` `.row` (the anchor itself), so it never blocks the
+    click (hovering the panel still IS hovering the link) and never shifts
+    layout (out of flow). `pointer-events` doesn't even need managing since
+    there's nothing else to click underneath it.
+  - **Right-column anchoring via a data-driven class, not `:nth-child`.** The
+    2×2 grid's right column needs `right: 0` instead of `left: 0` so the panel
+    never overflows past the content column. Simpler and more robust to add a
+    `right` class in the `.map()` loop (`i % 2 === 0 && i !== 0`, accounting for
+    the wide hero at index 0) than fight `:nth-child` parity across a mixed
+    wide+grid list.
+  - **`::details-content` + `interpolate-size: allow-keywords` works as
+    expected** for animating native `<details>` open/close: `interpolate-size:
+    allow-keywords` on the `<details>` element itself (not `html`/`:root` — it's
+    an inherited property, scoping it to the one component that needs it is
+    fine and keeps the change local), then `::details-content { block-size: 0;
+    opacity: 0; transition: content-visibility …ms allow-discrete, block-size
+    …ms, opacity …ms; }` and `details[open]::details-content { block-size: auto;
+    opacity: 1; }`. Unsupported browsers just keep the native instant
+    show/hide — true progressive enhancement, nothing to feature-detect.
+    **Unverified against current spec/browser docs** (research-gateway MCP
+    wasn't reachable from this subagent invocation) — implemented from
+    training-era knowledge of the Chrome "redesigning the disclosure widget"
+    pattern; worth a `/research` pass to confirm `block-size` (not `height`)
+    and the `content-visibility: … allow-discrete` transition are still exactly
+    right before leaning on this pattern elsewhere.
+- **Didn't:**
+  - **A `<details>` as the sole grid item collapses into the first column.**
+    `.entry { display: grid; grid-template-columns: 96px 1fr }` with `<details
+    class="role">` as its ONLY direct child (unlike the plain education `<li>`,
+    which has two direct children) auto-places that one child into column 1 —
+    the whole row visually crushes into 96px, wrapping every word. Fix:
+    `.entry > .role { grid-column: 1 / -1 }` so the `<details>` spans both
+    columns and its OWN nested `.summary` grid (same `96px 1fr` template) does
+    the real column split. Caught only by screenshotting the built page and
+    reading actual rendered text wrapping — `astro check`/`build` are silent
+    on this class of bug, and a `getComputedStyle` probe (element width
+    reported as `"96px"`) was what pinned it down.
+  - **The expanded panel (`::details-content`'s child) can't be a CSS grid
+    cell of the parent's grid** — the pseudo-element wrapper sits between
+    `<details>` and the panel `<div>`, so `grid-column` on the panel does
+    nothing. Aligned it under the body column with a matching `margin-left:
+    calc(96px + var(--space-block))` instead (cleared to 0 at the mobile
+    single-column breakpoint).
+- **Gotcha — CDP screenshot cropping needs page-absolute coordinates, not
+  `scrollIntoView` + viewport-relative `getBoundingClientRect`.** A probe script
+  that calls `el.scrollIntoView()` then immediately reads
+  `getBoundingClientRect()` races the site's `scroll-behavior: smooth` (global
+  on `html`) — the rect is read mid-animation, so the subsequent
+  `Page.captureScreenshot({ clip })` crops the wrong region (confirmed: images
+  came back showing the WRONG section's content, shifted by roughly one
+  section). Fix: skip scrolling entirely — read `rect.x + scrollX, rect.y +
+  scrollY` for page-absolute coordinates and pass `captureBeyondViewport: true`
+  to `Page.captureScreenshot`, which interprets `clip` relative to the document
+  regardless of current scroll position. Reusable pattern for any future
+  region-crop screenshot script in this repo.
+- **Verdict / decision:** **Ships.** `astro check` 0/0/0, `astro build` green.
+  CDP screenshots (light/dark, desktop/mobile, hover state, one `<details>`
+  forced open) confirm: 2×2 grid renders borderless with a wider (`--space-
+  block`, not the usual 16px) column gap documented in AGENTS.md; hover preview
+  opens/right-anchors correctly and never overflows; Experience accordion opens
+  smoothly with a rotating chevron, context + bold-lead highlights render, and
+  closed rows are visually identical to the old static version. **Pattern to
+  keep:** hover-intent needs no JS (asymmetric `transition-delay`); a `<details>`
+  that must sit inside an outer grid needs an explicit `grid-column: 1 / -1` on
+  itself so its own nested grid does the real work.
+
+## 2026-09-29 — Rebuild /resume as a sibling surface, reusing homepage sections
+- **Context:** the old `/resume` used `ReadingHeader` + a bespoke template that
+  didn't match the rest of the site. Rebuilt it on the shell + `Sidebar` rail,
+  reusing `Experience`/`Projects`/`Skills` directly instead of forking them.
+- **Worked:** styling content passed through a slot from the PARENT page (the
+  rail's "Download PDF" link) needs `:global()` in the CHILD's `<style>` block
+  — Astro's scoped-CSS attribute is stamped on elements the component itself
+  renders, not on children passed in via `<slot>`, which keep the caller's
+  scope. `.foot :global(a) { … }` in `Sidebar.astro` is the only way a plain
+  `<a class="u" slot="foot">` from the page picks up rail styling. Gate the
+  wrapper on `Astro.slots.has('foot')` so surfaces that don't pass one render
+  no extra empty node.
+- **Worked:** turning a shared homepage section into a reusable component for
+  a second surface is a **props-only** change, not a fork — `Experience.astro`
+  got `defaultOpen`/`showAction`/`showEducation` (all default to the exact
+  homepage behaviour) and `Projects.astro` got an optional `intro` paragraph.
+  Homepage output is byte-identical (same defaults), confirmed by diffing the
+  built HTML around those sections before/after.
+- **Gotcha:** a component that unconditionally renders a sub-block (here,
+  `Experience.astro`'s inline Education list under the `id="experience"`
+  `Section`) will DUPLICATE that content if the new page also wants a
+  dedicated, anchorable Education section — the rail's scroll-spy needs a real
+  `id="education"` target, and the homepage's inline block has no id of its
+  own to point at. Fix: add a boolean prop to suppress the inline block
+  (`showEducation={false}`) and build the dedicated section on the new page
+  using the same visual pattern (96px date column + body) and the same data
+  source (`src/data/experience.ts`'s `education`), rather than trying to
+  reuse the inline block via CSS/DOM tricks.
+- **Verdict / decision:** **Ships.** `astro check` + `astro build` 0/0/0.
+  CDP screenshots (light/dark, desktop/mobile) of `/`, `/resume`, `/imprint`,
+  `/guide/personal-stack` confirm: `/resume`'s rail (About/Experience/
+  Projects/Skills/Education anchors + Download PDF) scroll-spies correctly,
+  Experience roles render pre-opened with no "View full resume" action loop,
+  Projects shows the "Building in public" intro line, Education appears
+  exactly once, and the homepage's own Experience/Projects sections are
+  pixel-identical to before (collapsed roles, the action link, inline
+  education). No overflow at 390px on any page.

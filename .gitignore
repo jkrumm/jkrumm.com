@@ -31,3 +31,8 @@ pnpm-debug.log*
 # local design reference (kept out of the published repo)
 design_handoff_portfolio/
 docs/diagrams/wireframe.*
+
+# résumé renders + private career targets (see .claude/skills/career)
+out/
+dist-print/
+.career/

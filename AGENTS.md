@@ -7,9 +7,10 @@ live here.
 
 ## Stack
 
-- **Astro 7**, `output: 'static'` — static markup, zero client JS except one
-  behavior script (`src/scripts/portfolio.ts`). **No UI framework** (no
-  React/Vue) — don't introduce one.
+- **Astro 7**, `output: 'static'` — static markup, zero client JS except two
+  scripts: `src/scripts/portfolio.ts` (behavior — reveals, scroll-spy) and
+  `src/scripts/analytics.ts` (measurement — Umami events, see Analytics below).
+  **No UI framework** (no React/Vue) — don't introduce one.
 - **Bun** — package manager + runtime.
 - **Motion** (`motion.dev`) — the only client dependency. Vanilla
   `animate`/`inView`/`scroll` from `motion` (never `motion/react`).
@@ -56,6 +57,14 @@ The motion budget is deliberately small: **reveals + scroll-spy**, both in
 article progress line, which is CSS-only (`animation-timeline: scroll(root
 block)` in `ArticleLayout.astro`). No scroll-linked JS on the homepage.
 
+Scroll-spy is generic, not per-surface: it drives every `a[data-nav-link]`
+whose `href="#…"` resolves to an element on the page (`getElementById`, not a
+`[data-section]` marker), so ONE implementation lights up both the homepage's
+section nav and an article's h2/h3 table of contents in the Sidebar rail — the
+active target is the last one whose top has crossed a line near the top of the
+viewport (so the last heading wins once the page is scrolled to the bottom).
+There is no second, TOC-specific `aria-current` implementation anywhere.
+
 Philosophy: **native + Motion over heavy JS.** Native document scroll + Motion
 `inView` + native View Transitions — no scroll-hijack libraries (fullPage.js /
 Lenis / GSAP) unless a POC proves native can't do it. Accessibility is
@@ -74,6 +83,23 @@ collapses to one column and the rail becomes the first static block.
 
 **Document scroll.** No inner scroll container, no `overflow-y: auto` stage, no
 scroll-snap. `#jk-scroll` and everything that special-cased it are gone.
+
+**One rail, every surface — `ReadingHeader.astro` is retired.** The back-link +
+top-bar chrome it used to render on articles, the guide/blog indexes and stub
+pages is gone; every surface now renders `Sidebar.astro` (props: `sections?`,
+`bio?`) in the `side` column instead. Articles pass their table of contents as
+`sections` (`bio={false}`) so the TOC is pinned at the rail's top like the
+homepage nav, with a viewport-capped `overflow-y: auto` on `.nav` so a deep TOC
+scrolls inside the rail rather than pushing it past the fold; below 900px the
+rail's own TOC nav is hidden in favour of a native `<details>` in the article
+head (no JS). Guide/blog indexes and stub pages pass the site nav
+(`src/data/profile.ts` → `siteNavItems`) with a static `aria-current="page"` on
+the current destination — no scroll-spy there. `ReadingHeader.astro` is
+deleted — its last caller, `/resume`, is rebuilt on the shell + rail like every
+other surface. `/resume` reuses the homepage's `Experience`/`Projects`/`Skills`
+sections directly (props only — `defaultOpen`/`showAction`/`showEducation` on
+`Experience`, `intro` on `Projects`) rather than re-implementing them; only its
+About and Education sections are its own.
 
 Invariants, in force order:
 
@@ -113,9 +139,11 @@ Invariants, in force order:
   what made the page feel arrhythmic (4/12/20/28/32/36/56 were all in play at
   once). Prefer a `gap` over margins so nothing can double or collapse.
   Two caveats: **column** gaps are chrome, not rhythm — they use the site's
-  16px inline convention. And a `.plate` row's `padding-block` is part of its
-  visual gap, so those lists set `gap: calc(<token> - 2 * <plate-y>)`; the
-  token is what you SEE, not what's in the `gap` declaration.
+  16px inline convention, except the Projects 2×2 grid, whose two columns each
+  carry a description + stack line and read cramped at 16px — it uses
+  `--space-block` (24px) instead. And a `.plate` row's `padding-block` is part
+  of its visual gap, so those lists set `gap: calc(<token> - 2 * <plate-y>)`;
+  the token is what you SEE, not what's in the `gap` declaration.
 - **Accent budget: 3 places** site-wide — the active-nav dot, `:focus-visible`,
   `::selection`. Plus links inside `.prose`. No accent chrome, no accent
   borders, and **no accent fills** — the Send button and the theme toggle's
@@ -126,7 +154,12 @@ Invariants, in force order:
   `@media (hover: hover)` — `.plate` (bleed plate: negative inline margin equal
   to the padding, so text never reflows), `.u` (always-on faint underline that
   darkens), `.dim-group` (siblings recede, hovered item returns to full ink). No
-  scale, no translate, no per-row shadow, no colour inversion.
+  scale, no translate, no per-row shadow, no colour inversion. The Projects
+  hover preview panel (`Projects.astro` `.preview`) is a fourth, scoped
+  vocabulary member: opacity + a few px of translate only, an asymmetric
+  `transition-delay` for hover-intent (~200ms in, near-instant out), lives
+  inside the `<a>` so it never blocks the click, and never shifts layout
+  (`position: absolute`).
 
 Deleted with the bento — do not import, reference, or reintroduce:
 `PageBox`, `SectionShell`, `Grid`, `Cell`, `SectionHeader`, `Chip`,
@@ -137,15 +170,56 @@ redesign was built against, the separation-without-borders mechanisms, the
 anti-patterns, and the decision taken on each open tension. §6 answers most
 layout questions; check it before inventing an answer.
 
+## Analytics
+
+Self-hosted Umami, cookieless. `UMAMI` in `src/consts.ts` holds `src` (the
+renamed `p.js` collector, not `script.js`) and the public `websiteId`;
+`BaseHead.astro` renders the `<script>` tag only when `import.meta.env.PROD`
+(and `data-domains="jkrumm.com"` keeps local builds out of the stats). The
+Umami API (Bearer auth) takes the admin key from the secrets store — never
+commit it.
+
+All events live in `src/scripts/analytics.ts`, guarded on `window.umami?.track`
+(no-op in dev / when blocked) and lifecycle-safe like `portfolio.ts` (init on
+`astro:page-load`, teardown on `astro:before-swap`). Naming: kebab-case event
+names, small flat data objects. Events: `scroll-depth` {path, depth} at
+25/50/75/100% · `section-view` {id} for homepage `section[id]`s ≥50% visible ·
+`article-read` {path} at the bottom of a guide/blog `<article>` ·
+`outbound` {url, label} for any cross-origin link click · `email-click` for any
+`mailto:` link · `resume-download` for the résumé PDF link · `theme-change`
+{theme} on the `themechange` window event BaseLayout's theme script dispatches
+· `details-open` {name} for any `<details>` opened (`data-track` or the summary
+text) · `preview-hover` {id} for `[data-track-hover="<id>"]` hovered ≥600ms ·
+`nav-click` {label} for `[data-nav-link]` clicks · `contact-submit` on the
+Contact section's form submit. Astro's `ClientRouter` view-transition
+navigations are plain `pushState` calls, which Umami's tracker already picks
+up — no extra wiring needed, but verify pageview counting (once, not zero or
+twice) against the live deploy.
+
 ## Content
 
-Edit typed modules in `src/data/`; the layout doesn't change. Design tokens (all
-colors, type, spacing, the shell's column widths) are CSS variables in
+Edit typed modules in `src/data/`; the layout doesn't change. Design tokens
+(all colors, type, spacing, the shell's column widths) are CSS variables in
 `src/styles/global.css`.
 
+**Career data has one source: `src/data/career/`** (`facts.ts` + generic
+`targets.ts`). The homepage Experience and featured Projects, `/resume`, the
+committed PDF (`public/johannes-krumm-resume.pdf`) and the LinkedIn copy are
+all derived from it — never hand-edit `experience.ts` / `projects.ts` featured
+rows. Use the **`career` skill** for any résumé, LinkedIn or positioning work.
+After changing anything the `default` target shows, run `bun run resume default`
+and commit the regenerated PDF with it. The print sheet
+(`src/components/resume/ResumeSheet.astro`) is a paper document with its own
+type system in pt (Source Serif 4, `--font-serif`, used nowhere else) — the
+layout-model invariants above do not apply to it. This repo is public: no
+phone, address or private email in `facts.ts`.
+
 The Activity section's GitHub heatmap falls back to the committed snapshot
-`src/data/github-activity.json` whenever the live build-time fetch fails; run
-`bun run activity` to refresh it against the real contribution graph.
+`src/data/github-activity.json` whenever the live build-time fetch fails; the
+section's "Tokens" view (AI token consumption, switched via a CSS-only
+segmented control) reads its own snapshot, `src/data/token-activity.json`,
+which the build never fetches live since it needs a secret — refresh both with
+`ARGO_TOKEN=<argo-api-secret> bun run activity`.
 
 ## Images / CDN
 

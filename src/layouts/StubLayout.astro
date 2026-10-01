@@ -1,16 +1,17 @@
 ---
 /**
  * Placeholder surface for sections that exist in the nav but not yet in
- * content. Same header, same `.shell` grid, same ink ramp as every other
- * off-stage page — an honest empty room, not a special one.
+ * content. Same `.shell` grid and identity rail (`Sidebar`, bio hidden, site
+ * nav) as every other off-stage page — an honest empty room, not a special one.
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import ReadingHeader from '@/components/chrome/ReadingHeader.astro';
+import Sidebar from '@/components/chrome/Sidebar.astro';
+import { siteNavItems } from '@/data/profile';
 
 interface Props {
   title: string;
   description: string;
-  /** Uppercase label shown in the header, e.g. "PHOTOGRAPHY". */
+  /** Uppercase eyebrow shown above the heading, e.g. "PHOTOGRAPHY". */
   category: string;
   heading: string;
   note: string;
@@ -20,14 +21,15 @@ const { title, description, category, heading, note } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description} jsonLd="page">
-  <ReadingHeader category={category} />
+  <div class="shell stub-shell">
+    <Sidebar sections={siteNavItems} bio={false} />
 
-  <main class="shell stub-shell">
-    <div class="stub">
+    <main class="stub">
+      <p class="stub__eyebrow mono">{category}</p>
       <h1 class="stub__title">{heading}</h1>
       <p class="stub__note">{note}</p>
-    </div>
-  </main>
+    </main>
+  </div>
 </BaseLayout>
 
 <style>
@@ -37,7 +39,14 @@ const { title, description, category, heading, note } = Astro.props;
 
   .stub {
     display: grid;
-    gap: var(--space-block);
+    gap: var(--space-row);
+  }
+
+  .stub__eyebrow {
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
   }
 
   .stub__title {

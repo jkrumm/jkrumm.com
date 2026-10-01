@@ -1,0 +1,95 @@
+---
+/**
+ * Imprint + privacy — one short, honest page. Same `.shell` grid and identity
+ * rail (`Sidebar`, bio hidden, site nav) as every other off-stage surface —
+ * the rail's Home link and site nav are the way around now, so this page
+ * carries no back-link or header component of its own.
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Sidebar from '@/components/chrome/Sidebar.astro';
+import { SITE } from '@/consts';
+import { identity } from '@/data/career/facts';
+import { siteNavItems } from '@/data/profile';
+---
+
+<BaseLayout
+  title={`Imprint — ${SITE.title}`}
+  description="Imprint and privacy notice for jkrumm.com."
+  jsonLd="page"
+>
+  <div class="shell imprint-shell">
+    <Sidebar sections={siteNavItems} bio={false} />
+
+    <main class="stack">
+      <header class="head">
+        <h1 class="head__title">Imprint &amp; privacy</h1>
+      </header>
+
+      <section class="prose">
+        <h2>Imprint</h2>
+        <p>
+          {identity.name}<br />
+          {identity.location}
+        </p>
+        <p>
+          Email: <a href={`mailto:${identity.email}`}>{identity.email}</a>
+        </p>
+        {
+          /* §5 DDG (Diensteanbieter-Kennzeichnungs-Gesetz, formerly §5 TMG) normally
+             requires a ladungsfähige Anschrift (a postal address capable of service of
+             process) here. Deliberately omitted — owner's decision — a street address
+             would go in this section. */
+        }
+      </section>
+
+      <section class="prose">
+        <h2>Privacy</h2>
+        <p>
+          This site is static — there are no accounts, no cookies, and nothing tracks you across
+          visits.
+        </p>
+        <p>
+          Traffic is measured with a self-hosted <a href="https://umami.is" target="_blank" rel="noopener"
+            >Umami</a
+          > instance: it's cookieless, doesn't collect personal data, doesn't store IP addresses,
+          and reports only aggregated numbers (pages, referrers, rough location by country).
+        </p>
+        <p>
+          Pages are served through Cloudflare's edge from a server in Germany.
+        </p>
+        <p>
+          The contact form, when it's wired up, and any email you send to {identity.email} are used
+          only to reply to you — nothing is shared, sold, or kept beyond what's needed to answer.
+        </p>
+        <p>
+          For any privacy request, email <a href={`mailto:${identity.email}`}>{identity.email}</a>.
+        </p>
+      </section>
+    </main>
+  </div>
+</BaseLayout>
+
+<style>
+  .imprint-shell {
+    padding-block: 64px var(--space-section);
+  }
+
+  .head {
+    display: grid;
+    gap: var(--space-block);
+  }
+
+  .head__title {
+    font-family: var(--display);
+    font-size: var(--text-xl);
+    font-weight: var(--w-strong);
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  @media (max-width: 900px) {
+    .imprint-shell {
+      padding-block: 40px var(--space-section);
+    }
+  }
+</style>

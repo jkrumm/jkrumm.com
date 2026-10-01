@@ -1,0 +1,85 @@
+---
+/**
+ * Temporary "work in progress" gate over the whole live site. Rendered in
+ * production builds only. Bypass for the owner, persisted in localStorage:
+ *   - `?preview` on any URL (`?preview=off` re-arms the gate), or
+ *   - click the "WIP" mark five times in quick succession.
+ * The bypass flag is applied pre-paint by BaseLayout's head script as
+ * `html[data-wip="off"]`. Delete this component + its two BaseLayout hooks to
+ * launch.
+ */
+import { SOCIAL } from '@/consts';
+---
+
+<div class="wip" role="dialog" aria-modal="true" aria-labelledby="wip-title">
+  <div class="card">
+    <p class="mark mono" data-wip-mark>WIP</p>
+    <h1 id="wip-title">Work in progress</h1>
+    <p class="body">
+      jkrumm.com is being rebuilt. Back soon — until then, reach me at
+      <a class="u" href={SOCIAL.linkedin}>LinkedIn</a>.
+    </p>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    var mark = document.querySelector('[data-wip-mark]');
+    if (!mark) return;
+    var hits = 0;
+    var timer;
+    mark.addEventListener('click', function () {
+      hits += 1;
+      clearTimeout(timer);
+      timer = setTimeout(function () { hits = 0; }, 1500);
+      if (hits < 5) return;
+      try { localStorage.setItem('jk-wip', 'off'); } catch (e) {}
+      document.documentElement.setAttribute('data-wip', 'off');
+    });
+  })();
+</script>
+
+<style>
+  .wip {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: var(--space-block);
+    background: var(--bg);
+  }
+
+  :global(html[data-wip='off']) .wip {
+    display: none;
+  }
+
+  :global(html:not([data-wip='off']):has(.wip)) {
+    overflow: hidden;
+  }
+
+  .card {
+    display: grid;
+    gap: var(--space-row);
+    max-width: 420px;
+  }
+
+  .mark {
+    color: var(--faint);
+    font-size: var(--text-sm);
+    user-select: none;
+    cursor: default;
+  }
+
+  h1 {
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--w-strong);
+  }
+
+  .body {
+    color: var(--ink-2);
+    font-size: var(--text-md);
+  }
+</style>

@@ -1,12 +1,21 @@
 ---
 /**
- * Projects — four featured rows, then the minor tools.
+ * Projects — one wide hero row, then a 2×2 grid of four, then the minor tools.
  *
- * Not cards. The two tiers are separated by DENSITY alone: a featured row is a
- * three-line GROUP (--space-group apart), a minor row is a single ROW
- * (--space-row apart). Giving the minor list a tint or a container would be a
- * second visual language for what is really just "less important", and that is
- * how the bento grew last time.
+ * Not cards. Every tier is separated by DENSITY alone: the hero and the grid
+ * four carry a description + stack line, the minor list is a single line.
+ * Giving any tier a tint or a container would be a second visual language for
+ * what is really just "less important", and that is how the bento grew last
+ * time.
+ *
+ * Hover/focus on a `.row` reveals a `.preview` panel — the `details` paragraph,
+ * an optional 16:10 screenshot, the stack line and a link hint. It lives
+ * INSIDE the `<a>` so it never blocks the click, is pure CSS (hover-intent via
+ * asymmetric `transition-delay`: ~200ms in, instant out), respects
+ * `prefers-reduced-motion`, and is positioned so it never shifts layout or
+ * spills past the content column — the right-hand grid column anchors it
+ * right-aligned. Touch devices (no `hover: hover`) never render it; the link
+ * still works.
  *
  * Both lists carry a `.plate` hover, whose padding is part of the visual gap —
  * hence --plate-y and the `calc()` on each list gap. See the spacing ladder in
@@ -14,18 +23,28 @@
  */
 import Section from '@/components/primitives/Section.astro';
 import { featured, minor } from '@/data/projects';
+
+interface Props {
+  /** /resume's "Building in public" line, shown as the section intro. Homepage
+   * carries no intro — the list speaks for itself there. */
+  intro?: string;
+}
+
+const { intro } = Astro.props;
 ---
 
 <Section id="projects" label="Projects">
+  {intro && <p class="intro reveal">{intro}</p>}
   <ul class="featured">
     {
       featured.map((project, i) => (
-        <li class="reveal" data-delay={i * 60}>
+        <li class:list={['reveal', { wide: i === 0, right: i % 2 === 0 && i !== 0 }]} data-delay={i * 60}>
           <a
             class="row plate"
             href={project.href}
             target={project.external ? '_blank' : undefined}
             rel={project.external ? 'noopener' : undefined}
+            data-track-hover={project.id}
           >
             <span class="head">
               <span class:list={['name', { ext: project.external }]}>{project.name}</span>
@@ -33,6 +52,16 @@ import { featured, minor } from '@/data/projects';
             </span>
             <span class="desc">{project.description}</span>
             <span class="stack mono">{project.stack.join(' · ')}</span>
+
+            {(project.details || project.image) && (
+              <span class="preview" aria-hidden="true">
+                {project.image && (
+                  <img class="preview-image" src={project.image} alt="" loading="lazy" />
+                )}
+                {project.details && <span class="preview-details">{project.details}</span>}
+                <span class="preview-hint mono">{project.external ? 'Visit ↗' : 'Open →'}</span>
+              </span>
+            )}
           </a>
         </li>
       ))
@@ -58,18 +87,39 @@ import { featured, minor } from '@/data/projects';
     list-style: none;
   }
 
+  .intro {
+    font-size: var(--text-md);
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 56ch;
+  }
+
+  /* Hero + 2×2 grid. Column gap is wider than the site's usual 16px inline
+     convention — at 16px the two grid columns read as one crowded block once
+     each carries a description + stack line, so this grid uses --space-block
+     (24px) instead; documented in AGENTS.md. */
   .featured {
     --plate-y: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: calc(var(--space-group) - 2 * var(--plate-y));
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--space-block);
+    row-gap: var(--space-group);
+  }
+
+  .featured li.wide {
+    grid-column: 1 / -1;
   }
 
   .row {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 3px;
     padding-block: var(--plate-y);
+  }
+
+  .wide .name {
+    font-size: var(--text-lg);
   }
 
   .head {
@@ -104,6 +154,69 @@ import { featured, minor } from '@/data/projects';
     margin-top: 1px;
   }
 
+  /* ── Hover preview panel ──────────────────────────────────────────────── */
+  .preview {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 20;
+    margin-top: var(--space-row);
+    width: min(320px, 90vw);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-row);
+    padding: var(--space-block);
+    border-radius: 12px;
+    background: var(--panel);
+    box-shadow: var(--shadow-ring);
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
+    transition:
+      opacity 180ms var(--ease-reveal),
+      transform 180ms var(--ease-reveal);
+    transition-delay: 60ms;
+  }
+
+  li.right .preview {
+    left: auto;
+    right: 0;
+  }
+
+  .preview-image {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: var(--shadow-ring);
+  }
+
+  .preview-details {
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+
+  .preview-hint {
+    font-size: var(--text-xs);
+    color: var(--faint);
+  }
+
+  @media (hover: hover) {
+    .row:hover .preview,
+    .row:focus-visible .preview {
+      opacity: 1;
+      transform: translateY(0);
+      transition-delay: 200ms;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .preview {
+      transition: none;
+    }
+  }
+
   /* ── Minor tools: same grammar, one line, tighter. ─────────────────────── */
   .minor {
     --plate-y: 4px;
@@ -129,6 +242,16 @@ import { featured, minor } from '@/data/projects';
     font-size: var(--text-sm);
     color: var(--faint);
     line-height: 1.5;
+  }
+
+  @media (max-width: 700px) {
+    .featured {
+      grid-template-columns: 1fr;
+    }
+
+    .preview {
+      display: none;
+    }
   }
 
   @media (max-width: 560px) {

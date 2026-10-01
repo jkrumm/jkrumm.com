@@ -1,11 +1,16 @@
 /**
- * Experience — the career ladder and education.
+ * Experience — the homepage's collapsible career ladder, DERIVED from the
+ * career fact base (src/data/career/facts.ts). Edit roles, titles, context
+ * and highlights there; this module only reshapes them for the two-track
+ * accordion grid.
  *
- * Renders as a two-track grid (`96px date | 1fr content`) with the dates in
- * mono tabular numerals. The `period` strings use the open-ended microformat:
- * `2019 –` for a current role, `2017 – 18` for a closed one. Keep them literal
- * — they are typeset, not parsed.
+ * The `period` strings are typeset, not parsed: `2021 – today` for a current
+ * role, `2018 – 2020` for a closed one. Highlights render in FACT-BASE order —
+ * there is no scoring/selection here (that only exists for the résumé, which
+ * is tailored per target); the homepage shows every highlight for every role.
  */
+import { education as careerEducation, roles as careerRoles } from './career/facts';
+import { formatSpan, pick } from './career/resolve';
 
 /** A title held within a company — a rung of the ladder, newest first. */
 export interface Position {
@@ -14,44 +19,36 @@ export interface Position {
   since: string;
 }
 
+/** A bold-lead bullet shown when the role is expanded. */
+export interface Highlight {
+  id: string;
+  lead: string;
+  text: string;
+}
+
 export interface Role {
-  /** Open-ended microformat, e.g. `2019 –` or `2014 – 18`. */
+  id: string;
   period: string;
   company: string;
   location: string;
   /** Newest first. A single-entry ladder renders as a plain title line. */
   positions: Position[];
+  /** Shown expanded, above the highlights. */
+  context?: string;
+  highlights: Highlight[];
   current?: boolean;
 }
 
-export const roles: Role[] = [
-  {
-    period: '2019 –',
-    company: 'IU International University',
-    location: 'Munich',
-    current: true,
-    positions: [
-      { title: 'Tech Lead', since: '2023' },
-      { title: 'Senior Developer', since: '2020' },
-      { title: 'Mid-level Developer', since: '2019' },
-    ],
-  },
-  {
-    period: '2017 – 18',
-    company: 'SqueTrade',
-    location: 'San Francisco',
-    positions: [
-      { title: 'Data Engineer', since: '2018' },
-      { title: 'Intern', since: '2017' },
-    ],
-  },
-  {
-    period: '2014 – 18',
-    company: 'Edelweiss',
-    location: 'Munich',
-    positions: [{ title: 'Frontend Developer', since: '2014' }],
-  },
-];
+export const roles: Role[] = careerRoles.map((role) => ({
+  id: role.id,
+  period: formatSpan({ start: role.start, end: role.end }),
+  company: role.company,
+  location: role.location,
+  current: !role.end,
+  positions: role.positions.map((p) => ({ title: p.title, since: p.since.slice(0, 4) })),
+  context: role.context ? pick(role.context, 'web') : undefined,
+  highlights: role.highlights.map((h) => ({ id: h.id, lead: h.lead, text: pick(h.text, 'web') })),
+}));
 
 export interface Education {
   period: string;
@@ -59,12 +56,10 @@ export interface Education {
   institution: string;
 }
 
-export const education: Education[] = [
-  {
-    period: '2014 – 18',
-    degree: 'B.Sc. Computer Science and Economics',
-    institution: 'Hochschule München',
-  },
-];
+export const education: Education[] = careerEducation.map((item) => ({
+  period: formatSpan({ start: item.start, end: item.end }),
+  degree: item.degree,
+  institution: item.institution,
+}));
 
 export const resumeHref = '/resume';

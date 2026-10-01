@@ -1,5 +1,5 @@
 ---
-import { SITE } from '@/consts';
+import { SITE, UMAMI } from '@/consts';
 
 interface Props {
   /** Full <title>. */
@@ -53,3 +53,16 @@ const robotsContent = [
 <meta name="twitter:title" content={title} />
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={ogImage} />
+
+{
+  /* Production builds only — dev and preview traffic never reaches Umami. */
+  import.meta.env.PROD && UMAMI.websiteId && (
+    <script
+      is:inline
+      defer
+      src={UMAMI.src}
+      data-website-id={UMAMI.websiteId}
+      data-domains="jkrumm.com"
+    />
+  )
+}

@@ -1,0 +1,1175 @@
+{
+  "generatedAt": "2026-09-29T13:37:57.516Z",
+  "since": "2026-05-28",
+  "days": [
+    {
+      "date": "2026-05-28",
+      "tokens": 16935506,
+      "families": {
+        "other": 15641960,
+        "claude": 1292716,
+        "openai": 830
+      }
+    },
+    {
+      "date": "2026-05-29",
+      "tokens": 31543737,
+      "families": {
+        "claude": 4962442,
+        "other": 26578434,
+        "openai": 2861
+      }
+    },
+    {
+      "date": "2026-05-30",
+      "tokens": 25099555,
+      "families": {
+        "other": 25099555
+      }
+    },
+    {
+      "date": "2026-05-31",
+      "tokens": 29058837,
+      "families": {
+        "claude": 2832390,
+        "other": 26226447
+      }
+    },
+    {
+      "date": "2026-06-01",
+      "tokens": 50704510,
+      "families": {
+        "claude": 6642487,
+        "other": 44030715,
+        "openai": 31308
+      }
+    },
+    {
+      "date": "2026-06-02",
+      "tokens": 67830059,
+      "families": {
+        "deepseek": 10529375,
+        "claude": 7747936,
+        "other": 49550762,
+        "openai": 1986
+      }
+    },
+    {
+      "date": "2026-06-03",
+      "tokens": 136962746,
+      "families": {
+        "deepseek": 118403417,
+        "claude": 3073177,
+        "other": 15486152
+      }
+    },
+    {
+      "date": "2026-06-04",
+      "tokens": 228692690,
+      "families": {
+        "deepseek": 223189231,
+        "claude": 5492404,
+        "other": 11055
+      }
+    },
+    {
+      "date": "2026-06-05",
+      "tokens": 269251271,
+      "families": {
+        "deepseek": 256895280,
+        "claude": 12351384,
+        "other": 4607
+      }
+    },
+    {
+      "date": "2026-06-06",
+      "tokens": 294117516,
+      "families": {
+        "deepseek": 290991624,
+        "claude": 3125892
+      }
+    },
+    {
+      "date": "2026-06-07",
+      "tokens": 156273282,
+      "families": {
+        "deepseek": 138696529,
+        "claude": 17576753
+      }
+    },
+    {
+      "date": "2026-06-08",
+      "tokens": 164314536,
+      "families": {
+        "deepseek": 150665312,
+        "claude": 13597223,
+        "other": 42736,
+        "openai": 9265
+      }
+    },
+    {
+      "date": "2026-06-09",
+      "tokens": 92512261,
+      "families": {
+        "deepseek": 67258580,
+        "claude": 23898462,
+        "openai": 24975,
+        "other": 1330244
+      }
+    },
+    {
+      "date": "2026-06-10",
+      "tokens": 90612420,
+      "families": {
+        "deepseek": 82623644,
+        "claude": 7767494,
+        "other": 214769,
+        "openai": 6513
+      }
+    },
+    {
+      "date": "2026-06-11",
+      "tokens": 48932817,
+      "families": {
+        "deepseek": 40686217,
+        "claude": 8152495,
+        "other": 86398,
+        "openai": 7707
+      }
+    },
+    {
+      "date": "2026-06-12",
+      "tokens": 17903864,
+      "families": {
+        "deepseek": 14419277,
+        "claude": 3379179,
+        "other": 105408
+      }
+    },
+    {
+      "date": "2026-06-13",
+      "tokens": 0,
+      "families": {}
+    },
+    {
+      "date": "2026-06-14",
+      "tokens": 35209,
+      "families": {
+        "deepseek": 35209
+      }
+    },
+    {
+      "date": "2026-06-15",
+      "tokens": 3075068,
+      "families": {
+        "deepseek": 743902,
+        "claude": 2278866,
+        "other": 52300
+      }
+    },
+    {
+      "date": "2026-06-16",
+      "tokens": 335838,
+      "families": {
+        "deepseek": 326769,
+        "other": 9069
+      }
+    },
+    {
+      "date": "2026-06-17",
+      "tokens": 21334253,
+      "families": {
+        "deepseek": 4578819,
+        "claude": 15991163,
+        "other": 760448,
+        "openai": 3823
+      }
+    },
+    {
+      "date": "2026-06-18",
+      "tokens": 16821761,
+      "families": {
+        "deepseek": 2414374,
+        "claude": 13585307,
+        "other": 816467,
+        "openai": 5613
+      }
+    },
+    {
+      "date": "2026-06-19",
+      "tokens": 7134061,
+      "families": {
+        "deepseek": 1825124,
+        "claude": 5297523,
+        "openai": 7298,
+        "other": 4116
+      }
+    },
+    {
+      "date": "2026-06-20",
+      "tokens": 7766472,
+      "families": {
+        "deepseek": 2653064,
+        "claude": 5067328,
+        "other": 45733,
+        "openai": 347
+      }
+    },
+    {
+      "date": "2026-06-21",
+      "tokens": 5737436,
+      "families": {
+        "deepseek": 296733,
+        "claude": 5440703
+      }
+    },
+    {
+      "date": "2026-06-22",
+      "tokens": 7229227,
+      "families": {
+        "deepseek": 2216458,
+        "claude": 5000439,
+        "other": 12330
+      }
+    },
+    {
+      "date": "2026-06-23",
+      "tokens": 6664806,
+      "families": {
+        "deepseek": 400361,
+        "claude": 6252493,
+        "other": 11952
+      }
+    },
+    {
+      "date": "2026-06-24",
+      "tokens": 2919020,
+      "families": {
+        "deepseek": 244484,
+        "claude": 2662810,
+        "other": 11726
+      }
+    },
+    {
+      "date": "2026-06-25",
+      "tokens": 6495604,
+      "families": {
+        "deepseek": 399067,
+        "claude": 6087507,
+        "other": 9030
+      }
+    },
+    {
+      "date": "2026-06-26",
+      "tokens": 116658,
+      "families": {
+        "deepseek": 108565,
+        "other": 8093
+      }
+    },
+    {
+      "date": "2026-06-27",
+      "tokens": 0,
+      "families": {}
+    },
+    {
+      "date": "2026-06-28",
+      "tokens": 0,
+      "families": {}
+    },
+    {
+      "date": "2026-06-29",
+      "tokens": 14106502,
+      "families": {
+        "deepseek": 1242595,
+        "claude": 12831226,
+        "other": 32681
+      }
+    },
+    {
+      "date": "2026-06-30",
+      "tokens": 8265273,
+      "families": {
+        "deepseek": 352127,
+        "claude": 7907204,
+        "other": 5942
+      }
+    },
+    {
+      "date": "2026-07-01",
+      "tokens": 16776642,
+      "families": {
+        "deepseek": 1110566,
+        "claude": 15640508,
+        "openai": 11786,
+        "other": 13782
+      }
+    },
+    {
+      "date": "2026-07-02",
+      "tokens": 11132756,
+      "families": {
+        "deepseek": 1902501,
+        "claude": 9209784,
+        "openai": 9490,
+        "other": 10981
+      }
+    },
+    {
+      "date": "2026-07-03",
+      "tokens": 17241547,
+      "families": {
+        "deepseek": 941333,
+        "claude": 16270948,
+        "openai": 19797,
+        "other": 9469
+      }
+    },
+    {
+      "date": "2026-07-04",
+      "tokens": 0,
+      "families": {}
+    },
+    {
+      "date": "2026-07-05",
+      "tokens": 21311490,
+      "families": {
+        "deepseek": 5019723,
+        "claude": 16276284,
+        "other": 2063,
+        "openai": 13420
+      }
+    },
+    {
+      "date": "2026-07-06",
+      "tokens": 19483426,
+      "families": {
+        "deepseek": 2886567,
+        "claude": 16581468,
+        "openai": 6789,
+        "other": 8602
+      }
+    },
+    {
+      "date": "2026-07-07",
+      "tokens": 22068481,
+      "families": {
+        "deepseek": 2224665,
+        "claude": 19800930,
+        "other": 26153,
+        "openai": 16733
+      }
+    },
+    {
+      "date": "2026-07-08",
+      "tokens": 26837105,
+      "families": {
+        "deepseek": 1329560,
+        "claude": 25426145,
+        "other": 53540,
+        "openai": 27860
+      }
+    },
+    {
+      "date": "2026-07-09",
+      "tokens": 20935460,
+      "families": {
+        "deepseek": 677785,
+        "claude": 20223454,
+        "other": 12987,
+        "openai": 21234
+      }
+    },
+    {
+      "date": "2026-07-10",
+      "tokens": 19795862,
+      "families": {
+        "deepseek": 4225444,
+        "claude": 15548168,
+        "openai": 18561,
+        "other": 3689
+      }
+    },
+    {
+      "date": "2026-07-11",
+      "tokens": 27424652,
+      "families": {
+        "deepseek": 2014282,
+        "claude": 25335861,
+        "other": 64622,
+        "openai": 9887
+      }
+    },
+    {
+      "date": "2026-07-12",
+      "tokens": 0,
+      "families": {}
+    },
+    {
+      "date": "2026-07-13",
+      "tokens": 17194498,
+      "families": {
+        "deepseek": 149842,
+        "claude": 17009131,
+        "openai": 27495,
+        "other": 8030
+      }
+    },
+    {
+      "date": "2026-07-14",
+      "tokens": 9395809,
+      "families": {
+        "deepseek": 147543,
+        "claude": 9224424,
+        "openai": 17679,
+        "other": 6163
+      }
+    },
+    {
+      "date": "2026-07-15",
+      "tokens": 23728086,
+      "families": {
+        "deepseek": 1651447,
+        "claude": 21966040,
+        "other": 89602,
+        "openai": 20997
+      }
+    },
+    {
+      "date": "2026-07-16",
+      "tokens": 52341212,
+      "families": {
+        "deepseek": 9897607,
+        "claude": 42110471,
+        "openai": 138288,
+        "other": 194846
+      }
+    },
+    {
+      "date": "2026-07-17",
+      "tokens": 35692781,
+      "families": {
+        "deepseek": 2835972,
+        "claude": 32690522,
+        "openai": 160926,
+        "other": 5361
+      }
+    },
+    {
+      "date": "2026-07-18",
+      "tokens": 14597005,
+      "families": {
+        "claude": 14597005
+      }
+    },
+    {
+      "date": "2026-07-19",
+      "tokens": 7395407,
+      "families": {
+        "deepseek": 40511,
+        "claude": 7296234,
+        "openai": 58662
+      }
+    },
+    {
+      "date": "2026-07-20",
+      "tokens": 9711192,
+      "families": {
+        "deepseek": 1832008,
+        "claude": 7864538,
+        "openai": 8304,
+        "other": 6342
+      }
+    },
+    {
+      "date": "2026-07-21",
+      "tokens": 32799032,
+      "families": {
+        "deepseek": 8831501,
+        "claude": 23694700,
+        "openai": 267098,
+        "other": 5733
+      }
+    },
+    {
+      "date": "2026-07-22",
+      "tokens": 27367604,
+      "families": {
+        "deepseek": 1889749,
+        "claude": 25455346,
+        "openai": 16809,
+        "other": 5700
+      }
+    },
+    {
+      "date": "2026-07-23",
+      "tokens": 6959941,
+      "families": {
+        "deepseek": 385877,
+        "claude": 6543687,
+        "openai": 24180,
+        "other": 6197
+      }
+    },
+    {
+      "date": "2026-07-24",
+      "tokens": 8665919,
+      "families": {
+        "deepseek": 2330275,
+        "claude": 6325079,
+        "other": 4734,
+        "openai": 5831
+      }
+    },
+    {
+      "date": "2026-07-25",
+      "tokens": 0,
+      "families": {}
+    },
+    {
+      "date": "2026-07-26",
+      "tokens": 14145577,
+      "families": {
+        "deepseek": 8829835,
+        "claude": 5301819,
+        "openai": 13923
+      }
+    },
+    {
+      "date": "2026-07-27",
+      "tokens": 19070140,
+      "families": {
+        "deepseek": 3013810,
+        "claude": 15989078,
+        "openai": 57741,
+        "other": 9511
+      }
+    },
+    {
+      "date": "2026-07-28",
+      "tokens": 15815943,
+      "families": {
+        "deepseek": 5105175,
+        "claude": 10687104,
+        "openai": 15152,
+        "other": 8512
+      }
+    },
+    {
+      "date": "2026-07-29",
+      "tokens": 24566535,
+      "families": {
+        "deepseek": 6433989,
+        "claude": 18123571,
+        "openai": 2808,
+        "other": 6167
+      }
+    },
+    {
+      "date": "2026-07-30",
+      "tokens": 21268723,
+      "families": {
+        "deepseek": 4474597,
+        "claude": 16678204,
+        "openai": 108721,
+        "other": 7201
+      }
+    },
+    {
+      "date": "2026-07-31",
+      "tokens": 32403752,
+      "families": {
+        "deepseek": 16566886,
+        "claude": 15815439,
+        "openai": 17163,
+        "other": 4264
+      }
+    },
+    {
+      "date": "2026-08-01",
+      "tokens": 17745739,
+      "families": {
+        "claude": 10784300,
+        "deepseek": 6960778,
+        "openai": 661
+      }
+    },
+    {
+      "date": "2026-08-02",
+      "tokens": 136308052,
+      "families": {
+        "deepseek": 75050453,
+        "claude": 60853625,
+        "openai": 373283,
+        "other": 30691
+      }
+    },
+    {
+      "date": "2026-08-03",
+      "tokens": 37893322,
+      "families": {
+        "deepseek": 6007882,
+        "claude": 31055077,
+        "openai": 79657,
+        "other": 750706
+      }
+    },
+    {
+      "date": "2026-08-04",
+      "tokens": 24017863,
+      "families": {
+        "deepseek": 4536482,
+        "claude": 19300591,
+        "openai": 173739,
+        "other": 7051
+      }
+    },
+    {
+      "date": "2026-08-05",
+      "tokens": 61801709,
+      "families": {
+        "deepseek": 16673425,
+        "claude": 44914586,
+        "openai": 119893,
+        "other": 93805
+      }
+    },
+    {
+      "date": "2026-08-06",
+      "tokens": 73563622,
+      "families": {
+        "deepseek": 32309349,
+        "claude": 41030676,
+        "openai": 185687,
+        "other": 37910
+      }
+    },
+    {
+      "date": "2026-08-07",
+      "tokens": 23382973,
+      "families": {
+        "deepseek": 1653680,
+        "claude": 21661589,
+        "openai": 63616,
+        "other": 4088
+      }
+    },
+    {
+      "date": "2026-08-08",
+      "tokens": 55017828,
+      "families": {
+        "claude": 31072534,
+        "deepseek": 23839498,
+        "openai": 94564,
+        "other": 11232
+      }
+    },
+    {
+      "date": "2026-08-09",
+      "tokens": 9227482,
+      "families": {
+        "claude": 6736590,
+        "deepseek": 2470394,
+        "openai": 20370,
+        "other": 128
+      }
+    },
+    {
+      "date": "2026-08-10",
+      "tokens": 20575012,
+      "families": {
+        "deepseek": 3598546,
+        "claude": 16076367,
+        "openai": 893091,
+        "other": 7008
+      }
+    },
+    {
+      "date": "2026-08-11",
+      "tokens": 16473513,
+      "families": {
+        "deepseek": 4379057,
+        "claude": 11482261,
+        "openai": 604444,
+        "other": 7751
+      }
+    },
+    {
+      "date": "2026-08-12",
+      "tokens": 10552911,
+      "families": {
+        "deepseek": 2926202,
+        "claude": 6096255,
+        "openai": 1523941,
+        "other": 6513
+      }
+    },
+    {
+      "date": "2026-08-13",
+      "tokens": 32966445,
+      "families": {
+        "deepseek": 10651876,
+        "claude": 21067697,
+        "openai": 1233780,
+        "other": 13092
+      }
+    },
+    {
+      "date": "2026-08-14",
+      "tokens": 57549724,
+      "families": {
+        "deepseek": 44459979,
+        "claude": 12649187,
+        "openai": 405922,
+        "other": 34636
+      }
+    },
+    {
+      "date": "2026-08-15",
+      "tokens": 42354395,
+      "families": {
+        "claude": 8270994,
+        "deepseek": 33674758,
+        "openai": 390119,
+        "other": 18524
+      }
+    },
+    {
+      "date": "2026-08-16",
+      "tokens": 70955058,
+      "families": {
+        "claude": 8815168,
+        "deepseek": 61572041,
+        "openai": 522649,
+        "other": 45200
+      }
+    },
+    {
+      "date": "2026-08-17",
+      "tokens": 98921564,
+      "families": {
+        "deepseek": 87003729,
+        "claude": 10965167,
+        "openai": 887136,
+        "other": 65532
+      }
+    },
+    {
+      "date": "2026-08-18",
+      "tokens": 126170484,
+      "families": {
+        "deepseek": 63970710,
+        "claude": 60941037,
+        "openai": 1221555,
+        "other": 37182
+      }
+    },
+    {
+      "date": "2026-08-19",
+      "tokens": 31644165,
+      "families": {
+        "deepseek": 2573487,
+        "claude": 28032392,
+        "openai": 1032135,
+        "other": 6151
+      }
+    },
+    {
+      "date": "2026-08-20",
+      "tokens": 60621802,
+      "families": {
+        "deepseek": 20914916,
+        "claude": 38003306,
+        "openai": 1687304,
+        "other": 16276
+      }
+    },
+    {
+      "date": "2026-08-21",
+      "tokens": 14331517,
+      "families": {
+        "deepseek": 11692,
+        "claude": 12546688,
+        "openai": 1769260,
+        "other": 3877
+      }
+    },
+    {
+      "date": "2026-08-22",
+      "tokens": 38953047,
+      "families": {
+        "claude": 33239946,
+        "deepseek": 454,
+        "openai": 5708920,
+        "other": 3727
+      }
+    },
+    {
+      "date": "2026-08-23",
+      "tokens": 0,
+      "families": {}
+    },
+    {
+      "date": "2026-08-24",
+      "tokens": 597008,
+      "families": {
+        "deepseek": 15495,
+        "openai": 575567,
+        "other": 5946
+      }
+    },
+    {
+      "date": "2026-08-25",
+      "tokens": 5053999,
+      "families": {
+        "deepseek": 16538,
+        "claude": 3532025,
+        "openai": 1497249,
+        "other": 8187
+      }
+    },
+    {
+      "date": "2026-08-26",
+      "tokens": 47950535,
+      "families": {
+        "deepseek": 15857,
+        "claude": 33135772,
+        "openai": 14785643,
+        "other": 13263
+      }
+    },
+    {
+      "date": "2026-08-27",
+      "tokens": 72223855,
+      "families": {
+        "claude": 66818033,
+        "deepseek": 990,
+        "openai": 5383255,
+        "other": 21577
+      }
+    },
+    {
+      "date": "2026-08-28",
+      "tokens": 18201024,
+      "families": {
+        "deepseek": 1131550,
+        "claude": 13206026,
+        "openai": 2916015,
+        "other": 947433
+      }
+    },
+    {
+      "date": "2026-08-29",
+      "tokens": 8312754,
+      "families": {
+        "claude": 5161506,
+        "openai": 3149828,
+        "other": 1420
+      }
+    },
+    {
+      "date": "2026-08-30",
+      "tokens": 24475301,
+      "families": {
+        "claude": 18766936,
+        "deepseek": 510,
+        "openai": 5704129,
+        "other": 3726
+      }
+    },
+    {
+      "date": "2026-08-31",
+      "tokens": 26373795,
+      "families": {
+        "deepseek": 2352210,
+        "claude": 13762505,
+        "openai": 6964042,
+        "other": 3295038
+      }
+    },
+    {
+      "date": "2026-09-01",
+      "tokens": 43021209,
+      "families": {
+        "claude": 26152084,
+        "deepseek": 711,
+        "openai": 5417954,
+        "other": 11450460
+      }
+    },
+    {
+      "date": "2026-09-02",
+      "tokens": 90803178,
+      "families": {
+        "claude": 76762410,
+        "openai": 13401215,
+        "other": 639553
+      }
+    },
+    {
+      "date": "2026-09-03",
+      "tokens": 18523718,
+      "families": {
+        "claude": 14318199,
+        "deepseek": 455,
+        "openai": 4140974,
+        "other": 64090
+      }
+    },
+    {
+      "date": "2026-09-04",
+      "tokens": 36487608,
+      "families": {
+        "claude": 17908926,
+        "openai": 18561168,
+        "other": 17514
+      }
+    },
+    {
+      "date": "2026-09-05",
+      "tokens": 5463610,
+      "families": {
+        "claude": 2712453,
+        "openai": 2681071,
+        "other": 70086
+      }
+    },
+    {
+      "date": "2026-09-06",
+      "tokens": 8846823,
+      "families": {
+        "claude": 4817600,
+        "openai": 3975792,
+        "other": 53431
+      }
+    },
+    {
+      "date": "2026-09-07",
+      "tokens": 50289206,
+      "families": {
+        "claude": 37194210,
+        "deepseek": 1556,
+        "openai": 11778561,
+        "other": 1314879
+      }
+    },
+    {
+      "date": "2026-09-08",
+      "tokens": 64088903,
+      "families": {
+        "claude": 34163662,
+        "deepseek": 1096,
+        "openai": 27627683,
+        "other": 2296462
+      }
+    },
+    {
+      "date": "2026-09-09",
+      "tokens": 43224741,
+      "families": {
+        "claude": 33477584,
+        "deepseek": 1153,
+        "openai": 8993603,
+        "other": 752401
+      }
+    },
+    {
+      "date": "2026-09-10",
+      "tokens": 47214619,
+      "families": {
+        "claude": 39947418,
+        "openai": 5263164,
+        "other": 2004037
+      }
+    },
+    {
+      "date": "2026-09-11",
+      "tokens": 52353983,
+      "families": {
+        "deepseek": 2221634,
+        "claude": 24080136,
+        "openai": 19855664,
+        "other": 6196549
+      }
+    },
+    {
+      "date": "2026-09-12",
+      "tokens": 24027575,
+      "families": {
+        "claude": 13754422,
+        "deepseek": 3845811,
+        "openai": 4945745,
+        "other": 1481597
+      }
+    },
+    {
+      "date": "2026-09-13",
+      "tokens": 28505028,
+      "families": {
+        "claude": 20404235,
+        "openai": 6541794,
+        "deepseek": 1062240,
+        "other": 496759
+      }
+    },
+    {
+      "date": "2026-09-14",
+      "tokens": 25336841,
+      "families": {
+        "claude": 14427858,
+        "deepseek": 6486923,
+        "openai": 940939,
+        "other": 3481121
+      }
+    },
+    {
+      "date": "2026-09-15",
+      "tokens": 82765437,
+      "families": {
+        "claude": 27213492,
+        "deepseek": 32290493,
+        "openai": 1937121,
+        "other": 21324331
+      }
+    },
+    {
+      "date": "2026-09-16",
+      "tokens": 12196565,
+      "families": {
+        "claude": 632489,
+        "openai": 16731,
+        "deepseek": 4936098,
+        "other": 6611247
+      }
+    },
+    {
+      "date": "2026-09-17",
+      "tokens": 2821575,
+      "families": {
+        "deepseek": 2640164,
+        "openai": 1289,
+        "other": 180122
+      }
+    },
+    {
+      "date": "2026-09-18",
+      "tokens": 23488159,
+      "families": {
+        "deepseek": 15431751,
+        "claude": 2017639,
+        "openai": 72770,
+        "other": 5965999
+      }
+    },
+    {
+      "date": "2026-09-19",
+      "tokens": 2875912,
+      "families": {
+        "claude": 224240,
+        "deepseek": 1824780,
+        "openai": 3102,
+        "other": 823790
+      }
+    },
+    {
+      "date": "2026-09-20",
+      "tokens": 70068271,
+      "families": {
+        "deepseek": 7424270,
+        "claude": 21211030,
+        "openai": 33701117,
+        "other": 7731854
+      }
+    },
+    {
+      "date": "2026-09-21",
+      "tokens": 10298269,
+      "families": {
+        "claude": 2626997,
+        "deepseek": 4308172,
+        "openai": 1895559,
+        "other": 1467541
+      }
+    },
+    {
+      "date": "2026-09-22",
+      "tokens": 32403552,
+      "families": {
+        "deepseek": 1607777,
+        "claude": 9646275,
+        "openai": 20558397,
+        "other": 591103
+      }
+    },
+    {
+      "date": "2026-09-23",
+      "tokens": 177005019,
+      "families": {
+        "deepseek": 58953268,
+        "claude": 70022910,
+        "openai": 46129327,
+        "other": 1899514
+      }
+    },
+    {
+      "date": "2026-09-24",
+      "tokens": 48832695,
+      "families": {
+        "deepseek": 21883732,
+        "claude": 26751136,
+        "openai": 186769,
+        "other": 11058
+      }
+    },
+    {
+      "date": "2026-09-25",
+      "tokens": 50671027,
+      "families": {
+        "claude": 25589355,
+        "deepseek": 24758472,
+        "openai": 309075,
+        "other": 14125
+      }
+    },
+    {
+      "date": "2026-09-26",
+      "tokens": 36173924,
+      "families": {
+        "claude": 20821593,
+        "deepseek": 14996420,
+        "openai": 348581,
+        "other": 7330
+      }
+    },
+    {
+      "date": "2026-09-27",
+      "tokens": 67625540,
+      "families": {
+        "claude": 55855125,
+        "deepseek": 11165952,
+        "openai": 602467,
+        "other": 1996
+      }
+    },
+    {
+      "date": "2026-09-28",
+      "tokens": 82009062,
+      "families": {
+        "claude": 54406369,
+        "deepseek": 25855277,
+        "openai": 1511401,
+        "other": 236015
+      }
+    },
+    {
+      "date": "2026-09-29",
+      "tokens": 47261977,
+      "families": {
+        "claude": 32645902,
+        "deepseek": 14063478,
+        "openai": 550277,
+        "other": 2320
+      }
+    }
+  ]
+}

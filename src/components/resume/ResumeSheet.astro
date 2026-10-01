@@ -1,0 +1,468 @@
+---
+/**
+ * One A4 sheet of résumé. A printed document, not a site surface: it has its
+ * own typographic system in points, a book serif, and document rules under
+ * the section labels — none of the site's layout invariants (size ladder,
+ * hairline budget, font roles) apply here, and nothing here leaks back.
+ *
+ * Density is the design: 9pt body, dates inline, bullets with bold lead-ins the
+ * eye can scan in six seconds. `bun run resume` fails if the sheet overflows
+ * one page — tighten spacing first, then bullet/project counts in targets.ts,
+ * never copy.
+ */
+import { Font } from 'astro:assets';
+import { buildingInPublic } from '@/data/career/facts';
+import { formatSpan, pick, type Resume } from '@/data/career/resolve';
+
+interface Props {
+  resume: Resume;
+}
+
+const { resume } = Astro.props;
+const { identity, target, pillars, principles, roles, projects, skills, education, outside } = resume;
+const contact = { ...target.contact };
+const email = contact.email ?? identity.email;
+const title = `${identity.name} — Résumé`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta name="author" content={identity.name} />
+    <title>{title}</title>
+    <Font cssVariable="--font-serif" preload />
+  </head>
+  <body>
+    <main class="sheet">
+      <header class="head">
+        <div class="who">
+          <h1 class="name">{identity.name}</h1>
+          <p class="headline">{target.headline}</p>
+        </div>
+        <ul class="contact">
+          <li><a href={identity.website.href}>{identity.website.display}</a></li>
+          {email && <li><a href={`mailto:${email}`}>{email}</a></li>}
+          {contact.phone && <li>{contact.phone}</li>}
+          <li><a href={identity.github.href}>{identity.github.display}</a></li>
+          <li><a href={identity.linkedin.href}>{identity.linkedin.display}</a></li>
+          <li>{identity.location}</li>
+        </ul>
+      </header>
+
+      <p class="summary">{pick(target.summary, 'cv')}</p>
+
+      <ul class="pillars">
+        {
+          pillars.map((pillar) => (
+            <li>
+              <h2 class="pillar-label">{pillar.label}</h2>
+              <p>{pick(pillar.text, 'cv')}</p>
+            </li>
+          ))
+        }
+      </ul>
+
+      <section>
+        <h2 class="label">Experience</h2>
+        <ol class="entries">
+          {
+            roles.map((role) => (
+              <li>
+                <h3 class="role">
+                  <span class="company">{role.company}</span>
+                  <span class="meta">
+                    {role.location} · {formatSpan({ start: role.start, end: role.end })}
+                  </span>
+                  <span class="ladder">
+                    {role.positions.map((position, i) => (
+                      <span class="rung">
+                        {i > 0 && <span class="arrow">←</span>}
+                        {position.title}
+                        {role.positions.length > 1 && (
+                          <span class="year"> {position.since.slice(0, 4)}</span>
+                        )}
+                      </span>
+                    ))}
+                  </span>
+                </h3>
+                {role.context && <p class="context">{pick(role.context, 'cv')}</p>}
+                {role.highlights.length > 0 && (
+                  <ul class="bullets">
+                    {role.highlights.map((highlight) => (
+                      <li>
+                        <strong>{highlight.lead}.</strong> {pick(highlight.text, 'cv')}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      <section>
+        <h2 class="label">How I work</h2>
+        <ul class="principles">
+          {
+            principles.map((principle) => (
+              <li>
+                <strong>{principle.lead}.</strong> {pick(principle.text, 'cv')}
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="label">Building in public</h2>
+        <p class="context">{pick(buildingInPublic, 'cv')}</p>
+        <ul class="projects">
+          {
+            projects.map((project) => (
+              <li>
+                <h3 class="project">
+                  <a class="company" href={project.href}>
+                    {project.name}
+                  </a>
+                  <span class="stack">{project.stack.join(' · ')}</span>
+                  <span class="year">{project.year}</span>
+                </h3>
+                <p>{pick(project.text, 'cv')}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="label">Skills</h2>
+        <dl class="skills">
+          {
+            skills.map((group) => (
+              <div>
+                <dt>{group.label}</dt>
+                <dd>{group.items.join(' · ')}</dd>
+              </div>
+            ))
+          }
+          <div>
+            <dt>Languages</dt>
+            <dd>{identity.languages.map((l) => `${l.name} (${l.level})`).join(' · ')}</dd>
+          </div>
+          <div>
+            <dt>Outside work</dt>
+            <dd>{pick(outside, 'cv')}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section>
+        <h2 class="label">Education</h2>
+        <ol class="entries">
+          {
+            education.map((item) => (
+              <li>
+                <h3 class="role">
+                  <span class="company">{item.degree}</span>
+                  <span class="meta">
+                    {item.institution} · {formatSpan({ start: item.start, end: item.end })}
+                  </span>
+                </h3>
+                {item.note && <p class="context">{item.note}</p>}
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  :root {
+    --serif: var(--font-serif), Georgia, serif;
+    --ink: #17171a;
+    --ink-2: #2e2e33;
+    --muted: #55555c;
+    --faint: #7a7a82;
+    --rule: #c9c9cf;
+    --col-gap: 4mm;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    background: #e4e4e8;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    font-family: var(--serif);
+    font-size: 9pt;
+    line-height: 1.26;
+    color: var(--ink-2);
+    font-kerning: normal;
+    font-variant-numeric: lining-nums proportional-nums;
+    text-rendering: optimizeLegibility;
+    hyphens: manual;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  ul,
+  ol {
+    list-style: none;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  strong {
+    font-weight: 620;
+    color: var(--ink);
+  }
+
+  .sheet {
+    width: 210mm;
+    height: 297mm;
+    margin: 12mm auto;
+    padding: 9mm 13mm 8mm;
+    background: #fff;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.12), 0 8px 24px rgb(0 0 0 / 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 3.6mm;
+    overflow: hidden;
+  }
+
+  @media print {
+    html {
+      background: none;
+    }
+    .sheet {
+      margin: 0;
+      box-shadow: none;
+    }
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 8mm;
+  }
+
+  .name {
+    font-size: 23pt;
+    font-weight: 560;
+    line-height: 1;
+    letter-spacing: -0.012em;
+    color: var(--ink);
+  }
+
+  .headline {
+    margin-top: 2.2mm;
+    font-size: 10.4pt;
+    font-style: italic;
+    color: var(--muted);
+  }
+
+  .contact {
+    text-align: right;
+    font-size: 8.4pt;
+    line-height: 1.4;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary {
+    font-size: 9.6pt;
+    line-height: 1.4;
+    color: var(--ink-2);
+    text-wrap: pretty;
+  }
+
+  /* ── Pillars ────────────────────────────────────────────── */
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5mm;
+  }
+
+  .pillar-label {
+    font-size: 7.4pt;
+    font-weight: 640;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 0.8mm;
+  }
+
+  .pillars p {
+    font-size: 8.6pt;
+    line-height: 1.34;
+    color: var(--muted);
+    text-wrap: pretty;
+  }
+
+  /* ── Sections ───────────────────────────────────────────── */
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4mm;
+  }
+
+  /* The only rules on the page: a label, then a hairline to the margin. */
+  .label {
+    display: flex;
+    align-items: center;
+    gap: 3mm;
+    font-size: 7.6pt;
+    font-weight: 640;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .label::after {
+    content: '';
+    flex: 1;
+    height: 0;
+    border-top: 0.5pt solid var(--rule);
+  }
+
+  .entries {
+    display: flex;
+    flex-direction: column;
+    gap: 1.9mm;
+  }
+
+  .role,
+  .project {
+    display: flex;
+    align-items: baseline;
+    column-gap: 2mm;
+  }
+
+  .company {
+    font-weight: 620;
+    color: var(--ink);
+  }
+
+  .meta,
+  .year,
+  .stack {
+    color: var(--faint);
+    font-size: 8.2pt;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  .ladder {
+    margin-left: auto;
+    font-style: italic;
+    color: var(--muted);
+  }
+
+  .rung .arrow {
+    padding-inline: 1.2mm;
+    font-style: normal;
+    color: var(--faint);
+  }
+
+  .ladder .year {
+    font-style: normal;
+  }
+
+  .context {
+    font-style: italic;
+    color: var(--muted);
+  }
+
+  .bullets {
+    margin-top: 0.5mm;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3mm;
+  }
+
+  .bullets li {
+    position: relative;
+    padding-left: 3mm;
+    text-wrap: pretty;
+  }
+
+  .bullets li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--faint);
+  }
+
+  /* ── Principles ─────────────────────────────────────────── */
+  /* One line each: four one-liners read faster than a 2×2 of wrapped cells. */
+  .principles {
+    display: grid;
+    gap: 0.6mm;
+  }
+
+  .principles li {
+    text-wrap: pretty;
+  }
+
+  /* ── Projects ───────────────────────────────────────────── */
+  .projects {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.6mm 6mm;
+  }
+
+  .project .year {
+    margin-left: auto;
+  }
+
+  .projects p {
+    text-wrap: pretty;
+  }
+
+  /* ── Skills ─────────────────────────────────────────────── */
+  .skills {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5mm;
+  }
+
+  .skills div {
+    display: grid;
+    grid-template-columns: 23mm 1fr;
+    column-gap: var(--col-gap);
+  }
+
+  .skills dt {
+    font-size: 8.4pt;
+    color: var(--faint);
+  }
+</style>

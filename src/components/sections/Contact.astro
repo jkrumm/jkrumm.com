@@ -14,14 +14,15 @@
  */
 import Section from '@/components/primitives/Section.astro';
 import { SOCIAL } from '@/consts';
+import { identity } from '@/data/career/facts';
 ---
 
 <Section id="contact" label="Contact">
   <p class="lede reveal">
     Best reached on <a class="u ext" href={SOCIAL.linkedin} target="_blank" rel="me noopener"
       >LinkedIn</a
-    > or <a class="u ext" href={SOCIAL.github} target="_blank" rel="me noopener">GitHub</a>. Or use
-    the form.
+    > or <a class="u ext" href={SOCIAL.github} target="_blank" rel="me noopener">GitHub</a>, by
+    email at <a class="u" href={`mailto:${identity.email}`}>{identity.email}</a>, or use the form.
   </p>
 
   <form class="form reveal" data-delay="60">

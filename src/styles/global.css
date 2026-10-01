@@ -321,6 +321,10 @@ time,
   position: sticky;
   top: var(--page-top);
   align-self: start;
+  /* A long `sections` list (an article's table of contents) must scroll
+     inside the rail's own `.nav` rather than push the sticky rail taller
+     than the viewport — see `.nav` in Sidebar.astro. */
+  max-height: calc(100vh - var(--page-top));
 }
 
 .shell > .bleed {
@@ -370,6 +374,7 @@ time,
     grid-column: full;
     position: static;
     margin-bottom: 48px;
+    max-height: none;
   }
 }
 
@@ -494,8 +499,13 @@ html.theme-anim *::after {
 .prose h4 {
   font-family: var(--display);
   color: var(--ink);
-  letter-spacing: -0.01em;
-  line-height: 1.35;
+  /* Normal width, not the site-wide 88% condensed stretch (--font-display-
+     stretch, inherited from body) — at reading size the condensed cut reads
+     tight and cramped, not "big". A hair of positive tracking plus a slightly
+     taller line-height gives the same big weight room to breathe. */
+  font-stretch: 100%;
+  letter-spacing: 0.002em;
+  line-height: 1.4;
 }
 
 .prose h2 {

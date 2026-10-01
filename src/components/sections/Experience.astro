@@ -1,64 +1,113 @@
 ---
 /**
- * Experience — a two-track grid: a fixed date column, then the content.
+ * Experience — a two-track grid (fixed date column, then content), collapsible
+ * per role via native `<details>`/`<summary>` — no JS, no accordion library.
  *
- * The old version was the densest border cluster in the repo (a timeline spine,
- * node rings, a circular chevron, ladder dots and connectors, and a border-top
- * per entry) wrapped in a JS accordion. All of it is gone: three companies with
- * a two-to-three rung ladder each is about ten lines of text, so hiding it
- * behind a click bought nothing. The full detail lives at /resume.
+ * Closed, a role shows exactly what the old static version showed: period,
+ * company · location, the title ladder. Opening it reveals the role's context
+ * line and its highlights as bold-lead bullets, in fact-base order. Roles with
+ * no highlights (the agencies) still expand to their context line. A quiet
+ * chevron (`--faint`, no border, no accent) rotates open/closed.
  *
- * Dates use the open-ended microformat from src/data/experience.ts (`2019 –`,
- * `2014 – 18`) in mono tabular numerals, so the column aligns without a table.
+ * Smooth open/close is CSS-only via the `::details-content` pseudo-element +
+ * `interpolate-size: allow-keywords` — progressive enhancement: unsupported
+ * browsers fall back to the native instant toggle, nothing breaks.
+ *
+ * Dates use the open-ended microformat from src/data/experience.ts (`2021 –
+ * today`, `2018 – 2020`) in mono tabular numerals, so the column aligns
+ * without a table.
  */
 import Section from '@/components/primitives/Section.astro';
 import { education, resumeHref, roles } from '@/data/experience';
+
+interface Props {
+  /** /resume renders every role expanded by default (still collapsible) — a
+   * reader shouldn't have to click through the whole ladder. Homepage default:
+   * closed. */
+  defaultOpen?: boolean;
+  /** /resume omits the "View full resume →" action — it would link to itself. */
+  showAction?: boolean;
+  /** /resume renders its own dedicated Education section, so this component's
+   * inline education row is suppressed there to avoid showing it twice. */
+  showEducation?: boolean;
+}
+
+const { defaultOpen = false, showAction = true, showEducation = true } = Astro.props;
 ---
 
-<Section id="experience" label="Experience" actionLabel="View full resume →" actionHref={resumeHref}>
+<Section
+  id="experience"
+  label="Experience"
+  actionLabel={showAction ? 'View full resume →' : undefined}
+  actionHref={showAction ? resumeHref : undefined}
+>
   <ol class="roles">
     {
       roles.map((role, i) => (
         <li class="entry reveal" data-delay={i * 60}>
-          <span class="period mono">{role.period}</span>
-          <div class="body">
-            <h3 class="company">
-              {role.company}
-              <span class="location"> · {role.location}</span>
-            </h3>
-            <ol class="ladder">
-              {role.positions.map((position) => (
-                <li>
-                  <span class="since mono">{position.since}</span>
-                  <span class="role-title">{position.title}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
+          <details class="role" data-track={`experience-${role.id}`} open={defaultOpen}>
+            <summary class="summary">
+              <span class="period mono">{role.period}</span>
+              <div class="body">
+                <h3 class="company">
+                  <span>
+                    {role.company}
+                    <span class="location"> · {role.location}</span>
+                  </span>
+                  <span class="chevron" aria-hidden="true">
+                    ›
+                  </span>
+                </h3>
+                <ol class="ladder">
+                  {role.positions.map((position) => (
+                    <li>
+                      <span class="since mono">{position.since}</span>
+                      <span class="role-title">{position.title}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </summary>
+            <div class="panel">
+              {role.context && <p class="context">{role.context}</p>}
+              {role.highlights.length > 0 && (
+                <ul class="highlights">
+                  {role.highlights.map((h) => (
+                    <li>
+                      <strong>{h.lead}.</strong> {h.text}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </details>
         </li>
       ))
     }
   </ol>
 
-  <ol class="roles education reveal" data-delay="180">
-    {
-      education.map((item) => (
-        <li class="entry">
-          <span class="period mono">{item.period}</span>
-          <div class="body">
-            {/* Without this the degree reads as a fourth job. */}
-            <p class="kind">Education</p>
-            <h3 class="company">{item.degree}</h3>
-            <p class="institution">{item.institution}</p>
-          </div>
-        </li>
-      ))
-    }
-  </ol>
+  {
+    showEducation && (
+      <ol class="roles education reveal" data-delay="180">
+        {education.map((item) => (
+          <li class="entry">
+            <span class="period mono">{item.period}</span>
+            <div class="body">
+              {/* Without this the degree reads as a fourth job. */}
+              <p class="kind">Education</p>
+              <h3 class="company">{item.degree}</h3>
+              <p class="institution">{item.institution}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    )
+  }
 </Section>
 
 <style>
-  ol {
+  ol,
+  ul {
     list-style: none;
   }
 
@@ -77,6 +126,34 @@ import { education, resumeHref, roles } from '@/data/experience';
     gap: var(--space-block);
   }
 
+  /* The education entry has no <details> — it keeps the grid directly. A role
+     entry's only direct child is <details>, so it must span both of .entry's
+     columns itself or it collapses into the first 96px cell; the real column
+     layout lives one level down, on .summary, so the SAME columns line up
+     whether or not the row is interactive. The expanded panel isn't a grid
+     cell (it's inside the browser-generated ::details-content box, which
+     `.summary`'s grid can't reach), so it aligns under the body column via a
+     matching margin-left instead. */
+  .entry > .role {
+    grid-column: 1 / -1;
+  }
+
+  .summary {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: var(--space-block);
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .summary::marker {
+    content: '';
+  }
+
   .period {
     font-size: var(--text-sm);
     color: var(--faint);
@@ -92,6 +169,10 @@ import { education, resumeHref, roles } from '@/data/experience';
   }
 
   .company {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
     font-family: var(--display);
     font-size: var(--text-md);
     font-weight: var(--w-med);
@@ -102,6 +183,17 @@ import { education, resumeHref, roles } from '@/data/experience';
   .location {
     color: var(--faint);
     font-weight: var(--w-body);
+  }
+
+  .chevron {
+    flex-shrink: 0;
+    color: var(--faint);
+    font-weight: var(--w-body);
+    transition: transform var(--dur-hover) ease;
+  }
+
+  .role[open] .chevron {
+    transform: rotate(90deg);
   }
 
   /* The ladder is a plain nested list — the year does the structural work that
@@ -143,13 +235,78 @@ import { education, resumeHref, roles } from '@/data/experience';
     margin-bottom: 2px;
   }
 
+  /* ── Expand/collapse — CSS-only, progressive enhancement. Unsupported
+     browsers keep the native instant toggle; nothing here is required for the
+     content to open. ────────────────────────────────────────────────────── */
+  .role {
+    interpolate-size: allow-keywords;
+  }
+
+  .role::details-content {
+    overflow: hidden;
+    block-size: 0;
+    opacity: 0;
+    transition:
+      content-visibility 220ms allow-discrete,
+      block-size 220ms var(--ease-reveal),
+      opacity 180ms var(--ease-reveal);
+  }
+
+  .role[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .role::details-content,
+    .chevron {
+      transition: none;
+    }
+  }
+
+  .panel {
+    margin-left: calc(96px + var(--space-block));
+    padding-top: var(--space-block);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-block);
+  }
+
+  .context {
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .highlights {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .highlights li {
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+
+  .highlights strong {
+    color: var(--ink);
+    font-weight: var(--w-strong);
+  }
+
   /* Stacked, the period becomes a caption above its entry rather than a
      column beside it — so the gap drops to the row step. The group spacing
      between entries stays on the ladder. */
   @media (max-width: 560px) {
-    .entry {
+    .entry,
+    .summary {
       grid-template-columns: 1fr;
       gap: 4px;
+    }
+
+    .panel {
+      margin-left: 0;
     }
   }
 </style>

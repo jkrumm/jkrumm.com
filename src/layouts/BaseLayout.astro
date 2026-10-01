@@ -1,6 +1,7 @@
 ---
 import { Font } from 'astro:assets';
 import { ClientRouter } from 'astro:transitions';
+import WipGate from '@/components/chrome/WipGate.astro';
 import BaseHead from '@/components/seo/BaseHead.astro';
 import JsonLd from '@/components/seo/JsonLd.astro';
 import { SITE } from '@/consts';
@@ -19,6 +20,25 @@ interface Props {
 
 const { title = SITE.title, description = SITE.description, ogType = 'website', jsonLd } =
   Astro.props;
+
+// WIP gate bypass (see WipGate.astro): `?preview` stores the flag, `?preview=off`
+// clears it. Applied pre-paint and re-applied after every ClientRouter swap,
+// which resets <html> attributes.
+const wipBypass = `(function () {
+  var KEY = 'jk-wip';
+  var m = /[?&]preview(?:=([^&]*))?/.exec(location.search);
+  try {
+    if (m) m[1] === 'off' ? localStorage.removeItem(KEY) : localStorage.setItem(KEY, 'off');
+  } catch (e) {}
+  function apply() {
+    var off = false;
+    try { off = localStorage.getItem(KEY) === 'off'; } catch (e) {}
+    if (off) document.documentElement.setAttribute('data-wip', 'off');
+    else document.documentElement.removeAttribute('data-wip');
+  }
+  apply();
+  document.addEventListener('astro:after-swap', apply);
+})();`;
 ---
 
 <!doctype html>
@@ -79,6 +99,8 @@ const { title = SITE.title, description = SITE.description, ogType = 'website', 
       })();
     </script>
 
+    {import.meta.env.PROD && <script is:inline set:html={wipBypass} />}
+
     <Font cssVariable="--font-mono" preload />
     <Font cssVariable="--font-display" preload />
     <Font cssVariable="--font-sans" preload />
@@ -97,9 +119,13 @@ const { title = SITE.title, description = SITE.description, ogType = 'website', 
   </head>
   <body>
     <slot />
+    {import.meta.env.PROD && <WipGate />}
 
     <script>
       import '../scripts/portfolio.ts';
+    </script>
+    <script>
+      import '../scripts/analytics.ts';
     </script>
   </body>
 </html>

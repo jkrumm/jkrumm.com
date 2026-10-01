@@ -1,0 +1,290 @@
+---
+/**
+ * The web résumé — a sibling of the homepage, not a bespoke template. Same
+ * `.shell` + `Sidebar` rail and the SAME section components the homepage uses
+ * (Experience, Projects, Skills), reused via props rather than re-implemented.
+ * The rail's `sections` are the résumé's own anchors (About, Experience,
+ * Projects, Skills, Education); About and Education are the two sections that
+ * don't exist on the homepage.
+ *
+ * Copy is the `default` target's `web` channel, via getTarget/pick/
+ * resolveResume — the same fact base the PDF and the homepage draw from.
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Sidebar from '@/components/chrome/Sidebar.astro';
+import SiteFooter from '@/components/chrome/SiteFooter.astro';
+import Section from '@/components/primitives/Section.astro';
+import Experience from '@/components/sections/Experience.astro';
+import Projects from '@/components/sections/Projects.astro';
+import Skills from '@/components/sections/Skills.astro';
+import { SITE } from '@/consts';
+import { education } from '@/data/experience';
+import { buildingInPublic, outside, resumePdf } from '@/data/career/facts';
+import { getTarget, pick, resolveResume } from '@/data/career/resolve';
+
+const { identity, target, pillars, principles } = resolveResume(getTarget('default'));
+
+const resumeSections = [
+  { href: '#about', label: 'About' },
+  { href: '#experience', label: 'Experience' },
+  { href: '#projects', label: 'Projects' },
+  { href: '#skills', label: 'Skills' },
+  { href: '#education', label: 'Education' },
+];
+---
+
+<BaseLayout
+  title={`Résumé — ${SITE.name}`}
+  description={`${identity.name} — ${target.headline}. ${pick(target.summary, 'web').split('. ')[0]}.`}
+  ogType="profile"
+  jsonLd="page"
+>
+  <div class="shell resume-shell">
+    <Sidebar sections={resumeSections} bio={false}>
+      <a slot="foot" class="u" href={resumePdf} download>
+        Download PDF
+      </a>
+    </Sidebar>
+
+    <main class="stack">
+      <header class="masthead">
+        <p class="masthead__eyebrow mono">Résumé</p>
+        <h1 class="masthead__title">{identity.name}</h1>
+        <p class="masthead__intro">{target.headline}</p>
+        <p class="masthead__actions">
+          <a class="u" href={resumePdf} download>Download PDF</a>
+          <span class="faint">·</span>
+          <span class="faint">one page, A4</span>
+        </p>
+      </header>
+
+      <Section id="about" label="About">
+        <p class="summary reveal">{pick(target.summary, 'web')}</p>
+
+        <ul class="pillars reveal" data-delay="60">
+          {
+            pillars.map((pillar) => (
+              <li>
+                <h3 class="pillar-label">{pillar.label}</h3>
+                <p>{pick(pillar.text, 'web')}</p>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="principles reveal" data-delay="120">
+          <h3 class="principles-label">How I work</h3>
+          <ul class="principles-list">
+            {
+              principles.map((principle) => (
+                <li>
+                  <strong>{principle.lead}.</strong> {pick(principle.text, 'web')}
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </Section>
+
+      <Experience defaultOpen showAction={false} showEducation={false} />
+
+      <Projects intro={pick(buildingInPublic, 'web')} />
+
+      <Skills />
+
+      <Section id="education" label="Education">
+        <ol class="edu-list">
+          {
+            education.map((item) => (
+              <li class="edu-entry">
+                <span class="when mono">{item.period}</span>
+                <div class="what">
+                  <h3 class="degree">{item.degree}</h3>
+                  <p class="institution">{item.institution}</p>
+                </div>
+              </li>
+            ))
+          }
+          <li class="edu-entry">
+            <span class="when">Outside work</span>
+            <p class="outside">{pick(outside, 'web')}</p>
+          </li>
+        </ol>
+      </Section>
+    </main>
+
+    <SiteFooter />
+  </div>
+</BaseLayout>
+
+<style>
+  ul,
+  ol {
+    list-style: none;
+  }
+
+  .resume-shell {
+    padding-block: 64px var(--space-section);
+  }
+
+  /* Same masthead grammar as IndexLayout/StubLayout — a quiet eyebrow, no
+     bespoke title block. */
+  .masthead {
+    display: grid;
+    gap: var(--space-row);
+  }
+
+  .masthead__eyebrow {
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .masthead__title {
+    font-family: var(--display);
+    font-size: var(--text-xl);
+    font-weight: var(--w-strong);
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .masthead__intro {
+    color: var(--muted);
+  }
+
+  .masthead__actions {
+    margin-top: var(--space-row);
+    display: flex;
+    gap: var(--space-row);
+    font-size: var(--text-sm);
+  }
+
+  .faint {
+    color: var(--faint);
+  }
+
+  .summary {
+    color: var(--ink-2);
+    max-width: 64ch;
+    text-wrap: pretty;
+  }
+
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-block);
+  }
+
+  .pillars li {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-row);
+  }
+
+  .pillar-label {
+    font-family: var(--display);
+    font-size: var(--text-sm);
+    font-weight: var(--w-med);
+    color: var(--ink);
+  }
+
+  .pillars p {
+    font-size: var(--text-sm);
+    color: var(--muted);
+    text-wrap: pretty;
+  }
+
+  .principles {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-row);
+  }
+
+  .principles-label {
+    font-family: var(--display);
+    font-size: var(--text-sm);
+    font-weight: var(--w-med);
+    color: var(--ink);
+  }
+
+  .principles-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-row);
+  }
+
+  .principles-list li {
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+
+  .principles-list strong {
+    color: var(--ink);
+    font-weight: var(--w-strong);
+  }
+
+  .edu-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-group);
+  }
+
+  .edu-entry {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: var(--space-block);
+  }
+
+  .when {
+    font-size: var(--text-sm);
+    color: var(--faint);
+    line-height: 1.5;
+    padding-top: 1px;
+    white-space: nowrap;
+  }
+
+  .what {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-row);
+  }
+
+  .degree {
+    font-family: var(--display);
+    font-size: var(--text-md);
+    font-weight: var(--w-med);
+    color: var(--ink);
+    line-height: 1.4;
+  }
+
+  .institution {
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+
+  .outside {
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+
+  @media (max-width: 900px) {
+    .resume-shell {
+      padding-block: 40px var(--space-section);
+    }
+  }
+
+  @media (max-width: 720px) {
+    .pillars {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .edu-entry {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+  }
+</style>

@@ -1,77 +1,257 @@
 ---
 /**
- * Activity — a build-time GitHub contribution heatmap, zero client JS.
+ * Activity — a build-time heatmap with two switchable views: GitHub
+ * contributions and AI token consumption. Zero client JS: the switch is two
+ * visually-hidden radio inputs + labels, toggled with `:has()` — native
+ * arrow-key navigation between them comes for free from the radio group.
  *
- * Data comes from `getGithubActivity` (live fetch, falling back to the
- * committed `src/data/github-activity.json` snapshot on any failure — see
- * `src/utils/github-activity.ts` and `bun run activity`). The grid is plain
- * inline SVG: weeks as columns, 7 rows, rendered once at build time — no
- * Plot, no runtime measurement, so a `viewBox` + `width: 100%` is enough to
- * make it responsive.
+ * Commits data comes from `getGithubActivity` (live fetch, falling back to
+ * the committed `src/data/github-activity.json` snapshot — see
+ * `src/utils/github-activity.ts` and `bun run activity`). Tokens data is
+ * snapshot-only: `src/data/token-activity.json`, refreshed by the same
+ * `bun run activity` (needs `ARGO_TOKEN`) — the site build never calls the
+ * Argo API, so it never needs a secret.
+ *
+ * Both grids share ONE geometry: `tokenWeeks` is derived by mapping over
+ * `commitWeeks` cell-for-cell, so switching never reflows. Cells for dates
+ * before the Argo floor (`tokenActivity.since`) render as empty — "no data",
+ * not zero.
  *
  * Intensity is the ink ramp, not colour: level 0 is a near-invisible tint,
- * levels 1–4 step up `--ink`'s opacity. No green — that would spend the
- * accent budget on decoration.
+ * levels 1–4 step up `--ink`'s opacity. No green/accent — that would spend
+ * the accent budget on decoration.
  */
 import Section from '@/components/primitives/Section.astro';
 import { SOCIAL } from '@/consts';
 import { getGithubActivity, type ActivityData, type ActivityDay } from '@/utils/github-activity';
-import fallback from '@/data/github-activity.json';
+import {
+  FAMILY_LABEL,
+  FAMILY_ORDER,
+  type TokenActivityData,
+  type TokenActivityDay,
+} from '@/utils/token-activity';
+import githubFallback from '@/data/github-activity.json';
+import tokenFallback from '@/data/token-activity.json';
 
 const GITHUB_HANDLE = 'jkrumm';
 const CELL = 11;
 const GAP = 3;
 const STEP = CELL + GAP;
 
-const activity = await getGithubActivity(GITHUB_HANDLE, fallback as ActivityData);
+const activity = await getGithubActivity(GITHUB_HANDLE, githubFallback as ActivityData);
+const tokenActivity = tokenFallback as TokenActivityData;
 
-// Group the flat, chronologically-sorted day list into weeks (Sunday-start
-// columns) for the grid — the source markup's own row/column structure isn't
-// something we depend on, only `date` + `level`.
-const weeks: (ActivityDay | null)[][] = [];
-for (const day of activity.days) {
-  const weekday = new Date(`${day.date}T00:00:00Z`).getUTCDay();
-  if (weekday === 0 || weeks.length === 0) weeks.push(new Array(7).fill(null));
-  weeks[weeks.length - 1][weekday] = day;
+// Group a chronologically-sorted, gap-free day list into weeks (Sunday-start
+// columns) for the grid — only `date` matters for the shape; per-view detail
+// (`level`, `tokens`) travels on the day object itself.
+function buildWeeks<T extends { date: string }>(days: T[]): (T | null)[][] {
+  const weeks: (T | null)[][] = [];
+  for (const day of days) {
+    const weekday = new Date(`${day.date}T00:00:00Z`).getUTCDay();
+    if (weekday === 0 || weeks.length === 0) weeks.push(new Array(7).fill(null));
+    weeks[weeks.length - 1][weekday] = day;
+  }
+  return weeks;
 }
 
-const width = weeks.length * STEP - GAP;
+const commitWeeks = buildWeeks(activity.days);
+
+interface TokenCell {
+  date: string;
+  tokens: number;
+  level: 0 | 1 | 2 | 3 | 4;
+}
+
+const tokenByDate = new Map(tokenActivity.days.map((day) => [day.date, day]));
+
+// Quantile buckets, not fixed log thresholds — the day-to-day range (roughly
+// 30K–300M tokens) shifts as usage grows, so the 4 non-zero levels are cut at
+// the 25th/50th/75th percentile of days that actually saw usage.
+const nonZeroTokens = tokenActivity.days
+  .map((day) => day.tokens)
+  .filter((tokens) => tokens > 0)
+  .sort((a, b) => a - b);
+const quantile = (p: number): number =>
+  nonZeroTokens[Math.min(nonZeroTokens.length - 1, Math.floor(p * nonZeroTokens.length))] ?? 0;
+const breakpoints = [quantile(0.25), quantile(0.5), quantile(0.75)];
+
+function tokenLevel(tokens: number): TokenCell['level'] {
+  if (tokens <= 0) return 0;
+  if (tokens < breakpoints[0]) return 1;
+  if (tokens < breakpoints[1]) return 2;
+  if (tokens < breakpoints[2]) return 3;
+  return 4;
+}
+
+function resolveTokenCell(day: ActivityDay | null): TokenCell | null {
+  if (!day || day.date < tokenActivity.since) return null;
+  const tokens = tokenByDate.get(day.date)?.tokens ?? 0;
+  return { date: day.date, tokens, level: tokenLevel(tokens) };
+}
+
+const tokenWeeks = commitWeeks.map((week) => week.map(resolveTokenCell));
+
+const width = commitWeeks.length * STEP - GAP;
 const height = 7 * STEP - GAP;
+
+const compactTokens = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
+const tokenTooltip = (cell: TokenCell): string => `${cell.date} · ${compactTokens.format(cell.tokens)} tokens`;
+
 const totalLabel = activity.total.toLocaleString('en-US');
+
+const totalTokens = tokenActivity.days.reduce((sum, day) => sum + day.tokens, 0);
+const activeTokenDays = tokenActivity.days.filter((day) => day.tokens > 0).length;
+const totalTokensLabel = compactTokens.format(totalTokens);
+
+const familyShares = FAMILY_ORDER.map((family) => ({
+  family,
+  tokens: tokenActivity.days.reduce(
+    (sum, day: TokenActivityDay) => sum + (day.families[family] ?? 0),
+    0,
+  ),
+}))
+  .filter((share) => share.tokens > 0)
+  .sort((a, b) => b.tokens - a.tokens);
+
+const familySplitLabel = familyShares
+  .map((share) => `${FAMILY_LABEL[share.family]} ${Math.round((share.tokens / totalTokens) * 100)}%`)
+  .join(' · ');
 ---
 
 <Section id="activity" label="Activity" actionLabel="GitHub →" actionHref={SOCIAL.github}>
   <div class="reveal">
-    <svg
-      class="heatmap"
-      viewBox={`0 0 ${width} ${height}`}
-      role="img"
-      aria-label={`${totalLabel} GitHub contributions in the last year`}
-    >
-      {
-        weeks.map((week, wi) =>
-          week.map(
-            (day, di) =>
-              day && (
-                <rect
-                  class="day"
-                  data-level={day.level}
-                  x={wi * STEP}
-                  y={di * STEP}
-                  width={CELL}
-                  height={CELL}
-                  rx="2"
-                />
-              ),
-          ),
-        )
-      }
-    </svg>
-    <p class="caption"><span class="mono">{totalLabel}</span> contributions in the last year</p>
+    <div class="switch-wrap">
+      <div class="switch" role="radiogroup" aria-label="Activity view">
+        <input type="radio" name="activity-view" id="activity-view-commits" checked />
+        <label for="activity-view-commits">Commits</label>
+        <input type="radio" name="activity-view" id="activity-view-tokens" />
+        <label for="activity-view-tokens">Tokens</label>
+      </div>
+
+      <div class="views">
+        <div class="view view-commits">
+          <svg
+            class="heatmap"
+            viewBox={`0 0 ${width} ${height}`}
+            role="img"
+            aria-label={`${totalLabel} GitHub contributions in the last year`}
+          >
+            {
+              commitWeeks.map((week, wi) =>
+                week.map(
+                  (day, di) =>
+                    day && (
+                      <rect
+                        class="day"
+                        data-level={day.level}
+                        x={wi * STEP}
+                        y={di * STEP}
+                        width={CELL}
+                        height={CELL}
+                        rx="2"
+                      />
+                    ),
+                ),
+              )
+            }
+          </svg>
+          <p class="caption"><span class="mono">{totalLabel}</span> contributions in the last year</p>
+        </div>
+
+        <div class="view view-tokens">
+          <svg
+            class="heatmap"
+            viewBox={`0 0 ${width} ${height}`}
+            role="img"
+            aria-label={`${totalTokensLabel} AI tokens consumed since ${tokenActivity.since}, excludes cache reads`}
+          >
+            {
+              tokenWeeks.map((week, wi) =>
+                week.map(
+                  (cell, di) =>
+                    cell && (
+                      <rect class="day" data-level={cell.level} x={wi * STEP} y={di * STEP} width={CELL} height={CELL} rx="2">
+                        <title>{tokenTooltip(cell)}</title>
+                      </rect>
+                    ),
+                ),
+              )
+            }
+          </svg>
+          <p class="caption mono">{totalTokensLabel} tokens · {activeTokenDays} active days</p>
+          <p class="caption">{familySplitLabel} — excludes cache reads</p>
+        </div>
+      </div>
+    </div>
   </div>
 </Section>
 
 <style>
+  .switch-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-row);
+  }
+
+  .switch {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: 3px;
+    gap: 2px;
+    border-radius: 999px;
+    background: var(--panel-hover);
+  }
+
+  .switch input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .switch label {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: var(--text-sm);
+    color: var(--faint);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .switch input:checked + label {
+    background: var(--panel);
+    color: var(--ink);
+    box-shadow: var(--shadow-ring);
+  }
+
+  .switch input:focus-visible + label {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 999px;
+  }
+
+  @media (hover: hover) {
+    .switch input:not(:checked) + label:hover {
+      color: var(--ink-2);
+    }
+  }
+
+  .view-tokens {
+    display: none;
+  }
+
+  .switch-wrap:has(#activity-view-tokens:checked) .view-commits {
+    display: none;
+  }
+
+  .switch-wrap:has(#activity-view-tokens:checked) .view-tokens {
+    display: block;
+  }
+
   .heatmap {
     width: 100%;
     height: auto;

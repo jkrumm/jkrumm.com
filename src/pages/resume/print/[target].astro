@@ -1,0 +1,39 @@
+---
+/**
+ * The printable résumé — one A4 sheet, rendered to PDF by `bun run resume`.
+ *
+ * Not part of the public site: getStaticPaths returns nothing unless
+ * RESUME_PRINT is set, so a normal `astro build` ships no print pages (the
+ * default PDF itself is committed to public/). Job-specific targets are read
+ * from the gitignored `.career/targets/*.ts` — see the `career` skill.
+ */
+import ResumeSheet from '@/components/resume/ResumeSheet.astro';
+import { resolveResume } from '@/data/career/resolve';
+import { targets } from '@/data/career/targets';
+import type { Target } from '@/data/career/types';
+
+export function getStaticPaths() {
+  if (!process.env.RESUME_PRINT) return [];
+  const local = Object.entries(
+    import.meta.glob<{ target?: Target }>('/.career/targets/*.ts', { eager: true }),
+  ).map(([file, module]) => {
+    if (!module.target) throw new Error(`${file} must \`export const target: Target\``);
+    return module.target;
+  });
+  const all = [...targets, ...local];
+  // A private target reusing a public id would render over the committed PDF.
+  const seen = new Set<string>();
+  for (const { id } of all) {
+    if (seen.has(id)) throw new Error(`Duplicate résumé target id "${id}"`);
+    seen.add(id);
+  }
+  return all.map((target) => ({
+    params: { target: target.id },
+    props: { target },
+  }));
+}
+
+const { target } = Astro.props;
+---
+
+<ResumeSheet resume={resolveResume(target)} />

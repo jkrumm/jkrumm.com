@@ -41,6 +41,8 @@ const DEVICES = [
 ] as const;
 
 const PORT = 9222 + (process.pid % 500);
+// Per-run profile so parallel runs never share a SingletonLock; removed on exit.
+const PROFILE = `/tmp/jk-shots-profile-${process.pid}`;
 
 const chrome = Bun.spawn(
   [
@@ -51,7 +53,7 @@ const chrome = Bun.spawn(
     '--no-first-run',
     `--remote-debugging-port=${PORT}`,
     // A throwaway profile keeps this run out of the user's real Chrome.
-    '--user-data-dir=/tmp/jk-shots-profile',
+    `--user-data-dir=${PROFILE}`,
     'about:blank',
   ],
   { stdout: 'ignore', stderr: 'ignore' },
@@ -135,7 +137,7 @@ for (const route of ROUTES) {
       );
 
       const sep = route.includes('?') ? '&' : '?';
-      const url = `${BASE}${route}${sep}__theme=${theme}`;
+      const url = `${BASE}${route}${sep}__theme=${theme}&preview`;
 
       const loaded = new Promise<void>((resolve) => {
         const onMessage = (event: MessageEvent) => {
@@ -242,5 +244,7 @@ for (const route of ROUTES) {
 
 ws.close();
 chrome.kill();
+await chrome.exited;
+await Bun.$`rm -rf ${PROFILE}`.quiet().nothrow();
 console.log(failures ? `done — ${failures} overflow failure(s)` : 'done');
 process.exit(failures ? 1 : 0);

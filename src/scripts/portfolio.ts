@@ -12,6 +12,11 @@ import { animate, inView } from 'motion';
  * `astro:before-swap`, so it survives client-side navigation without leaking
  * observers or animations. Each behavior no-ops when its own targets are
  * absent, so the script is harmless on article and index pages.
+ *
+ * Scroll-spy is generic: it drives every `a[data-nav-link]` whose `href="#…"`
+ * resolves to an element on the page, so the SAME implementation lights up
+ * the homepage's section nav and an article's table-of-contents headings in
+ * the Sidebar rail. There is no separate per-surface implementation.
  */
 
 type Cleanup = () => void;
@@ -48,52 +53,81 @@ function init(): void {
     teardown.push(stopReveals);
   }
 
-  // ---- Scroll-spy: active section → sidebar nav ----------------------------
-  // Hand-rolled IntersectionObserver rather than Motion's `inView`, because it
-  // needs MULTIPLE thresholds: with several sections partly on screen at once,
-  // "active" is the one with the highest intersectionRatio, and that comparison
-  // is only possible if every section reports its ratio at several crossings.
-  // `inView` is a binary enter/leave callback and can't express that.
-  const sections = [...document.querySelectorAll<HTMLElement>('[data-section]')];
+  // ---- Scroll-spy: active heading → nav link --------------------------------
+  // The nav links are the source of truth for what to observe (not a
+  // `[data-section]` marker), so the same code drives both the homepage's
+  // section nav and an article's h2/h3 table of contents.
+  //
+  // Active = the LAST target whose top has crossed a line near the top of the
+  // viewport, in document order — not "highest intersection ratio". Ratio
+  // comparison breaks on article headings, where a section can run far taller
+  // than the viewport and never report a high ratio. Top-crossing naturally
+  // gives "the last one wins" once the page is scrolled past every heading,
+  // because every target's top has crossed by then and the last in document
+  // order is picked.
   const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('a[data-nav-link]')];
-  if (!sections.length) return;
+  const targets = navLinks
+    .map((link) => {
+      const href = link.getAttribute('href') ?? '';
+      const target = href.startsWith('#') ? document.getElementById(href.slice(1)) : null;
+      return target ? { link, target } : null;
+    })
+    .filter((entry): entry is { link: HTMLAnchorElement; target: HTMLElement } => entry !== null);
+  if (!targets.length) return;
 
-  let activeIndex = -1;
+  const LINE = 0.2; // 20% down the viewport — "a line near the top"
+  let activeTarget: HTMLElement | null = null;
+  let atBottom = false;
 
-  const setActive = (index: number): void => {
-    activeIndex = index;
-    const id = sections[index]?.id;
-    for (const link of navLinks) {
-      if (id && link.getAttribute('href') === `#${id}`) link.setAttribute('aria-current', 'true');
+  const recompute = (): void => {
+    const lineY = window.innerHeight * LINE;
+    let next: HTMLElement | null = null;
+    for (const { target } of targets) {
+      if (target.getBoundingClientRect().top <= lineY) next = target;
+    }
+    // Before the first heading has crossed the line, keep the first one
+    // active rather than showing no active state at all.
+    next ??= targets[0]?.target ?? null;
+    if (atBottom) next = targets.at(-1)?.target ?? next;
+    if (next === activeTarget) return;
+    activeTarget = next;
+    for (const { link, target } of targets) {
+      if (target === activeTarget) link.setAttribute('aria-current', 'true');
       else link.removeAttribute('aria-current');
     }
   };
 
-  const ratios = new Map<Element, number>();
-  const sectionObserver = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) ratios.set(entry.target, entry.intersectionRatio);
-      let best: HTMLElement | null = null;
-      let bestRatio = -1;
-      for (const section of sections) {
-        const ratio = ratios.get(section) ?? 0;
-        if (ratio > bestRatio) {
-          bestRatio = ratio;
-          best = section;
-        }
-      }
-      if (!best) return;
-      const index = sections.indexOf(best);
-      if (index !== activeIndex) setActive(index);
-    },
-    { root: null, threshold: [0.12, 0.3, 0.5, 0.75] },
-  );
-  sections.forEach((section) => sectionObserver.observe(section));
-  teardown.push(() => sectionObserver.disconnect());
+  // Fire exactly when a target's top crosses the line: the root is shrunk to
+  // the band above it, so entering/leaving that band IS the crossing. Ratio
+  // thresholds on the full viewport miss short targets (an h2 sits at ratio 1
+  // the whole time it moves past the line).
+  const spyObserver = new IntersectionObserver(recompute, {
+    root: null,
+    rootMargin: `0px 0px -${(1 - LINE) * 100}% 0px`,
+    threshold: 0,
+  });
+  targets.forEach(({ target }) => spyObserver.observe(target));
+  teardown.push(() => spyObserver.disconnect());
+
+  // A last target too close to the page end never reaches the line — once the
+  // document bottom is in view, it wins.
+  const sentinel = document.createElement('div');
+  sentinel.setAttribute('aria-hidden', 'true');
+  sentinel.style.height = '1px';
+  document.body.append(sentinel);
+  const bottomObserver = new IntersectionObserver(([entry]) => {
+    atBottom = entry?.isIntersecting ?? false;
+    recompute();
+  });
+  bottomObserver.observe(sentinel);
+  teardown.push(() => {
+    bottomObserver.disconnect();
+    sentinel.remove();
+  });
 
   // Set the initial state synchronously (before the observer's first callback)
   // so there is no flash of "no active section" on load.
-  setActive(0);
+  recompute();
 }
 
 function cleanup(): void {

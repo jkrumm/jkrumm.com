@@ -12,7 +12,9 @@
     "check": "bun --bun node_modules/.bin/astro check",
     "astro": "bun --bun node_modules/.bin/astro",
     "shots": "bun scripts/shots.ts",
-    "activity": "bun scripts/activity.ts"
+    "activity": "bun scripts/activity.ts",
+    "resume": "bun scripts/resume.ts",
+    "linkedin": "bun scripts/linkedin.ts"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "0.4.1",
