@@ -1,0 +1,91 @@
+---
+title: 'Agent Infrastructure'
+description: 'One engine, one loop, one front door, one cockpit: how my coding agents are wired, and what I deleted to get there.'
+order: 2
+status: 'draft'
+publishedDate: 2026-10-04
+tags: ['agents', 'infrastructure']
+---
+
+**TLDR:** four components with one verb each, four ways to start agent work, and
+one contract every repo follows. Trust comes from the network and my GitHub
+account. The only gates left are quality gates.
+
+I rewrote this setup after measuring it. Over three weeks the unattended loop
+dispatched 414 jobs and merged about 10 through its own path. 23 approval and
+policy gates sat between a signal and a merge, and nobody had asked for any of
+them. 30 to 40 percent of the work items were duplicates or follow-ups of an
+earlier one. One policy drift, a repo rule defined in two places, failed 281
+dispatches. There were ten ways to start an agent episode.
+
+<iframe
+  src="/diagrams/agent-platform.html"
+  title="Agent platform architecture"
+  loading="lazy"
+  style={{ width: "100%", height: "720px", border: 0, borderRadius: "8px" }}
+></iframe>
+
+## Four components, one verb each
+
+| Component | Does | Never does |
+|-|-|-|
+| **Warden** | owns the ledger and drives every unattended item to `fixed` | hold per-repo config, ask for approval, edit code |
+| **Sideclaw** | runs bounded jobs: triage, investigate, implement, review, check | decide what to work on, merge |
+| **Hermes** | answers, narrates one line per item, files work | dispatch on its own, land PRs |
+| **herdr** | my cockpit: an orchestrator tab spawns wave tabs and waits on them | run unattended work |
+
+Argo is the status page on top. It holds no state of its own.
+
+## Four lanes
+
+Every agent episode starts in exactly one of these. I deleted the other six.
+
+| Lane | For |
+|-|-|
+| `@implementer` | an edit that must land in the live session's working tree |
+| `sideclaw dispatch` | settled, bounded work that ends as a branch, a PR or a verdict |
+| `rd wave` | long work I want to watch or steer, in a visible herdr tab |
+| `warden run` or a GitHub issue | unattended work, tracked until it is fixed |
+
+## One contract per repo
+
+Warden knows nothing about my repos. Each repo describes itself with the same four
+Make targets and four sections in its `AGENTS.md`.
+
+| Target | Means |
+|-|-|
+| `make check` | all local validation, no side effects |
+| `make deploy` | ship the merged default branch |
+| `make verify` | probe production, exit 0 if healthy |
+| `make logs` | bounded tail of production logs |
+
+`AGENTS.md` carries `Validate`, `Deploy`, `Verify & Monitor` (health URL,
+monitor name, OTel service name) and `Gotchas`. A signal is routed by its own
+label, and when that fails, a cheap single-shot triage reads those sections.
+Claude Code, OpenCode and every worker read the same files.
+
+## The unattended loop
+
+Nine states, from `new` to `fixed`, with `needs_decision` and `failed` as the
+only side exits. `needs_decision` must name a concrete question with two
+options. A missing permission or a low-confidence verdict does not qualify.
+
+Intake fingerprints each event by stripping timestamps, ids, paths and numbers,
+so the same line from two log files is one event. Triage is a single model call
+with no tools, a few seconds and a few cents. Revisions are attempts on one
+item, not new items.
+
+The tail of the loop is **rolling out**: a per-repo merge train (rebase, green
+checks on that SHA, review on that SHA, squash merge pinned to it), then
+deploy, verify, and an automatic `git revert` if verification fails. Today a
+human still lands the merge.
+
+## What I deleted
+
+- Approval gates that never changed an outcome
+- Policy defined in two services
+- Model ids in prose. They live in one registry, and everything else points at it
+- Hermes authoring its own skills (126 became about 20) and replying to every card
+
+The point of the rewrite is subtraction. A new component only earns a place if
+it replaces one.
