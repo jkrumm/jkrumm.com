@@ -23,21 +23,48 @@ live here.
   (`src/dev-toolbar/font-lab.ts`) — width/weight sliders drive the same tokens
   production reads.
 
-**Runtime pin (gotcha).** Astro 7 needs Node ≥ 22.12; this machine defaults to
-older Node, so every `astro` command is pinned to Bun's runtime
-(`bun --bun node_modules/.bin/astro …`) in `package.json`. Details in `README.md`
-§ Runtime — don't "fix" the scripts back to bare `astro`.
+## Validate
 
-## Validation
-
-- `bun run build` = `astro check` + `astro build`. Must stay green (0
-  errors/warnings) on any source change.
+- `bun run build` = `astro check` + `astro build` — the exact local validation CI
+  runs (the Dockerfile's `RUN bun run build`). Must stay green (0 errors/warnings)
+  on any source change.
+- `make check` wraps it (`bun run build`). There is no separate lint, format or
+  test step in this repo.
 - Don't run `bun run dev` for the user — they validate running apps manually.
 - Local HTTPS dev host: `https://jkrumm.test` (Caddy → `localhost:7728`).
-- After a large multi-file edit, the **live dev server can serve stale scoped
-  styles** (Vite HMR silently drops some `.astro` `<style>` updates) — a page that
-  looks structurally broken may just be stale. Verify against `bun run build`
-  output or a restarted dev server, not the hot-reloaded page.
+
+## Deploy
+
+- Push to `master` deploys. `.github/workflows/deploy.yml` builds the image and
+  ships it to the VPS via RollHook (zero-downtime rolling swap), then purges the
+  `jkrumm.com` hostname from Cloudflare's edge. There is no local deploy step —
+  `make deploy` only prints `deployed by CI on push`.
+- A daily 04:17 UTC scheduled run rebuilds the site so the homepage GitHub
+  heatmap (fetched at build time) moves.
+- The VPS app lives at `vps/apps/jkrumm-com`; its compose service is
+  `jkrumm-com` (RollHook-managed nginx container, no secrets in the compose).
+
+## Verify & Monitor
+
+- Health URL: `https://jkrumm.com/` — `make verify` curls it and exits non-zero
+  when the site is not live and healthy.
+- Uptime Kuma monitor: none — no jkrumm.com site monitor is declared in the homelab's
+  `uptime-kuma/monitors.yaml`.
+- OTel `service.name`: `none` — the site is a static nginx container with no
+  OpenTelemetry instrumentation; the compose file sets no `OTEL_*` variables and
+  the repo carries no OTel SDK.
+
+## Gotchas
+
+- **Runtime pin.** Astro 7 needs Node ≥ 22.12; this machine defaults to older
+  Node, so every `astro` command is pinned to Bun's runtime
+  (`bun --bun node_modules/.bin/astro …`) in `package.json`. Details in `README.md`
+  § Runtime — don't "fix" the scripts back to bare `astro`.
+- **Stale dev styles.** After a large multi-file edit the live dev server can
+  serve stale scoped styles (Vite HMR silently drops some `.astro` `<style>`
+  updates) — a page that looks structurally broken may just be stale. Verify
+  against `bun run build` output or a restarted dev server, not the hot-reloaded
+  page.
 
 ## Scroll & animation work
 
