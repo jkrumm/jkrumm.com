@@ -301,7 +301,7 @@ export const projects: Project[] = [
       web: 'My agentic engineering setup. Issues go in, verified fixes come out — triaged, implemented, reviewed, deployed and checked by agents, with a human gate where the risk is.',
     },
     details:
-      'Warden is the control plane: it turns a signal — a failing check, an error spike, a new issue — into an investigation, a verdict, an implementation, a review and a merge, then verifies the fix in production. Around it: Hermes, a 24/7 assistant in Slack; sideclaw, which offloads checks, reviews and implementation to cheaper models; gateways for research, speech, email and image generation; and model choice from daily benchmarks, not habit. It runs on a Mac mini, a homelab and a VPS.',
+      'Warden is the control plane: it turns a signal — a failing check, an error spike, a new issue — into an investigation, a verdict, an implementation, a review and a merge, then verifies the fix in production. Around it: Hermes, a 24/7 assistant in Slack; agent-gateway, which offloads checks, reviews and implementation to cheaper models; gateways for research, speech, email and image generation; and model choice from daily benchmarks, not habit. It runs on a Mac mini, a homelab and a VPS.',
     tags: ['agentic', 'platform', 'architecture'],
     rank: 1,
   },

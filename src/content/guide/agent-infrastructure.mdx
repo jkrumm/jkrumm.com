@@ -30,7 +30,7 @@ dispatches. There were ten ways to start an agent episode.
 | Component | Does | Never does |
 |-|-|-|
 | **Warden** | owns the ledger and drives every unattended item to `fixed` | hold per-repo config, ask for approval, edit code |
-| **Sideclaw** | runs bounded jobs: triage, investigate, implement, review, check | decide what to work on, merge |
+| **agent-gateway** | runs bounded jobs: triage, investigate, implement, review, check | decide what to work on, merge |
 | **Hermes** | answers, narrates one line per item, files work | dispatch on its own, land PRs |
 | **herdr** | my cockpit: an orchestrator tab spawns wave tabs and waits on them | run unattended work |
 
@@ -43,7 +43,7 @@ Every agent episode starts in exactly one of these. I deleted the other six.
 | Lane | For |
 |-|-|
 | `@implementer` | an edit that must land in the live session's working tree |
-| `sideclaw dispatch` | settled, bounded work that ends as a branch, a PR or a verdict |
+| `agw dispatch` | settled, bounded work that ends as a branch, a PR or a verdict |
 | `rd wave` | long work I want to watch or steer, in a visible herdr tab |
 | `warden run` or a GitHub issue | unattended work, tracked until it is fixed |
 
