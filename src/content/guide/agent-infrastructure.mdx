@@ -2,14 +2,15 @@
 title: 'Agent Infrastructure'
 description: 'One engine, one loop, one front door, one cockpit: how my coding agents are wired, and what I deleted to get there.'
 order: 2
-status: 'draft'
-publishedDate: 2026-10-04
+status: 'published'
+publishedDate: 2026-10-10
 tags: ['agents', 'infrastructure']
 ---
 
 **TLDR:** four components with one verb each, four ways to start agent work, and
 one contract every repo follows. Trust comes from the network and my GitHub
-account. The only gates left are quality gates.
+account. The only gates left are quality gates. The stack around it is in
+[Personal Stack](/guide/personal-stack).
 
 I rewrote this setup after measuring it. Over three weeks the unattended loop
 dispatched 414 jobs and merged about 10 through its own path. 23 approval and
@@ -43,9 +44,17 @@ Every agent episode starts in exactly one of these. I deleted the other six.
 | Lane | For |
 |-|-|
 | `@implementer` | an edit that must land in the live session's working tree |
-| `agw dispatch` | settled, bounded work that ends as a branch, a PR or a verdict |
+| `agw dispatch` | one bounded change, unattended, in a repo I'm not working in; ends as a branch, a PR or a verdict |
 | `rd wave` | long work I want to watch or steer, in a visible herdr tab |
 | `warden run` or a GitHub issue | unattended work, tracked until it is fixed |
+
+`rd wave` has three shapes, picked by one `/wave` skill. **Sequential** is the
+default: one wave at a time, each a fresh context that hands over through a plan
+file in the repo, with an orchestrator tab that reviews every close-out before the
+next wave starts. **Fan-out** puts N independent changes on N worktrees and tabs
+and lands them with a rebase-and-merge train. **Fleet** is for work that outlives
+any one context: a lean mother that never reads code, a lead that owns review and
+merge, a fresh worker per task. The simplest shape that fits wins.
 
 ## One contract per repo
 
@@ -75,10 +84,11 @@ so the same line from two log files is one event. Triage is a single model call
 with no tools, a few seconds and a few cents. Revisions are attempts on one
 item, not new items.
 
-The tail of the loop is **rolling out**: a per-repo merge train (rebase, green
-checks on that SHA, review on that SHA, squash merge pinned to it), then
-deploy, verify, and an automatic `git revert` if verification fails. Today a
-human still lands the merge.
+The tail of the loop is a per-repo merge train: rebase, green checks on that SHA,
+a review on that SHA, squash merge pinned to it, then deploy, verify, and an
+automatic `git revert` if verification fails. Warden lands its own PRs this way.
+It only parks a repo's merge while a checkout is dirty, diverged from origin or has
+an agent working in it, and retries 25 minutes later without a strike.
 
 ## What I deleted
 
@@ -86,6 +96,7 @@ human still lands the merge.
 - Policy defined in two services
 - Model ids in prose. They live in one registry, and everything else points at it
 - Hermes authoring its own skills (126 became about 20) and replying to every card
+- The merge-approval gate warden used to stop at. Merges now go through the train
 
 The point of the rewrite is subtraction. A new component only earns a place if
 it replaces one.

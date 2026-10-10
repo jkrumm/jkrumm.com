@@ -4,6 +4,7 @@ description: 'A tour of the tools behind my AI-coding setup, homelab and VPS —
 order: 1
 status: 'published'
 publishedDate: 2026-01-15
+updatedDate: 2026-10-10
 tags: ['stack', 'tooling']
 ---
 
@@ -15,19 +16,26 @@ AI coding, homelab, and VPS/infra.
 
 ## AI coding
 
-The core idea is agents with strong guardrails, not agents left to wander.
-Every repository carries a `CLAUDE.md` that encodes conventions, validation
-commands, and scope limits, so an agent starting cold in any project already
-knows how that project wants to be touched.
+The core idea is agents with strong guardrails, not agents left to wander. Every
+repository carries an `AGENTS.md` that encodes conventions, validation commands
+and scope limits, so an agent starting cold in any project already knows how
+that project wants to be touched. It is a plain, tool-neutral file: Claude Code,
+OpenCode and every unattended worker read the same one.
 
 > The guardrail isn't there to slow the agent down — it's there so a fast
 > agent doesn't have to be a careless one.
 
+The work itself runs on a Mac mini that stays on. The laptop is a client; agents
+outlive it. Four ways start agent work, a warden loop drives unattended items from
+signal to merged and verified, and the rest of the wiring is a separate piece:
+[Agent Infrastructure](/guide/agent-infrastructure).
+
 ### Guardrails in practice
 
-- Global rules for TypeScript, commit conventions, and dependency hygiene apply everywhere
+- Global rules for code style, commit conventions and dependency hygiene apply everywhere
 - Per-project rules narrow scope with `paths:` frontmatter
-- Validation always runs through the repo's own scripts, never ad hoc commands
+- Validation always runs through the repo's own `make check`, never ad hoc commands
+- Hooks, not reminders, enforce the hard stops: protected branches, Docker through Makefile targets only
 - Research is required before touching an unfamiliar external API — no coding from memory[^1]
 
 ## Homelab
@@ -52,16 +60,16 @@ know how to bring it up, tear it down, or check its logs.
 
 ## VPS / infra
 
-Production runs on a Hetzner VPS behind Traefik/Caddy, with Rollhook handling
+Production runs on a Hetzner VPS behind Traefik, with Rollhook handling
 zero-downtime rolling deploys triggered by webhook. Observability runs through
-Grafana and Loki, which is enough for a one-person operation without pulling
-in a heavier stack.
+ClickStack (ClickHouse and HyperDX) for logs, traces and alerts — one store
+for all three, and the alerts feed the agent loop directly.
 
 | Layer | Tool | Why |
 | --- | --- | --- |
 | Deploys | Rollhook | Rolling restarts, no dropped requests |
-| Routing | Traefik / Caddy | Automatic TLS, simple config |
-| Logs | Grafana / Loki | Cheap, self-hosted, good enough |
+| Routing | Traefik | Automatic TLS, simple config |
+| Telemetry | ClickStack / HyperDX | Logs, traces and alerts in one place |
 
 The common thread across all three groups is the same: fewer moving parts,
 each one well understood, each one replaceable without replacing everything
