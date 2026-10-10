@@ -6,7 +6,9 @@
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check deploy verify logs
+.PHONY: help check deploy verify logs diagrams
+
+DIAGRAMS_SRC ?= $(HOME)/SourceRoot/dotfiles/docs/diagrams
 
 help: ## List available targets
 	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | sort | \
@@ -23,3 +25,6 @@ verify: ## Probe production — exits 0 when jkrumm.com is live and healthy
 
 logs: ## Show the last 200 lines of production logs, then exit (no follow)
 	ssh vps 'docker logs --tail 200 "$$(docker ps -qf label=com.docker.compose.service=jkrumm-com | head -1)"'
+
+diagrams: ## Copy the agent-platform diagram from its dotfiles source into public/diagrams
+	cp $(DIAGRAMS_SRC)/agent-platform.html public/diagrams/agent-platform.html

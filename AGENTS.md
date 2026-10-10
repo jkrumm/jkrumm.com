@@ -257,6 +257,9 @@ which the build never fetches live since it needs a secret — refresh both with
 - **Anything scrapers/unfurlers read** (OG images, RSS) must use an `f:jpg`
   rendition, never `@jpg` — Cloudflare ignores `Vary: Accept`, so a
   format-negotiated URL can get cache-poisoned to AVIF for old clients.
+- `public/diagrams/agent-platform.html` is a copy, not a source: edit
+  `dotfiles/docs/diagrams/agent-platform.architecture.json`, regenerate it there with
+  archify, then `make diagrams` here. The Agent Infrastructure guide embeds it.
 - `public/` stays for the favicon, small SVG diagrams, and the current OG
   image (`og.png`, wired via `SITE.ogImage` in `src/consts.ts`, resolved
   absolute in `BaseHead.astro`). Migrating `og.png` to the CDN
