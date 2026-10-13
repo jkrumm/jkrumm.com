@@ -472,7 +472,7 @@ Entry format:
   name-scale morph (`transform: scale` on a shared name) — rejected: the hero's
   focal H1 is the value statement, the name only lives in the bar, so there's no
   shared element to morph; the crossfade matches the brief and is simpler.
-- **Gotcha:** the **sideclaw `check` MCP bridge was down** — every call (even bare
+- **Gotcha:** the **agent-gateway `check` MCP bridge was down** — every call (even bare
   `cwd`, no `commands`) returned `SyntaxError: Failed to parse JSON` at the
   transport layer. Fell back to `bun run build` directly (the repo's own
   validator). Not an input problem.
@@ -1231,7 +1231,7 @@ Entry format:
   math — the whole beam apparatus (pinStart/track/`scaleY`/`--chapter-min`/the
   `@media (min-width:900px)` desktop split) was DELETED. The section works
   identically at every width now (the old sticky rail was desktop-only).
-- **Gotcha:** sideclaw `check` MCP still down (`SyntaxError: Failed to parse
+- **Gotcha:** agent-gateway `check` MCP still down (`SyntaxError: Failed to parse
   JSON` at the transport, same as the 2026-07-05 entries) — fell back to
   `bun run build`.
 - **Verdict / decision:** **Ships.** `bun run build` green (0/0/0, 34 files, 4
