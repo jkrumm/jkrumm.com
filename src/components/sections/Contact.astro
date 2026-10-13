@@ -1,20 +1,22 @@
 ---
 /**
- * Contact — the form from the wireframe.
+ * Contact — a progressive form posting to email-gateway's public route.
  *
- * MARKUP ONLY. There is no endpoint yet: the form posts nowhere and is marked
- * `inert`-free but explicitly disabled at the submit step, so it can't silently
- * swallow a real message. Wiring it to email-gateway (the Resend wrapper with
- * AI spam detection) is the follow-up; when that lands, set `action` to the
- * endpoint and drop the notice plus the `disabled` attribute.
+ * With JS, `initContactForm` in `portfolio.ts` intercepts submit, POSTs JSON to
+ * `data-endpoint` and drives the status line (sending / sent / error). Without
+ * JS the `mailto:` action opens the visitor's mail client, so the form is never
+ * a dead end. `website` is a honeypot: hidden from humans and assistive tech,
+ * bots fill it, the gateway answers 200 and drops the message.
  *
  * Fields are borderless: an input is a baseline rule and a label, not a box.
  * That rule is a `box-shadow` rather than a `border` so it doesn't count
  * against the border budget and can animate to accent on focus.
  */
 import Section from '@/components/primitives/Section.astro';
-import { SOCIAL } from '@/consts';
+import { CONTACT_ENDPOINT, SOCIAL } from '@/consts';
 import { identity } from '@/data/career/facts';
+
+const mailto = `mailto:${identity.email}`;
 ---
 
 <Section id="contact" label="Contact">
@@ -22,39 +24,48 @@ import { identity } from '@/data/career/facts';
     Best reached on <a class="u ext" href={SOCIAL.linkedin} target="_blank" rel="me noopener"
       >LinkedIn</a
     > or <a class="u ext" href={SOCIAL.github} target="_blank" rel="me noopener">GitHub</a>, by
-    email at <a class="u" href={`mailto:${identity.email}`}>{identity.email}</a>, or use the form.
+    email at <a class="u" href={mailto}>{identity.email}</a>, or use the form.
   </p>
 
-  <form class="form reveal" data-delay="60">
+  <form
+    class="form reveal"
+    data-delay="60"
+    data-contact-form
+    data-endpoint={CONTACT_ENDPOINT}
+    action={mailto}
+    method="post"
+    enctype="text/plain"
+  >
     <div class="grid">
       <label class="field">
         <span class="label">Name</span>
-        <input type="text" name="name" autocomplete="name" />
+        <input type="text" name="name" autocomplete="name" maxlength="200" />
       </label>
       <label class="field">
         <span class="label">E-Mail</span>
-        <input type="email" name="email" autocomplete="email" />
-      </label>
-      <label class="field">
-        <span class="label">Telephone</span>
-        <input type="tel" name="phone" autocomplete="tel" />
+        <input type="email" name="email" autocomplete="email" required />
       </label>
     </div>
-
-    <label class="field">
-      <span class="label">Subject</span>
-      <input type="text" name="subject" />
-    </label>
 
     <label class="field">
       <span class="label">Message</span>
-      <textarea name="message" rows="3"></textarea>
+      <textarea name="message" rows="3" required maxlength="5000"></textarea>
     </label>
 
-    <div class="foot">
-      <button type="submit" disabled>Send</button>
-      <span class="notice">Not wired up yet — the endpoint lands with email-gateway.</span>
+    <div class="trap" aria-hidden="true">
+      <label>
+        Website
+        <input type="text" name="website" tabindex="-1" autocomplete="off" />
+      </label>
     </div>
+
+    <div class="foot">
+      <button type="submit">Send</button>
+      <p class="status" role="status" aria-live="polite" data-contact-status></p>
+    </div>
+    <p class="fallback" data-contact-fallback hidden>
+      Or write directly: <a class="u" href={mailto}>{identity.email}</a>
+    </p>
   </form>
 </Section>
 
@@ -73,7 +84,7 @@ import { identity } from '@/data/career/facts';
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-block);
   }
 
@@ -148,9 +159,23 @@ import { identity } from '@/data/career/facts';
     cursor: not-allowed;
   }
 
-  .notice {
+  .status,
+  .fallback {
     font-size: var(--text-xs);
     color: var(--faint);
+  }
+
+  .fallback {
+    color: var(--ink-2);
+  }
+
+  /* Off-screen, not display:none — some bots skip fields that aren't rendered. */
+  .trap {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
   }
 
   @media (max-width: 640px) {

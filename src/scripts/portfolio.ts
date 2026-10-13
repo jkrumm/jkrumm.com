@@ -1,9 +1,10 @@
 import { animate, inView } from 'motion';
 
 /**
- * Behavior layer for the site. Two things only:
+ * Behavior layer for the site. Three things only:
  *   - scroll reveals (Motion `inView`, once per element)
  *   - scroll-spy → `aria-current` on the sidebar nav links
+ *   - the Contact form's fetch submit (progressive over its `mailto:` action)
  *
  * The page uses DOCUMENT scroll — there is no inner scroll container, so every
  * observer is rooted at the viewport (`root: null` / no `root` option).
@@ -26,6 +27,8 @@ const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function init(): void {
+  initContactForm();
+
   // ---- Reveals (Motion, viewport-rooted) -----------------------------------
   // Each element reveals once and stays put. Replay-on-re-entry was tried and
   // deliberately removed: re-animating on every boundary crossing read as jank
@@ -128,6 +131,76 @@ function init(): void {
   // Set the initial state synchronously (before the observer's first callback)
   // so there is no flash of "no active section" on load.
   recompute();
+}
+
+// ---- Contact form → email-gateway ------------------------------------------
+// Native validation runs first (submit only fires on a valid form). The gateway
+// answers 200 for a sent, held-as-spam or honeypot message alike, so any 2xx is
+// "sent"; anything else — 422, 403, network, timeout — reveals the mailto
+// fallback. The timeout is a hang guard for a stalled connection, generous
+// because the gateway screens for spam before it answers.
+const CONTACT_TIMEOUT_MS = 30_000;
+const CONTACT_COPY = {
+  sending: 'Sending…',
+  sent: 'Thanks — your message is on its way.',
+  error: "Couldn't send — please use the email link below.",
+} as const;
+
+function initContactForm(): void {
+  const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
+  const endpoint = form?.dataset.endpoint;
+  const status = form?.querySelector<HTMLElement>('[data-contact-status]');
+  const fallback = form?.querySelector<HTMLElement>('[data-contact-fallback]');
+  const button = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+  if (!form || !endpoint || !status || !fallback || !button) return;
+
+  const send = async (): Promise<boolean> => {
+    const data = new FormData(form);
+    const field = (name: string): string => String(data.get(name) ?? '');
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: field('name') || null,
+        email: field('email'),
+        message: field('message'),
+        website: field('website'),
+      }),
+      signal: AbortSignal.timeout(CONTACT_TIMEOUT_MS),
+    });
+    return res.ok;
+  };
+
+  const onSubmit = (event: SubmitEvent): void => {
+    event.preventDefault();
+    // Trim first so whitespace-only input fails `required` here instead of
+    // round-tripping to the gateway's 422.
+    for (const el of form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+      'input, textarea',
+    )) {
+      el.value = el.value.trim();
+    }
+    if (!form.reportValidity()) return;
+
+    button.disabled = true;
+    fallback.hidden = true;
+    status.textContent = CONTACT_COPY.sending;
+
+    void send()
+      .catch((err: unknown) => {
+        console.error('contact submit failed', err);
+        return false;
+      })
+      .then((ok) => {
+        button.disabled = false;
+        status.textContent = ok ? CONTACT_COPY.sent : CONTACT_COPY.error;
+        if (ok) form.reset();
+        else fallback.hidden = false;
+      });
+  };
+
+  form.addEventListener('submit', onSubmit);
+  teardown.push(() => form.removeEventListener('submit', onSubmit));
 }
 
 function cleanup(): void {

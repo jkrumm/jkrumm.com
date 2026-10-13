@@ -8,7 +8,8 @@ live here.
 ## Stack
 
 - **Astro 7**, `output: 'static'` — static markup, zero client JS except two
-  scripts: `src/scripts/portfolio.ts` (behavior — reveals, scroll-spy) and
+  scripts: `src/scripts/portfolio.ts` (behavior — reveals, scroll-spy, the
+  Contact form's fetch submit to email-gateway) and
   `src/scripts/analytics.ts` (measurement — Umami events, see Analytics below).
   **No UI framework** (no React/Vue) — don't introduce one.
 - **Bun** — package manager + runtime.
