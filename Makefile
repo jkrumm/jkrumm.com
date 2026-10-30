@@ -8,7 +8,7 @@
 
 .PHONY: help check deploy verify logs diagrams
 
-DIAGRAMS_SRC ?= $(HOME)/SourceRoot/dotfiles/docs/diagrams
+DIAGRAMS_SRC ?= $(HOME)/SourceRoot/dotfiles/docs/archive/diagrams
 
 help: ## List available targets
 	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | sort | \
