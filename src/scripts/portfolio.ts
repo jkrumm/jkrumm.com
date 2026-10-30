@@ -1,4 +1,4 @@
-import { animate, inView } from 'motion';
+import { animate, inView } from 'motion'
 
 /**
  * Behavior layer for the site. Three things only:
@@ -20,14 +20,13 @@ import { animate, inView } from 'motion';
  * the Sidebar rail. There is no separate per-surface implementation.
  */
 
-type Cleanup = () => void;
-let teardown: Cleanup[] = [];
+type Cleanup = () => void
+let teardown: Cleanup[] = []
 
-const prefersReducedMotion = () =>
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 function init(): void {
-  initContactForm();
+  initContactForm()
 
   // ---- Reveals (Motion, viewport-rooted) -----------------------------------
   // Each element reveals once and stays put. Replay-on-re-entry was tried and
@@ -37,23 +36,23 @@ function init(): void {
   // The 8px travel must stay in sync with `html.js .reveal` in global.css —
   // that rule paints the hidden start state, this animates out of it.
   if (!prefersReducedMotion()) {
-    const MAX_STAGGER = 220; // cap so the last element never lags far behind
+    const MAX_STAGGER = 220 // cap so the last element never lags far behind
     const stopReveals = inView(
       '.reveal',
       (el) => {
-        const target = el as HTMLElement;
-        if (target.dataset.revealed) return; // guard: inView re-fires on re-entry
-        target.dataset.revealed = '1';
-        const delay = Math.min(Number(target.dataset.delay ?? 0), MAX_STAGGER) / 1000;
+        const target = el as HTMLElement
+        if (target.dataset.revealed) return // guard: inView re-fires on re-entry
+        target.dataset.revealed = '1'
+        const delay = Math.min(Number(target.dataset.delay ?? 0), MAX_STAGGER) / 1000
         animate(
           target,
           { opacity: [0, 1], y: [8, 0] },
           { duration: 0.55, delay, ease: [0.2, 0.7, 0.2, 1] },
-        );
+        )
       },
       { amount: 0.2 },
-    );
-    teardown.push(stopReveals);
+    )
+    teardown.push(stopReveals)
   }
 
   // ---- Scroll-spy: active heading → nav link --------------------------------
@@ -68,37 +67,37 @@ function init(): void {
   // gives "the last one wins" once the page is scrolled past every heading,
   // because every target's top has crossed by then and the last in document
   // order is picked.
-  const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('a[data-nav-link]')];
+  const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('a[data-nav-link]')]
   const targets = navLinks
     .map((link) => {
-      const href = link.getAttribute('href') ?? '';
-      const target = href.startsWith('#') ? document.getElementById(href.slice(1)) : null;
-      return target ? { link, target } : null;
+      const href = link.getAttribute('href') ?? ''
+      const target = href.startsWith('#') ? document.getElementById(href.slice(1)) : null
+      return target ? { link, target } : null
     })
-    .filter((entry): entry is { link: HTMLAnchorElement; target: HTMLElement } => entry !== null);
-  if (!targets.length) return;
+    .filter((entry): entry is { link: HTMLAnchorElement; target: HTMLElement } => entry !== null)
+  if (!targets.length) return
 
-  const LINE = 0.2; // 20% down the viewport — "a line near the top"
-  let activeTarget: HTMLElement | null = null;
-  let atBottom = false;
+  const LINE = 0.2 // 20% down the viewport — "a line near the top"
+  let activeTarget: HTMLElement | null = null
+  let atBottom = false
 
   const recompute = (): void => {
-    const lineY = window.innerHeight * LINE;
-    let next: HTMLElement | null = null;
+    const lineY = window.innerHeight * LINE
+    let next: HTMLElement | null = null
     for (const { target } of targets) {
-      if (target.getBoundingClientRect().top <= lineY) next = target;
+      if (target.getBoundingClientRect().top <= lineY) next = target
     }
     // Before the first heading has crossed the line, keep the first one
     // active rather than showing no active state at all.
-    next ??= targets[0]?.target ?? null;
-    if (atBottom) next = targets.at(-1)?.target ?? next;
-    if (next === activeTarget) return;
-    activeTarget = next;
+    next ??= targets[0]?.target ?? null
+    if (atBottom) next = targets.at(-1)?.target ?? next
+    if (next === activeTarget) return
+    activeTarget = next
     for (const { link, target } of targets) {
-      if (target === activeTarget) link.setAttribute('aria-current', 'true');
-      else link.removeAttribute('aria-current');
+      if (target === activeTarget) link.setAttribute('aria-current', 'true')
+      else link.removeAttribute('aria-current')
     }
-  };
+  }
 
   // Fire exactly when a target's top crosses the line: the root is shrunk to
   // the band above it, so entering/leaving that band IS the crossing. Ratio
@@ -108,29 +107,29 @@ function init(): void {
     root: null,
     rootMargin: `0px 0px -${(1 - LINE) * 100}% 0px`,
     threshold: 0,
-  });
-  targets.forEach(({ target }) => spyObserver.observe(target));
-  teardown.push(() => spyObserver.disconnect());
+  })
+  targets.forEach(({ target }) => spyObserver.observe(target))
+  teardown.push(() => spyObserver.disconnect())
 
   // A last target too close to the page end never reaches the line — once the
   // document bottom is in view, it wins.
-  const sentinel = document.createElement('div');
-  sentinel.setAttribute('aria-hidden', 'true');
-  sentinel.style.height = '1px';
-  document.body.append(sentinel);
+  const sentinel = document.createElement('div')
+  sentinel.setAttribute('aria-hidden', 'true')
+  sentinel.style.height = '1px'
+  document.body.append(sentinel)
   const bottomObserver = new IntersectionObserver(([entry]) => {
-    atBottom = entry?.isIntersecting ?? false;
-    recompute();
-  });
-  bottomObserver.observe(sentinel);
+    atBottom = entry?.isIntersecting ?? false
+    recompute()
+  })
+  bottomObserver.observe(sentinel)
   teardown.push(() => {
-    bottomObserver.disconnect();
-    sentinel.remove();
-  });
+    bottomObserver.disconnect()
+    sentinel.remove()
+  })
 
   // Set the initial state synchronously (before the observer's first callback)
   // so there is no flash of "no active section" on load.
-  recompute();
+  recompute()
 }
 
 // ---- Contact form → email-gateway ------------------------------------------
@@ -139,27 +138,27 @@ function init(): void {
 // "sent"; anything else — 422, 403, network, timeout — reveals the mailto
 // fallback. The timeout is a hang guard for a stalled connection, generous
 // because the gateway screens for spam before it answers.
-const CONTACT_TIMEOUT_MS = 30_000;
+const CONTACT_TIMEOUT_MS = 30_000
 const CONTACT_COPY = {
   sending: 'Sending…',
   sent: 'Thanks — your message is on its way.',
   error: "Couldn't send — please use the email link below.",
-} as const;
+} as const
 
 function initContactForm(): void {
-  const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
-  const endpoint = form?.dataset.endpoint;
-  const status = form?.querySelector<HTMLElement>('[data-contact-status]');
-  const fallback = form?.querySelector<HTMLElement>('[data-contact-fallback]');
-  const button = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
-  if (!form || !endpoint || !status || !fallback || !button) return;
+  const form = document.querySelector<HTMLFormElement>('[data-contact-form]')
+  const endpoint = form?.dataset.endpoint
+  const status = form?.querySelector<HTMLElement>('[data-contact-status]')
+  const fallback = form?.querySelector<HTMLElement>('[data-contact-fallback]')
+  const button = form?.querySelector<HTMLButtonElement>('button[type="submit"]')
+  if (!form || !endpoint || !status || !fallback || !button) return
 
   const send = async (): Promise<boolean> => {
-    const data = new FormData(form);
+    const data = new FormData(form)
     const field = (name: string): string => {
-      const value = data.get(name);
-      return typeof value === 'string' ? value : '';
-    };
+      const value = data.get(name)
+      return typeof value === 'string' ? value : ''
+    }
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -170,53 +169,53 @@ function initContactForm(): void {
         website: field('website'),
       }),
       signal: AbortSignal.timeout(CONTACT_TIMEOUT_MS),
-    });
-    return res.ok;
-  };
+    })
+    return res.ok
+  }
 
   const onSubmit = (event: SubmitEvent): void => {
-    event.preventDefault();
+    event.preventDefault()
     // Trim first so whitespace-only input fails `required` here instead of
     // round-tripping to the gateway's 422.
     for (const el of form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
       'input, textarea',
     )) {
-      el.value = el.value.trim();
+      el.value = el.value.trim()
     }
-    if (!form.reportValidity()) return;
+    if (!form.reportValidity()) return
 
-    button.disabled = true;
-    fallback.hidden = true;
-    status.textContent = CONTACT_COPY.sending;
+    button.disabled = true
+    fallback.hidden = true
+    status.textContent = CONTACT_COPY.sending
 
     void send()
       .catch((err: unknown) => {
-        console.error('contact submit failed', err);
-        return false;
+        console.error('contact submit failed', err)
+        return false
       })
       .then((ok) => {
-        button.disabled = false;
-        status.textContent = ok ? CONTACT_COPY.sent : CONTACT_COPY.error;
-        if (ok) form.reset();
-        else fallback.hidden = false;
-      });
-  };
+        button.disabled = false
+        status.textContent = ok ? CONTACT_COPY.sent : CONTACT_COPY.error
+        if (ok) form.reset()
+        else fallback.hidden = false
+      })
+  }
 
-  form.addEventListener('submit', onSubmit);
-  teardown.push(() => form.removeEventListener('submit', onSubmit));
+  form.addEventListener('submit', onSubmit)
+  teardown.push(() => form.removeEventListener('submit', onSubmit))
 }
 
 function cleanup(): void {
   for (const fn of teardown) {
     try {
-      fn();
+      fn()
     } catch {
       /* best-effort teardown */
     }
   }
-  teardown = [];
+  teardown = []
 }
 
-document.documentElement.classList.add('js');
-document.addEventListener('astro:page-load', init);
-document.addEventListener('astro:before-swap', cleanup);
+document.documentElement.classList.add('js')
+document.addEventListener('astro:page-load', init)
+document.addEventListener('astro:before-swap', cleanup)

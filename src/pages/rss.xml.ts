@@ -1,17 +1,17 @@
-import rss from '@astrojs/rss';
-import type { APIContext } from 'astro';
-import { getCollection } from 'astro:content';
-import { SITE } from '@/consts';
+import rss from '@astrojs/rss'
+import type { APIContext } from 'astro'
+import { getCollection } from 'astro:content'
+import { SITE } from '@/consts'
 
 export async function GET(context: APIContext) {
-  const [blog, guide] = await Promise.all([getCollection('blog'), getCollection('guide')]);
+  const [blog, guide] = await Promise.all([getCollection('blog'), getCollection('guide')])
 
   const entries = [
     ...blog.map((entry) => ({ entry, href: `/blog/${entry.id}` })),
     ...guide.map((entry) => ({ entry, href: `/guide/${entry.id}` })),
   ]
     .filter(({ entry }) => entry.data.status === 'published')
-    .sort((a, b) => b.entry.data.publishedDate.valueOf() - a.entry.data.publishedDate.valueOf());
+    .sort((a, b) => b.entry.data.publishedDate.valueOf() - a.entry.data.publishedDate.valueOf())
 
   return rss({
     title: SITE.title,
@@ -27,5 +27,5 @@ export async function GET(context: APIContext) {
       link: href,
       categories: entry.data.tags,
     })),
-  });
+  })
 }

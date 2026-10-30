@@ -17,13 +17,12 @@
  * never fires, with no error.
  */
 
-import { animate, inView, scroll } from 'motion';
+import { animate, inView, scroll } from 'motion'
 
-type Cleanup = () => void;
-let teardown: Cleanup[] = [];
+type Cleanup = () => void
+let teardown: Cleanup[] = []
 
-const prefersReducedMotion = () =>
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 function init(): void {
   // ---- Reveals: ONCE-ONLY, not replay ---------------------------------------
@@ -36,26 +35,25 @@ function init(): void {
   // opacity/transform, which wins over the CSS hidden state. The 8px travel must
   // match `translateY(8px)` in global.css.
   if (!prefersReducedMotion()) {
-    const MAX_STAGGER = 220; // ms cap so the last element never lags far behind
+    const MAX_STAGGER = 220 // ms cap so the last element never lags far behind
     const stopReveals = inView(
       '.reveal',
       (el) => {
-        const target = el as HTMLElement;
-        if (target.dataset.revealed) return; // guard: inView re-fires on re-entry
-        target.dataset.revealed = '1';
-        const delay =
-          Math.min(Number(target.dataset.delay ?? 0), MAX_STAGGER) / 1000;
+        const target = el as HTMLElement
+        if (target.dataset.revealed) return // guard: inView re-fires on re-entry
+        target.dataset.revealed = '1'
+        const delay = Math.min(Number(target.dataset.delay ?? 0), MAX_STAGGER) / 1000
         animate(
           target,
           { opacity: [0, 1], y: [8, 0] },
           { duration: 0.55, delay, ease: [0.2, 0.7, 0.2, 1] },
-        );
+        )
       },
       // No `root` — document scroll. (`root: null` is equivalent and explicit.)
       { amount: 0.2 },
-    );
+    )
     // inView returns a stop() function — register it for teardown.
-    teardown.push(stopReveals);
+    teardown.push(stopReveals)
   }
 
   // ---- Scroll-linked value via Motion `scroll()` ----------------------------
@@ -64,13 +62,13 @@ function init(): void {
   // scroll(root block)`). Prefer CSS-only; reach for `scroll()` only for a
   // pinned/scrubbed section (SKILL.md §6). No `container` option: document
   // scroll is the default.
-  const progress = document.querySelector<HTMLElement>('[data-progress]');
+  const progress = document.querySelector<HTMLElement>('[data-progress]')
   if (progress) {
     const stopScroll = scroll((value: number) => {
       // Animate transform only. scaleX(0..1) is compositor-friendly.
-      progress.style.transform = `scaleX(${value})`;
-    });
-    teardown.push(stopScroll);
+      progress.style.transform = `scaleX(${value})`
+    })
+    teardown.push(stopScroll)
   }
 
   // ---- Plain IntersectionObserver (when you need raw threshold control) ------
@@ -79,16 +77,16 @@ function init(): void {
   // because "active" is the section with the highest intersectionRatio and that
   // comparison needs several crossings per section. Same rule: `root: null`, and
   // register disconnect() for teardown.
-  const sections = [...document.querySelectorAll<HTMLElement>('[data-section]')];
+  const sections = [...document.querySelectorAll<HTMLElement>('[data-section]')]
   if (sections.length) {
     const io = new IntersectionObserver(
       (entries) => {
         // ... update active-section UI from entries ...
       },
       { root: null, threshold: [0.12, 0.3, 0.5, 0.75] },
-    );
-    sections.forEach((s) => io.observe(s));
-    teardown.push(() => io.disconnect());
+    )
+    sections.forEach((s) => io.observe(s))
+    teardown.push(() => io.disconnect())
   }
 
   // ---- Timers, listeners, etc. all follow the same register-for-teardown rule.
@@ -97,18 +95,18 @@ function init(): void {
 function cleanup(): void {
   for (const fn of teardown) {
     try {
-      fn();
+      fn()
     } catch {
       /* best-effort teardown */
     }
   }
-  teardown = [];
+  teardown = []
 }
 
 // `.js` is added in the <head> inline script (BaseLayout.astro) BEFORE first
 // paint so the CSS hidden state applies without FOUC. Adding it here too is a
 // harmless belt-and-braces for non-swap loads.
-document.documentElement.classList.add('js');
-document.addEventListener('astro:page-load', init); // (re)init every navigation
-document.addEventListener('astro:before-swap', cleanup); // tear down before swap
+document.documentElement.classList.add('js')
+document.addEventListener('astro:page-load', init) // (re)init every navigation
+document.addEventListener('astro:before-swap', cleanup) // tear down before swap
 // Need to fix scroll position after a swap? Use `astro:after-swap`.

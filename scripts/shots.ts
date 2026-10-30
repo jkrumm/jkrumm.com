@@ -27,22 +27,21 @@
  * after a large multi-file edit (see AGENTS.md § Validation). The production
  * build is what actually ships, so it is what gets reviewed.
  */
-const BASE = process.env.BASE ?? 'http://localhost:4321';
-const OUT = process.env.OUT ?? '/tmp/jk-shots';
-const THEMES = (process.env.THEMES ?? 'light dark').split(/\s+/).filter(Boolean);
-const ROUTES = process.argv.slice(2).length ? process.argv.slice(2) : ['/'];
+const BASE = process.env.BASE ?? 'http://localhost:4321'
+const OUT = process.env.OUT ?? '/tmp/jk-shots'
+const THEMES = (process.env.THEMES ?? 'light dark').split(/\s+/).filter(Boolean)
+const ROUTES = process.argv.slice(2).length ? process.argv.slice(2) : ['/']
 
-const CHROME =
-  process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const CHROME = process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 
 const DEVICES = [
   { label: 'desktop', width: 1440, height: 1200, scale: 1, mobile: false },
   { label: 'mobile', width: 390, height: 900, scale: 2, mobile: true },
-] as const;
+] as const
 
-const PORT = 9222 + (process.pid % 500);
+const PORT = 9222 + (process.pid % 500)
 // Per-run profile so parallel runs never share a SingletonLock; removed on exit.
-const PROFILE = `/tmp/jk-shots-profile-${process.pid}`;
+const PROFILE = `/tmp/jk-shots-profile-${process.pid}`
 
 const chrome = Bun.spawn(
   [
@@ -57,70 +56,70 @@ const chrome = Bun.spawn(
     'about:blank',
   ],
   { stdout: 'ignore', stderr: 'ignore' },
-);
+)
 
 /** Poll the CDP endpoint until Chrome is listening. */
 async function endpoint(): Promise<string> {
   for (let i = 0; i < 60; i++) {
     try {
-      const res = await fetch(`http://127.0.0.1:${PORT}/json/version`);
-      const json = (await res.json()) as { webSocketDebuggerUrl: string };
-      if (json.webSocketDebuggerUrl) return json.webSocketDebuggerUrl;
+      const res = await fetch(`http://127.0.0.1:${PORT}/json/version`)
+      const json = (await res.json()) as { webSocketDebuggerUrl: string }
+      if (json.webSocketDebuggerUrl) return json.webSocketDebuggerUrl
     } catch {
       /* not up yet */
     }
-    await Bun.sleep(150);
+    await Bun.sleep(150)
   }
-  throw new Error(`Chrome did not expose a CDP endpoint on ${PORT}`);
+  throw new Error(`Chrome did not expose a CDP endpoint on ${PORT}`)
 }
 
-const ws = new WebSocket(await endpoint());
+const ws = new WebSocket(await endpoint())
 await new Promise<void>((resolve, reject) => {
-  ws.addEventListener('open', () => resolve(), { once: true });
-  ws.addEventListener('error', () => reject(new Error('CDP socket failed')), { once: true });
-});
+  ws.addEventListener('open', () => resolve(), { once: true })
+  ws.addEventListener('error', () => reject(new Error('CDP socket failed')), { once: true })
+})
 
-let nextId = 1;
-const pending = new Map<number, (value: any) => void>();
+let nextId = 1
+const pending = new Map<number, (value: any) => void>()
 
 ws.addEventListener('message', (event) => {
-  const msg = JSON.parse(String(event.data));
-  const resolve = pending.get(msg.id);
+  const msg = JSON.parse(String(event.data))
+  const resolve = pending.get(msg.id)
   if (resolve) {
-    pending.delete(msg.id);
-    resolve(msg.result ?? {});
+    pending.delete(msg.id)
+    resolve(msg.result ?? {})
   }
-});
+})
 
 /** One CDP call. `sessionId` targets a page rather than the browser. */
 function send(method: string, params: object = {}, sessionId?: string): Promise<any> {
-  const id = nextId++;
+  const id = nextId++
   return new Promise((resolve) => {
-    pending.set(id, resolve);
-    ws.send(JSON.stringify({ id, method, params, sessionId }));
-  });
+    pending.set(id, resolve)
+    ws.send(JSON.stringify({ id, method, params, sessionId }))
+  })
 }
 
-const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
-const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
+const { targetId } = await send('Target.createTarget', { url: 'about:blank' })
+const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true })
 
-await send('Page.enable', {}, sessionId);
-await send('Runtime.enable', {}, sessionId);
+await send('Page.enable', {}, sessionId)
+await send('Runtime.enable', {}, sessionId)
 
 async function evaluate(expression: string) {
   const res = await send(
     'Runtime.evaluate',
     { expression, awaitPromise: true, returnByValue: true },
     sessionId,
-  );
-  return res?.result?.value;
+  )
+  return res?.result?.value
 }
 
-await Bun.$`mkdir -p ${OUT}`.quiet();
+await Bun.$`mkdir -p ${OUT}`.quiet()
 
-let failures = 0;
+let failures = 0
 
-console.log(`Shooting ${BASE} → ${OUT}`);
+console.log(`Shooting ${BASE} → ${OUT}`)
 
 for (const route of ROUTES) {
   for (const device of DEVICES) {
@@ -134,24 +133,24 @@ for (const route of ROUTES) {
           mobile: device.mobile,
         },
         sessionId,
-      );
+      )
 
-      const sep = route.includes('?') ? '&' : '?';
-      const url = `${BASE}${route}${sep}__theme=${theme}&preview`;
+      const sep = route.includes('?') ? '&' : '?'
+      const url = `${BASE}${route}${sep}__theme=${theme}&preview`
 
       const loaded = new Promise<void>((resolve) => {
         const onMessage = (event: MessageEvent) => {
-          const msg = JSON.parse(String(event.data));
+          const msg = JSON.parse(String(event.data))
           if (msg.method === 'Page.loadEventFired') {
-            ws.removeEventListener('message', onMessage);
-            resolve();
+            ws.removeEventListener('message', onMessage)
+            resolve()
           }
-        };
-        ws.addEventListener('message', onMessage);
-      });
+        }
+        ws.addEventListener('message', onMessage)
+      })
 
-      await send('Page.navigate', { url }, sessionId);
-      await Promise.race([loaded, Bun.sleep(10_000)]);
+      await send('Page.navigate', { url }, sessionId)
+      await Promise.race([loaded, Bun.sleep(10_000)])
 
       // Trip every scroll-reveal observer, then return to the top.
       // IntersectionObserver reports on a later frame and the reveal tween runs
@@ -165,10 +164,10 @@ for (const route of ROUTES) {
         }
         scrollTo(0, 0);
         await new Promise(r => setTimeout(r, 1200));
-      })()`);
+      })()`)
 
-      const slug = route.replace(/^\//, '').replace(/\//g, '-') || 'home';
-      const file = `${OUT}/${slug}-${device.label}-${theme}.png`;
+      const slug = route.replace(/^\//, '').replace(/\//g, '-') || 'home'
+      const file = `${OUT}/${slug}-${device.label}-${theme}.png`
 
       // `captureBeyondViewport` re-lays-out sticky/fixed elements against the
       // expanded viewport, so the progress line and the sticky rail can appear
@@ -178,9 +177,9 @@ for (const route of ROUTES) {
         'Page.captureScreenshot',
         { format: 'png', captureBeyondViewport: true },
         sessionId,
-      );
-      await Bun.write(file, Buffer.from(data, 'base64'));
-      console.log(`  ${file}`);
+      )
+      await Bun.write(file, Buffer.from(data, 'base64'))
+      console.log(`  ${file}`)
 
       // Horizontal overflow is the failure mode a screenshot hides — a clipped
       // page and a correct one look identical once the image is cropped. Assert
@@ -199,7 +198,7 @@ for (const route of ROUTES) {
             mobile: device.mobile,
           },
           sessionId,
-        );
+        )
         const report = JSON.parse(
           await evaluate(`(() => {
             // An element may legitimately exceed the viewport if an ancestor
@@ -222,29 +221,28 @@ for (const route of ROUTES) {
             });
             return JSON.stringify({ w: document.documentElement.scrollWidth, vw: innerWidth, bad: bad.slice(0, 8) });
           })()`),
-        );
+        )
         // `vw !== device.width` is the important assertion. Under mobile
         // emulation Chrome grows the layout viewport to fit overflowing
         // content, so `scrollWidth <= innerWidth` stays true while the page is
         // genuinely too wide — the check has to catch the grown viewport too.
-        const ok =
-          report.vw === device.width && report.w <= report.vw && report.bad.length === 0;
+        const ok = report.vw === device.width && report.w <= report.vw && report.bad.length === 0
         console.log(
           `    overflow @${report.vw}: ${
             ok
               ? 'clean'
               : `FAIL expected ${device.width}px viewport, scrollWidth=${report.w} ${report.bad.join(', ')}`
           }`,
-        );
-        if (!ok) failures++;
+        )
+        if (!ok) failures++
       }
     }
   }
 }
 
-ws.close();
-chrome.kill();
-await chrome.exited;
-await Bun.$`rm -rf ${PROFILE}`.quiet().nothrow();
-console.log(failures ? `done — ${failures} overflow failure(s)` : 'done');
-process.exit(failures ? 1 : 0);
+ws.close()
+chrome.kill()
+await chrome.exited
+await Bun.$`rm -rf ${PROFILE}`.quiet().nothrow()
+console.log(failures ? `done — ${failures} overflow failure(s)` : 'done')
+process.exit(failures ? 1 : 0)

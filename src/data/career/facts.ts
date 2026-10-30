@@ -13,7 +13,7 @@
  * Order is narrative order: the resolver cuts by score but prints in the
  * order written here.
  */
-import type { Copy, Education, Pillar, Principle, Project, Role, SkillGroup } from './types';
+import type { Copy, Education, Pillar, Principle, Project, Role, SkillGroup } from './types'
 
 export const identity = {
   name: 'Johannes Krumm',
@@ -30,7 +30,7 @@ export const identity = {
     { name: 'German', level: 'native' },
     { name: 'English', level: 'fluent' },
   ],
-} as const;
+} as const
 
 export const pillars: Pillar[] = [
   {
@@ -57,7 +57,7 @@ export const pillars: Pillar[] = [
     },
     tags: ['agentic'],
   },
-];
+]
 
 /** How he works — the leadership line the pillars only name. */
 export const principles: Principle[] = [
@@ -93,19 +93,19 @@ export const principles: Principle[] = [
       web: 'At home, agents triage an issue, fix it, review it, deploy it and verify it. At work, they triage and classify bugs, then wait for a human before the fix. The gate sits where the risk is.',
     },
   },
-];
+]
 
 /** Personality, one line. */
 export const outside: Copy = {
   cv: 'Powerlifting, hiking, skiing and surfing — and long walks with the dog.',
   web: 'Powerlifting, hiking, skiing, surfing — and long walks with my dog.',
-};
+}
 
 /** One line under the "Building in public" label. */
 export const buildingInPublic: Copy = {
   cv: '5,200+ commits across 30+ repositories in the last twelve months — products, infrastructure and agent tooling.',
   web: 'Over 5,200 commits across 30+ repositories in the last twelve months — products, infrastructure and the agent tooling I work with every day.',
-};
+}
 
 export const roles: Role[] = [
   {
@@ -243,21 +243,27 @@ export const roles: Role[] = [
       {
         id: 'st-merchants',
         lead: 'Merchant onboarding',
-        text: { cv: 'Integrated new retail partners into the ingestion pipeline for protection plans.' },
+        text: {
+          cv: 'Integrated new retail partners into the ingestion pipeline for protection plans.',
+        },
         tags: ['backend', 'platform'],
         rank: 2,
       },
       {
         id: 'st-iam',
         lead: 'Merchant access',
-        text: { cv: "Contributed to the IAM service that let merchants manage their own users' access." },
+        text: {
+          cv: "Contributed to the IAM service that let merchants manage their own users' access.",
+        },
         tags: ['backend', 'architecture'],
         rank: 2,
       },
       {
         id: 'st-analytics',
         lead: 'Device analytics',
-        text: { cv: 'Captured anonymous device telemetry that fed customer profiling and dynamic pricing.' },
+        text: {
+          cv: 'Captured anonymous device telemetry that fed customer profiling and dynamic pricing.',
+        },
         tags: ['backend'],
         rank: 3,
       },
@@ -275,7 +281,7 @@ export const roles: Role[] = [
     },
     highlights: [],
   },
-];
+]
 
 export const education: Education[] = [
   {
@@ -287,7 +293,7 @@ export const education: Education[] = [
     end: '2020',
     note: 'Thesis project: a Bitcoin payment service validating transactions before block confirmation.',
   },
-];
+]
 
 export const projects: Project[] = [
   {
@@ -364,19 +370,35 @@ export const projects: Project[] = [
     tags: ['backend', 'frontend'],
     rank: 3,
   },
-];
+]
 
 export const skills: SkillGroup[] = [
   {
     id: 'architecture',
     label: 'Architecture',
-    items: ['Domain-driven design', 'Event-driven systems', 'Transactional outbox', 'Hexagonal', 'CQRS'],
+    items: [
+      'Domain-driven design',
+      'Event-driven systems',
+      'Transactional outbox',
+      'Hexagonal',
+      'CQRS',
+    ],
     tags: ['architecture'],
   },
   {
     id: 'backend',
     label: 'Backend',
-    items: ['TypeScript', 'Python', 'Bun', 'Node.js', 'NestJS', 'Kafka', 'PostgreSQL', 'MySQL', 'Redis'],
+    items: [
+      'TypeScript',
+      'Python',
+      'Bun',
+      'Node.js',
+      'NestJS',
+      'Kafka',
+      'PostgreSQL',
+      'MySQL',
+      'Redis',
+    ],
     tags: ['backend'],
   },
   {
@@ -398,7 +420,16 @@ export const skills: SkillGroup[] = [
   {
     id: 'platform',
     label: 'Platform',
-    items: ['AWS', 'Docker', 'Terraform', 'Cloudflare', 'GitLab CI', 'GitHub Actions', 'Datadog', 'OpenTelemetry'],
+    items: [
+      'AWS',
+      'Docker',
+      'Terraform',
+      'Cloudflare',
+      'GitLab CI',
+      'GitHub Actions',
+      'Datadog',
+      'OpenTelemetry',
+    ],
     tags: ['platform'],
   },
   {
@@ -407,7 +438,7 @@ export const skills: SkillGroup[] = [
     items: ['React', 'Astro', 'Vue', 'TanStack', 'Mantine', 'D3 / visx', 'Micro-frontends'],
     tags: ['frontend'],
   },
-];
+]
 
 /** Profile fields that only exist on LinkedIn. */
 export const linkedin = {
@@ -429,7 +460,7 @@ export const linkedin = {
     'iu:Full-Stack Developer':
       'Joined as a full-stack developer: NestJS services on Kafka and MySQL, Vue micro-frontends, AWS. Built the SharePoint provisioning pipeline (DAM service) and the academic-profile statistics view, and grew into the technical owner of the domain.',
   } as Record<string, string>,
-};
+}
 
 /** The committed default render (`bun run resume default`), served from public/. */
-export const resumePdf = '/johannes-krumm-resume.pdf';
+export const resumePdf = '/johannes-krumm-resume.pdf'

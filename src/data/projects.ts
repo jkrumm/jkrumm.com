@@ -9,30 +9,30 @@
  * (src/data/career/facts.ts, `web` channel) so the homepage, /resume and the
  * PDF never disagree. Edit them there. The minor tools are site-only.
  */
-import { SITE } from '@/consts';
-import { projects } from './career/facts';
-import { pick } from './career/resolve';
+import { SITE } from '@/consts'
+import { projects } from './career/facts'
+import { pick } from './career/resolve'
 
 export interface Project {
-  id: string;
-  name: string;
+  id: string
+  name: string
   /** One sentence. Says what it does and, where there is one, the number that matters. */
-  description: string;
+  description: string
   /** Longer paragraph shown in the hover preview panel. */
-  details?: string;
+  details?: string
   /** Preview screenshot (CDN URL), 16:10. Absent = text-only preview. */
-  image?: string;
+  image?: string
   /** `·`-joined at render time. Mono, faint — this is data, not decoration. */
-  stack: string[];
-  href: string;
+  stack: string[]
+  href: string
   /** Rendered right-aligned, mono, tabular. Omit for undated work. */
-  year?: string;
+  year?: string
   /** Off-site link — adds the ↗ affordance and rel/target. */
-  external?: boolean;
+  external?: boolean
 }
 
 export const featured: Project[] = projects.map((project) => {
-  const internal = project.href.startsWith(SITE.url);
+  const internal = project.href.startsWith(SITE.url)
   return {
     id: project.id,
     name: project.name,
@@ -43,14 +43,14 @@ export const featured: Project[] = projects.map((project) => {
     href: internal ? project.href.slice(SITE.url.length) : project.href,
     year: project.year,
     external: !internal,
-  };
-});
+  }
+})
 
 /** One line each — name, then what it does. No stack line, no year. */
 export interface MinorProject {
-  name: string;
-  description: string;
-  href: string;
+  name: string
+  description: string
+  href: string
 }
 
 export const minor: MinorProject[] = [
@@ -64,4 +64,4 @@ export const minor: MinorProject[] = [
     description: 'Forwards ntfy notifications to macOS',
     href: 'https://github.com/jkrumm/ntfy-mac',
   },
-];
+]

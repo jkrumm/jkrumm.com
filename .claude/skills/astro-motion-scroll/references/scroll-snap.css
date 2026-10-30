@@ -21,18 +21,18 @@
    observer/scroll() in the behavior layer must therefore be rooted here
    (`root: scroller` / `container: scroller`), not on the document. */
 #jk-scroll {
-  height: 100svh;              /* svh, NOT vh: mobile URL-bar show/hide would make
+  height: 100svh; /* svh, NOT vh: mobile URL-bar show/hide would make
                                   100vh jump and mis-size the stage. */
   overflow-y: auto;
   overscroll-behavior: contain; /* trap the scroll chain: no rubber-band bleed to
                                   the document / browser chrome; snap stays inside. */
   scroll-behavior: smooth;
-  scroll-snap-type: y proximity;/* CURRENT state. `proximity` tolerates sections
+  scroll-snap-type: y proximity; /* CURRENT state. `proximity` tolerates sections
                                   that don't exactly fit the viewport. Phase 2
                                   moves to `mandatory` once every non-narrative
                                   section is an exact 100svh fit — see
                                   references/scroll-narrative.md and LEARNINGS. */
-  scroll-padding-top: var(--bar-top);     /* snap point sits below the top bar   */
+  scroll-padding-top: var(--bar-top); /* snap point sits below the top bar   */
   scroll-padding-bottom: var(--bar-bottom); /* ...and above the bottom bar        */
 }
 
@@ -82,8 +82,16 @@
   pointer-events: none;
   user-select: none;
 }
-.plus--tl { top: 0;    left: 0;    transform: translate(-50%, -50%); }
-.plus--br { top: 100%; left: 100%; transform: translate(-50%, -50%); }
+.plus--tl {
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+}
+.plus--br {
+  top: 100%;
+  left: 100%;
+  transform: translate(-50%, -50%);
+}
 
 /* ---- Reveal system (progressive enhancement, no FOUC) -----------------------
    Content is VISIBLE by default. The <head> inline script adds `.js` to <html>

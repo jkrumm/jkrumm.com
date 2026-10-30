@@ -1,6 +1,6 @@
-import { defineCollection } from 'astro:content';
-import { glob } from 'astro/loaders';
-import { z } from 'astro/zod';
+import { defineCollection } from 'astro:content'
+import { glob } from 'astro/loaders'
+import { z } from 'astro/zod'
 
 const guide = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/guide' }),
@@ -14,7 +14,7 @@ const guide = defineCollection({
     tags: z.array(z.string()).optional(),
     pinned: z.boolean().optional(),
   }),
-});
+})
 
 const blog = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
@@ -27,6 +27,6 @@ const blog = defineCollection({
     tags: z.array(z.string()).optional(),
     pinned: z.boolean().optional(),
   }),
-});
+})
 
-export const collections = { guide, blog };
+export const collections = { guide, blog }

@@ -108,7 +108,7 @@ export const TAILWIND_PALETTES: Record<string, Record<string, string>> = {
     '900': '#104e64',
     '950': '#053345',
   },
-};
+}
 
 export const MANTINE_PALETTES: Record<string, Record<string, string>> = {
   dark: {
@@ -147,7 +147,7 @@ export const MANTINE_PALETTES: Record<string, Record<string, string>> = {
     '8': '#1971c2',
     '9': '#1864ab',
   },
-};
+}
 
 // Sourced from @blueprintjs/colors' canonical colors.ts (palantir/blueprint).
 // Gray runs lightest-to-darkest as white -> light-gray-1..5 -> gray-1..5 ->
@@ -187,4 +187,4 @@ export const BLUEPRINT_PALETTES: Record<string, Record<string, string>> = {
   turquoise: { '1': '#004d46', '2': '#007067', '3': '#00a396', '4': '#13c9ba', '5': '#7ae1d8' },
   vermilion: { '1': '#96290d', '2': '#b83211', '3': '#d33d17', '4': '#eb6847', '5': '#ff9980' },
   violet: { '1': '#5c255c', '2': '#7c327c', '3': '#9d3f9d', '4': '#bd6bbd', '5': '#d69fd6' },
-};
+}

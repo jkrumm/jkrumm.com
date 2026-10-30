@@ -8,12 +8,12 @@
  * `web` is first person and a little warmer; `linkedin` is first person,
  * may run longer and carries plain-text only (LinkedIn renders no markup).
  */
-export type Channel = 'cv' | 'web' | 'linkedin';
+export type Channel = 'cv' | 'web' | 'linkedin'
 
 export interface Copy {
-  cv: string;
-  web?: string;
-  linkedin?: string;
+  cv: string
+  web?: string
+  linkedin?: string
 }
 
 /**
@@ -28,85 +28,85 @@ export type Tag =
   | 'frontend'
   | 'platform'
   | 'quality'
-  | 'agentic';
+  | 'agentic'
 
 export interface Highlight {
-  id: string;
+  id: string
   /** Bold lead-in, 1–4 words. The eye scans these first. */
-  lead: string;
-  text: Copy;
-  tags: Tag[];
+  lead: string
+  text: Copy
+  tags: Tag[]
   /** 1 = core (every target shows it), 2 = strong, 3 = filler cut first. */
-  rank: 1 | 2 | 3;
+  rank: 1 | 2 | 3
 }
 
 export interface Position {
-  title: string;
+  title: string
   /** `YYYY-MM` — the row above implies the end. */
-  since: string;
+  since: string
 }
 
 export interface Role {
-  id: string;
-  company: string;
-  href?: string;
-  location: string;
+  id: string
+  company: string
+  href?: string
+  location: string
   /** `YYYY-MM`. */
-  start: string;
+  start: string
   /** `YYYY-MM`; absent = current. */
-  end?: string;
+  end?: string
   /** Newest first. */
-  positions: Position[];
+  positions: Position[]
   /** One line of context: what the company/team is, the scale. */
-  context?: Copy;
-  highlights: Highlight[];
+  context?: Copy
+  highlights: Highlight[]
 }
 
 export interface Education {
-  id: string;
-  degree: string;
-  institution: string;
-  location: string;
-  start: string;
-  end: string;
-  note?: string;
+  id: string
+  degree: string
+  institution: string
+  location: string
+  start: string
+  end: string
+  note?: string
 }
 
 export interface Project {
-  id: string;
-  name: string;
-  href: string;
-  year: string;
-  stack: string[];
+  id: string
+  name: string
+  href: string
+  year: string
+  stack: string[]
   /** The one-liner every channel shows. */
-  text: Copy;
+  text: Copy
   /** Web only: the longer paragraph in the homepage hover preview. */
-  details?: string;
+  details?: string
   /** Web only: preview screenshot (CDN URL). Absent = text-only preview. */
-  image?: string;
-  tags: Tag[];
-  rank: 1 | 2 | 3;
+  image?: string
+  tags: Tag[]
+  rank: 1 | 2 | 3
 }
 
 /** One line of "how I work" — bold lead, then the claim. */
 export interface Principle {
-  id: string;
-  lead: string;
-  text: Copy;
+  id: string
+  lead: string
+  text: Copy
 }
 
 export interface SkillGroup {
-  id: string;
-  label: string;
-  items: string[];
-  tags: Tag[];
+  id: string
+  label: string
+  items: string[]
+  tags: Tag[]
 }
 
 export interface Pillar {
-  id: string;
-  label: string;
-  text: Copy;
-  tags: Tag[];
+  id: string
+  label: string
+  text: Copy
+  tags: Tag[]
 }
 
 /**
@@ -115,21 +115,21 @@ export interface Pillar {
  * skill for where those go.
  */
 export interface Target {
-  id: string;
+  id: string
   /** Human label, shown only in tooling output. */
-  label: string;
+  label: string
   /** The line under the name. */
-  headline: string;
-  summary: Copy;
+  headline: string
+  summary: Copy
   /** Tags in priority order; a highlight's score is the best index it hits. */
-  focus: Tag[];
+  focus: Tag[]
   /** Bullets per role id; roles not listed render header-only. */
-  bullets: Record<string, number>;
-  projects: number;
+  bullets: Record<string, number>
+  projects: number
   /** Skill group ids in print order; unlisted groups are dropped. */
-  skills: string[];
+  skills: string[]
   /** Text replacements by highlight/project id — tailoring without forking facts. */
-  overrides?: Record<string, Partial<Copy>>;
+  overrides?: Record<string, Partial<Copy>>
   /** Private targets only: contact lines that must never reach the public repo. */
-  contact?: { email?: string; phone?: string };
+  contact?: { email?: string; phone?: string }
 }

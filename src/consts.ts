@@ -15,7 +15,7 @@ export const SITE = {
   locale: 'en',
   /** Open Graph image, resolved against `url` at build time. */
   ogImage: '/og.png',
-} as const;
+} as const
 
 export const AUTHOR = {
   firstName: 'Johannes',
@@ -37,14 +37,14 @@ export const AUTHOR = {
     'DevOps',
     'Technical Leadership',
   ],
-} as const;
+} as const
 
 export const LOCATION = {
   city: 'Munich',
   countryCode: 'DE',
   region: 'CET',
   timeZone: 'Europe/Berlin',
-} as const;
+} as const
 
 /**
  * Self-hosted Umami analytics. The website ID is public by design (it ships in
@@ -55,13 +55,13 @@ export const LOCATION = {
 export const UMAMI = {
   src: 'https://umami.jkrumm.com/p.js',
   websiteId: '085d08a0-95b5-44ff-90c8-9534d2a20f02',
-} as const;
+} as const
 
 /**
  * email-gateway's public contact route — no secret, the gateway allow-lists
  * this site's production Origin and mails the owner with reply-to = visitor.
  */
-export const CONTACT_ENDPOINT = 'https://email-gateway.jkrumm.com/jkrumm-contact';
+export const CONTACT_ENDPOINT = 'https://email-gateway.jkrumm.com/jkrumm-contact'
 
 export const SOCIAL = {
   github: 'https://github.com/jkrumm',
@@ -69,4 +69,4 @@ export const SOCIAL = {
   linkedin: 'https://www.linkedin.com/in/johannes-krumm/',
   /** Intentional fill-in slot — see the Contact section. */
   email: '',
-} as const;
+} as const

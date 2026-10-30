@@ -34,28 +34,35 @@
  * `canvas` (a dedicated ShadowRoot), styled with hardcoded neutral chrome
  * colors so the tool stays legible regardless of the font being previewed.
  */
-import { defineToolbarApp } from 'astro/toolbar';
-import { FALLBACK, type FontCandidate, MONO_CANDIDATES, PROPORTIONAL_CANDIDATES, type Spacing, STORAGE_KEY } from './font-candidates';
+import { defineToolbarApp } from 'astro/toolbar'
+import {
+  FALLBACK,
+  type FontCandidate,
+  MONO_CANDIDATES,
+  PROPORTIONAL_CANDIDATES,
+  type Spacing,
+  STORAGE_KEY,
+} from './font-candidates'
 
 /** Mono candidates preview/apply against the site's real code font
  * (`--font-mono`); proportional candidates preview/apply against the
  * heading/UI display font (`--font-display`). */
 function targetVar(spacing: Spacing): string {
-  return spacing === 'mono' ? '--font-mono' : '--font-display';
+  return spacing === 'mono' ? '--font-mono' : '--font-display'
 }
 
 function loadSelection(): string | null {
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    return localStorage.getItem(STORAGE_KEY)
   } catch {
-    return null;
+    return null
   }
 }
 
 function saveSelection(id: string | null): void {
   try {
-    if (id) localStorage.setItem(STORAGE_KEY, id);
-    else localStorage.removeItem(STORAGE_KEY);
+    if (id) localStorage.setItem(STORAGE_KEY, id)
+    else localStorage.removeItem(STORAGE_KEY)
   } catch {
     // Private-mode/quota failure — selection stays in-memory only for this session.
   }
@@ -66,48 +73,51 @@ function saveSelection(id: string | null): void {
  * signed offset). Keyed to the candidate id so a stale override from a
  * different candidate never silently applies to whatever's selected now. */
 function makeOverrideStore(suffix: string) {
-  const key = `${STORAGE_KEY}-${suffix}`;
+  const key = `${STORAGE_KEY}-${suffix}`
   return {
     load(candidateId: string): number | null {
       try {
-        const saved = JSON.parse(localStorage.getItem(key) ?? 'null') as { id: string; value: number } | null;
-        return saved && saved.id === candidateId ? saved.value : null;
+        const saved = JSON.parse(localStorage.getItem(key) ?? 'null') as {
+          id: string
+          value: number
+        } | null
+        return saved && saved.id === candidateId ? saved.value : null
       } catch {
-        return null;
+        return null
       }
     },
     save(candidateId: string, value: number | null): void {
       try {
-        if (value === null) localStorage.removeItem(key);
-        else localStorage.setItem(key, JSON.stringify({ id: candidateId, value }));
+        if (value === null) localStorage.removeItem(key)
+        else localStorage.setItem(key, JSON.stringify({ id: candidateId, value }))
       } catch {
         // Private-mode/quota failure — override stays in-memory only for this session.
       }
     },
-  };
+  }
 }
 
-const stretchStore = makeOverrideStore('stretch');
-const weightOffsetStore = makeOverrideStore('weight-offset');
+const stretchStore = makeOverrideStore('stretch')
+const weightOffsetStore = makeOverrideStore('weight-offset')
 
 /** Injects a candidate's stylesheet into <head> at most once, so all cards can
  * render in their real font without waiting for a click-to-load round trip. */
 function ensureStylesheetLoaded(candidate: FontCandidate): void {
-  if (document.head.querySelector(`link[data-jk-font-lab="${candidate.id}"]`)) return;
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = candidate.source.href;
-  link.dataset.jkFontLab = candidate.id;
-  document.head.append(link);
+  if (document.head.querySelector(`link[data-jk-font-lab="${candidate.id}"]`)) return
+  const link = document.createElement('link')
+  link.rel = 'stylesheet'
+  link.href = candidate.source.href
+  link.dataset.jkFontLab = candidate.id
+  document.head.append(link)
 }
 
 interface ApplyOverrides {
   /** Width, in percent — overrides the candidate's own `fontStretch` default. */
-  widthOverride?: number;
+  widthOverride?: number
   /** Signed delta added to every --display consumer's own font-weight via
    * calc(<base> + var(--font-display-weight-offset)) — see global.css and
    * the per-component rules a prior sweep converted. */
-  weightOffset?: number;
+  weightOffset?: number
 }
 
 /** Both overrides drive the exact same CSS custom properties production
@@ -115,42 +125,56 @@ interface ApplyOverrides {
  * `--font-display-weight-offset` inside each --display consumer's own
  * font-weight: calc(...)) — no separate preview-only code path. */
 function applyCandidate(candidate: FontCandidate, overrides: ApplyOverrides = {}): void {
-  ensureStylesheetLoaded(candidate);
-  document.documentElement.style.setProperty(targetVar(candidate.spacing), `'${candidate.family}', ${FALLBACK[candidate.spacing]}`);
+  ensureStylesheetLoaded(candidate)
+  document.documentElement.style.setProperty(
+    targetVar(candidate.spacing),
+    `'${candidate.family}', ${FALLBACK[candidate.spacing]}`,
+  )
   if (candidate.spacing === 'proportional') {
-    const stretch = overrides.widthOverride !== undefined ? `${overrides.widthOverride}%` : (candidate.fontStretch ?? '100%');
-    document.documentElement.style.setProperty('--font-display-stretch', stretch);
-    document.documentElement.style.setProperty('--font-display-weight-offset', String(overrides.weightOffset ?? 0));
+    const stretch =
+      overrides.widthOverride !== undefined
+        ? `${overrides.widthOverride}%`
+        : (candidate.fontStretch ?? '100%')
+    document.documentElement.style.setProperty('--font-display-stretch', stretch)
+    document.documentElement.style.setProperty(
+      '--font-display-weight-offset',
+      String(overrides.weightOffset ?? 0),
+    )
   }
-  saveSelection(candidate.id);
-  stretchStore.save(candidate.id, overrides.widthOverride ?? null);
-  weightOffsetStore.save(candidate.id, overrides.weightOffset ?? null);
+  saveSelection(candidate.id)
+  stretchStore.save(candidate.id, overrides.widthOverride ?? null)
+  weightOffsetStore.save(candidate.id, overrides.weightOffset ?? null)
 }
 
 function resetToDefault(): void {
-  document.documentElement.style.removeProperty('--font-mono');
-  document.documentElement.style.removeProperty('--font-display');
-  document.documentElement.style.removeProperty('--font-display-stretch');
-  document.documentElement.style.removeProperty('--font-display-weight-offset');
-  saveSelection(null);
-  stretchStore.save('', null);
-  weightOffsetStore.save('', null);
+  document.documentElement.style.removeProperty('--font-mono')
+  document.documentElement.style.removeProperty('--font-display')
+  document.documentElement.style.removeProperty('--font-display-stretch')
+  document.documentElement.style.removeProperty('--font-display-weight-offset')
+  saveSelection(null)
+  stretchStore.save('', null)
+  weightOffsetStore.save('', null)
 }
 
 function buildConfigSnippet(candidate: FontCandidate): string {
-  const fallbacks = candidate.spacing === 'mono' ? "['ui-monospace', 'SFMono-Regular', 'monospace']" : "['system-ui', 'sans-serif']";
+  const fallbacks =
+    candidate.spacing === 'mono'
+      ? "['ui-monospace', 'SFMono-Regular', 'monospace']"
+      : "['system-ui', 'sans-serif']"
   const entryLabel =
-    candidate.spacing === 'mono' ? 'replace the existing JetBrains Mono entry in `fonts:` with:' : 'replace the existing Hubot Sans entry in `fonts:` with:';
+    candidate.spacing === 'mono'
+      ? 'replace the existing JetBrains Mono entry in `fonts:` with:'
+      : 'replace the existing Hubot Sans entry in `fonts:` with:'
   const stretchNote = candidate.fontStretch
     ? `\n// Astro's fontProviders.fontsource() has no width-axis option — the font file is\n` +
       `// still the full variable font, so also set global.css's --font-display-stretch\n` +
       `// token to '${candidate.fontStretch}' (read by the body rule's font-stretch: var(...)).`
-    : '';
+    : ''
   // A range ('200 900') is what actually loads the font as variable — a
   // discrete list ([400, 500, 600, 700]) pins separate static instances.
   const weightsSnippet = candidate.axes?.wght
     ? `['${candidate.axes.wght[0]} ${candidate.axes.wght[1]}']`
-    : `[${candidate.weights.join(', ')}]`;
+    : `[${candidate.weights.join(', ')}]`
   return (
     `// astro.config.mjs — ${entryLabel}\n` +
     `{\n` +
@@ -165,7 +189,7 @@ function buildConfigSnippet(candidate: FontCandidate): string {
     `// verify '${candidate.fontsourcePackage}' actually ships these weights on fontsource.org\n` +
     `// before shipping — this preview loaded them from Google Fonts/jsDelivr, not Fontsource.` +
     stretchNote
-  );
+  )
 }
 
 function h<K extends keyof HTMLElementTagNameMap>(
@@ -173,45 +197,56 @@ function h<K extends keyof HTMLElementTagNameMap>(
   attrs: Partial<HTMLElementTagNameMap[K]>,
   children: (Node | string)[] = [],
 ): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag);
-  Object.assign(node, attrs);
+  const node = document.createElement(tag)
+  Object.assign(node, attrs)
   for (const child of children) {
-    node.append(typeof child === 'string' ? document.createTextNode(child) : child);
+    node.append(typeof child === 'string' ? document.createTextNode(child) : child)
   }
-  return node;
+  return node
 }
 
 function parseStretchPercent(value: string | undefined): number {
-  const n = value ? parseFloat(value) : NaN;
-  return Number.isFinite(n) ? n : 100;
+  const n = value ? parseFloat(value) : NaN
+  return Number.isFinite(n) ? n : 100
 }
 
 function formatSignedOffset(value: number): string {
-  return value > 0 ? `+${value}` : String(value);
+  return value > 0 ? `+${value}` : String(value)
 }
 
 /** One card's sample block — mirrors the site's real mono usage (kicker,
  * heading, nav/meta label) plus a character-disambiguation string, all set to
  * the candidate's own font-family so cards are comparable without applying
  * each one in turn. */
-function buildSampleBlock(candidate: FontCandidate, stretchOverride?: number, weightOffset?: number): HTMLElement {
-  const kicker = h('div', { className: 'jk-fl-sample-kicker', textContent: 'FEATURED PROJECT' });
+function buildSampleBlock(
+  candidate: FontCandidate,
+  stretchOverride?: number,
+  weightOffset?: number,
+): HTMLElement {
+  const kicker = h('div', { className: 'jk-fl-sample-kicker', textContent: 'FEATURED PROJECT' })
   const heading = h('div', {
     className: 'jk-fl-sample-heading',
     // "Milli" isolates the wide-M / narrow-i contrast a true monospace forces.
     textContent: 'Milli-second latency, meaningfully lower',
-  });
-  const meta = h('div', { className: 'jk-fl-sample-meta', textContent: '2024 · Full-Stack Engineer · Remote' });
-  const disambig = h('div', { className: 'jk-fl-sample-disambig', textContent: '0O1lI 8B 3E5S6G2Z ({[<>]})' });
-  const block = h('div', { className: 'jk-fl-sample' }, [kicker, heading, meta, disambig]);
-  block.style.fontFamily = `'${candidate.family}', ${FALLBACK[candidate.spacing]}`;
-  block.style.fontStretch = stretchOverride !== undefined ? `${stretchOverride}%` : (candidate.fontStretch ?? 'normal');
+  })
+  const meta = h('div', {
+    className: 'jk-fl-sample-meta',
+    textContent: '2024 · Full-Stack Engineer · Remote',
+  })
+  const disambig = h('div', {
+    className: 'jk-fl-sample-disambig',
+    textContent: '0O1lI 8B 3E5S6G2Z ({[<>]})',
+  })
+  const block = h('div', { className: 'jk-fl-sample' }, [kicker, heading, meta, disambig])
+  block.style.fontFamily = `'${candidate.family}', ${FALLBACK[candidate.spacing]}`
+  block.style.fontStretch =
+    stretchOverride !== undefined ? `${stretchOverride}%` : (candidate.fontStretch ?? 'normal')
   // Sample sub-elements use calc(<base> + var(--font-display-weight-offset,
   // 0)) in CHROME_CSS, same as the real site's swept --display consumers —
   // setting this one custom property on the block previews the delta
   // exactly as it'll apply live, hierarchy (600 vs 700 vs 500) intact.
-  block.style.setProperty('--font-display-weight-offset', String(weightOffset ?? 0));
-  return block;
+  block.style.setProperty('--font-display-weight-offset', String(weightOffset ?? 0))
+  return block
 }
 
 function buildCard(
@@ -220,26 +255,39 @@ function buildCard(
   onApply: (candidate: FontCandidate, overrides?: ApplyOverrides) => void,
   onCopy: (candidate: FontCandidate) => void,
 ): { el: HTMLElement; refreshActive: () => void } {
-  const widthAxis = candidate.axes?.wdth;
-  const initialWidth = widthAxis ? (stretchStore.load(candidate.id) ?? parseStretchPercent(candidate.fontStretch)) : undefined;
-  const weightAxis = candidate.axes?.wght;
-  const initialWeightOffset = weightAxis ? (weightOffsetStore.load(candidate.id) ?? 0) : undefined;
-  const sample = buildSampleBlock(candidate, initialWidth, initialWeightOffset);
+  const widthAxis = candidate.axes?.wdth
+  const initialWidth = widthAxis
+    ? (stretchStore.load(candidate.id) ?? parseStretchPercent(candidate.fontStretch))
+    : undefined
+  const weightAxis = candidate.axes?.wght
+  const initialWeightOffset = weightAxis ? (weightOffsetStore.load(candidate.id) ?? 0) : undefined
+  const sample = buildSampleBlock(candidate, initialWidth, initialWeightOffset)
 
-  const applyBtn = h('button', { type: 'button', className: 'jk-fl-btn', textContent: 'Apply to site' });
-  const copyBtn = h('button', { type: 'button', className: 'jk-fl-btn', textContent: 'Copy config' });
-  copyBtn.addEventListener('click', () => onCopy(candidate));
+  const applyBtn = h('button', {
+    type: 'button',
+    className: 'jk-fl-btn',
+    textContent: 'Apply to site',
+  })
+  const copyBtn = h('button', {
+    type: 'button',
+    className: 'jk-fl-btn',
+    textContent: 'Copy config',
+  })
+  copyBtn.addEventListener('click', () => onCopy(candidate))
 
   const currentOverrides = (): ApplyOverrides => ({
     widthOverride: widthInput ? Number(widthInput.value) : undefined,
     weightOffset: weightInput ? Number(weightInput.value) : undefined,
-  });
+  })
 
-  const sliderRows: HTMLElement[] = [];
-  let widthInput: HTMLInputElement | null = null;
-  let weightInput: HTMLInputElement | null = null;
+  const sliderRows: HTMLElement[] = []
+  let widthInput: HTMLInputElement | null = null
+  let weightInput: HTMLInputElement | null = null
   if (widthAxis) {
-    const readout = h('span', { className: 'jk-fl-slider__readout', textContent: `${initialWidth}%` });
+    const readout = h('span', {
+      className: 'jk-fl-slider__readout',
+      textContent: `${initialWidth}%`,
+    })
     widthInput = h('input', {
       type: 'range',
       className: 'jk-fl-slider__input',
@@ -247,14 +295,20 @@ function buildCard(
       max: String(widthAxis[1]),
       step: '1',
       value: String(initialWidth),
-    });
+    })
     widthInput.addEventListener('input', () => {
-      const value = Number(widthInput?.value);
-      readout.textContent = `${value}%`;
-      sample.style.fontStretch = `${value}%`;
-      onApply(candidate, currentOverrides());
-    });
-    sliderRows.push(h('div', { className: 'jk-fl-slider' }, [h('span', { className: 'jk-fl-slider__label', textContent: 'Width' }), widthInput, readout]));
+      const value = Number(widthInput?.value)
+      readout.textContent = `${value}%`
+      sample.style.fontStretch = `${value}%`
+      onApply(candidate, currentOverrides())
+    })
+    sliderRows.push(
+      h('div', { className: 'jk-fl-slider' }, [
+        h('span', { className: 'jk-fl-slider__label', textContent: 'Width' }),
+        widthInput,
+        readout,
+      ]),
+    )
   }
   if (weightAxis) {
     // A signed delta, not an absolute weight — real --display consumers have
@@ -262,10 +316,13 @@ function buildCard(
     // each converted to calc(<base> + var(--font-display-weight-offset)).
     // Bounded so base+offset can't leave the font's real 200-900 wght axis
     // for the lightest base weight this site actually uses (500).
-    const [axisMin, axisMax] = weightAxis;
-    const offsetMin = Math.max(-300, axisMin - 500);
-    const offsetMax = Math.min(300, axisMax - 700);
-    const readout = h('span', { className: 'jk-fl-slider__readout', textContent: formatSignedOffset(initialWeightOffset ?? 0) });
+    const [axisMin, axisMax] = weightAxis
+    const offsetMin = Math.max(-300, axisMin - 500)
+    const offsetMax = Math.min(300, axisMax - 700)
+    const readout = h('span', {
+      className: 'jk-fl-slider__readout',
+      textContent: formatSignedOffset(initialWeightOffset ?? 0),
+    })
     weightInput = h('input', {
       type: 'range',
       className: 'jk-fl-slider__input',
@@ -273,44 +330,48 @@ function buildCard(
       max: String(offsetMax),
       step: '10',
       value: String(initialWeightOffset ?? 0),
-    });
+    })
     weightInput.addEventListener('input', () => {
-      const value = Number(weightInput?.value);
-      readout.textContent = formatSignedOffset(value);
-      sample.style.setProperty('--font-display-weight-offset', String(value));
-      onApply(candidate, currentOverrides());
-    });
+      const value = Number(weightInput?.value)
+      readout.textContent = formatSignedOffset(value)
+      sample.style.setProperty('--font-display-weight-offset', String(value))
+      onApply(candidate, currentOverrides())
+    })
     sliderRows.push(
       h('div', { className: 'jk-fl-slider' }, [
         h('span', { className: 'jk-fl-slider__label', textContent: 'Weight' }),
         weightInput,
         readout,
       ]),
-    );
+    )
   }
-  applyBtn.addEventListener('click', () => onApply(candidate, currentOverrides()));
+  applyBtn.addEventListener('click', () => onApply(candidate, currentOverrides()))
 
-  const activeTag = h('span', { className: 'jk-fl-active-tag', textContent: 'applied', hidden: true });
-  const spacingTag = h('span', { className: 'jk-fl-spacing-tag', textContent: candidate.spacing });
-  spacingTag.dataset.spacing = candidate.spacing;
+  const activeTag = h('span', {
+    className: 'jk-fl-active-tag',
+    textContent: 'applied',
+    hidden: true,
+  })
+  const spacingTag = h('span', { className: 'jk-fl-spacing-tag', textContent: candidate.spacing })
+  spacingTag.dataset.spacing = candidate.spacing
   const head = h('div', { className: 'jk-fl-card__head' }, [
     h('span', { className: 'jk-fl-card__label', textContent: candidate.label }),
     spacingTag,
     activeTag,
-  ]);
-  const blurb = h('div', { className: 'jk-fl-card__blurb', textContent: candidate.blurb });
-  const actions = h('div', { className: 'jk-fl-card__actions' }, [applyBtn, copyBtn]);
+  ])
+  const blurb = h('div', { className: 'jk-fl-card__blurb', textContent: candidate.blurb })
+  const actions = h('div', { className: 'jk-fl-card__actions' }, [applyBtn, copyBtn])
 
-  const children = [head, blurb, sample, ...sliderRows, actions];
-  const el = h('div', { className: 'jk-fl-card' }, children);
+  const children = [head, blurb, sample, ...sliderRows, actions]
+  const el = h('div', { className: 'jk-fl-card' }, children)
 
   const refreshActive = (): void => {
-    const active = isCurrent();
-    activeTag.hidden = !active;
-    el.dataset.active = String(active);
-  };
+    const active = isCurrent()
+    activeTag.hidden = !active
+    el.dataset.active = String(active)
+  }
 
-  return { el, refreshActive };
+  return { el, refreshActive }
 }
 
 // Hardcoded neutral dark chrome — deliberately NOT built from the site's own
@@ -507,83 +568,92 @@ const CHROME_CSS = `
   border-top: 1px solid #333338;
   padding-top: 8px;
 }
-`;
+`
 
 export default defineToolbarApp({
   init(canvas) {
-    const style = document.createElement('style');
-    style.textContent = CHROME_CSS;
-    canvas.append(style);
+    const style = document.createElement('style')
+    style.textContent = CHROME_CSS
+    canvas.append(style)
 
-    let currentId: string | null = loadSelection();
+    let currentId: string | null = loadSelection()
 
-    const header = h('div', { className: 'jk-fl-header' }, [h('span', { textContent: 'Font Lab' })]);
+    const header = h('div', { className: 'jk-fl-header' }, [h('span', { textContent: 'Font Lab' })])
     const subtitle = h('div', {
       className: 'jk-fl-subtitle',
       textContent:
         '--font-mono/--font-display candidates, loaded dev-only from Google Fonts/jsDelivr — never ' +
-        "touches the production Fonts API config. Proportional siblings are included because a true " +
+        'touches the production Fonts API config. Proportional siblings are included because a true ' +
         "monospace's fixed advance width crushes wide letters (M) and pads narrow ones (I) at heading " +
         'sizes. Cards with a real width (wdth) axis get a live slider on --font-display-stretch; cards ' +
         'with a weight (wght) axis get a signed-offset slider on --font-display-weight-offset — both ' +
         "drag the site's actual production tokens. Apply swaps the whole site's font live; Copy config " +
         'gives you the astro.config.mjs snippet once you pick a winner.',
-    });
-    const cssPre = h('pre', { className: 'jk-fl-css-pre', hidden: true });
+    })
+    const cssPre = h('pre', { className: 'jk-fl-css-pre', hidden: true })
 
-    const root = h('div', { className: 'jk-font-lab' }, [header, subtitle]);
+    const root = h('div', { className: 'jk-font-lab' }, [header, subtitle])
 
-    const ALL_CANDIDATES = [...MONO_CANDIDATES, ...PROPORTIONAL_CANDIDATES];
-    const cards: { candidate: FontCandidate; refreshActive: () => void }[] = [];
-    const refreshAll = (): void => cards.forEach((c) => c.refreshActive());
+    const ALL_CANDIDATES = [...MONO_CANDIDATES, ...PROPORTIONAL_CANDIDATES]
+    const cards: { candidate: FontCandidate; refreshActive: () => void }[] = []
+    const refreshAll = (): void => cards.forEach((c) => c.refreshActive())
 
     const onApply = (candidate: FontCandidate, overrides?: ApplyOverrides): void => {
-      applyCandidate(candidate, overrides);
-      currentId = candidate.id;
-      refreshAll();
-    };
+      applyCandidate(candidate, overrides)
+      currentId = candidate.id
+      refreshAll()
+    }
     const onCopy = (candidate: FontCandidate): void => {
-      const text = buildConfigSnippet(candidate);
-      void navigator.clipboard.writeText(text);
-      cssPre.textContent = text;
-      cssPre.hidden = false;
-    };
+      const text = buildConfigSnippet(candidate)
+      void navigator.clipboard.writeText(text)
+      cssPre.textContent = text
+      cssPre.hidden = false
+    }
 
     const addGroup = (title: string, candidates: FontCandidate[]): void => {
-      root.append(h('div', { className: 'jk-fl-group-title', textContent: title }));
+      root.append(h('div', { className: 'jk-fl-group-title', textContent: title }))
       for (const candidate of candidates) {
-        ensureStylesheetLoaded(candidate);
-        const { el, refreshActive } = buildCard(candidate, () => currentId === candidate.id, onApply, onCopy);
-        cards.push({ candidate, refreshActive });
-        root.append(el);
+        ensureStylesheetLoaded(candidate)
+        const { el, refreshActive } = buildCard(
+          candidate,
+          () => currentId === candidate.id,
+          onApply,
+          onCopy,
+        )
+        cards.push({ candidate, refreshActive })
+        root.append(el)
       }
-    };
-    addGroup('Monospace', MONO_CANDIDATES);
-    addGroup('Proportional (mono aesthetic)', PROPORTIONAL_CANDIDATES);
+    }
+    addGroup('Monospace', MONO_CANDIDATES)
+    addGroup('Proportional (mono aesthetic)', PROPORTIONAL_CANDIDATES)
 
     // Re-apply a persisted pick immediately, before any click — same
     // pattern as Color Lab restoring saved overrides on load.
     if (currentId) {
-      const persisted = ALL_CANDIDATES.find((c) => c.id === currentId);
+      const persisted = ALL_CANDIDATES.find((c) => c.id === currentId)
       if (persisted) {
         applyCandidate(persisted, {
           widthOverride: stretchStore.load(persisted.id) ?? undefined,
           weightOffset: weightOffsetStore.load(persisted.id) ?? undefined,
-        });
+        })
       }
     }
 
-    const resetBtn = h('button', { type: 'button', className: 'jk-fl-btn', textContent: 'Reset to default' });
+    const resetBtn = h('button', {
+      type: 'button',
+      className: 'jk-fl-btn',
+      textContent: 'Reset to default',
+    })
     resetBtn.addEventListener('click', () => {
-      resetToDefault();
-      currentId = null;
-      refreshAll();
-    });
-    const footer = h('div', { className: 'jk-fl-footer' }, [resetBtn]);
+      resetToDefault()
+      currentId = null
+      refreshAll()
+    })
+    const footer = h('div', { className: 'jk-fl-footer' }, [resetBtn])
 
-    root.append(footer);
-    root.append(cssPre);
-    canvas.append(root);
-    refreshAll();
+    root.append(footer)
+    root.append(cssPre)
+    canvas.append(root)
+    refreshAll()
   },
-});
+})

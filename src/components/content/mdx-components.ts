@@ -5,13 +5,13 @@
  * with no per-file import. Never map `pre`/`code` (would intercept
  * Expressive Code's fenced code blocks) or `img` (Figure is the image path).
  */
-import Callout from './Callout.astro';
-import Chart from './Chart.astro';
-import Figure from './Figure.astro';
-import Kbd from './Kbd.astro';
-import PullQuote from './PullQuote.astro';
-import Steps from './Steps.astro';
-import Table from './Table.astro';
+import Callout from './Callout.astro'
+import Chart from './Chart.astro'
+import Figure from './Figure.astro'
+import Kbd from './Kbd.astro'
+import PullQuote from './PullQuote.astro'
+import Steps from './Steps.astro'
+import Table from './Table.astro'
 
 export const components = {
   table: Table,
@@ -22,4 +22,4 @@ export const components = {
   PullQuote,
   Steps,
   Kbd,
-};
+}

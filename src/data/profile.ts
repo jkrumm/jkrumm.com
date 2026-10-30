@@ -6,12 +6,12 @@
  * "what sections exist" — adding one here and adding the matching section to
  * `src/pages/index.astro` is the whole change.
  */
-import { SOCIAL } from '@/consts';
-import { identity } from '@/data/career/facts';
+import { SOCIAL } from '@/consts'
+import { identity } from '@/data/career/facts'
 
 export interface NavItem {
-  id: string;
-  label: string;
+  id: string
+  label: string
 }
 
 export const navItems: NavItem[] = [
@@ -21,11 +21,11 @@ export const navItems: NavItem[] = [
   { id: 'activity', label: 'Activity' },
   { id: 'writing', label: 'Writing' },
   { id: 'contact', label: 'Contact' },
-];
+]
 
 export interface SiteNavItem {
-  href: string;
-  label: string;
+  href: string
+  label: string
 }
 
 /**
@@ -39,13 +39,13 @@ export const siteNavItems: SiteNavItem[] = [
   { href: '/guide', label: 'Guide' },
   { href: '/blog', label: 'Blog' },
   { href: '/resume', label: 'Resume' },
-];
+]
 
 export interface ProfileLink {
-  label: string;
-  href: string;
+  label: string
+  href: string
   /** External links get the ↗ affordance and rel/target. */
-  external?: boolean;
+  external?: boolean
 }
 
 /**
@@ -59,7 +59,7 @@ export const profileLinks: ProfileLink[] = [
   { label: 'GitHub', href: SOCIAL.github, external: true },
   { label: 'LinkedIn', href: SOCIAL.linkedin, external: true },
   { label: 'Email', href: `mailto:${identity.email}` },
-];
+]
 
 export const profile = {
   name: 'Johannes Krumm',
@@ -72,4 +72,4 @@ export const profile = {
    */
   avatar: null as string | null,
   avatarAlt: 'Johannes Krumm',
-} as const;
+} as const

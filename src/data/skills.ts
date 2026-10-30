@@ -37,17 +37,17 @@ import {
   siTypescript,
   siVuedotjs,
   type SimpleIcon,
-} from 'simple-icons';
+} from 'simple-icons'
 
 export interface Skill {
-  name: string;
-  href: string;
-  icon?: SimpleIcon;
+  name: string
+  href: string
+  icon?: SimpleIcon
 }
 
 export interface SkillGroup {
-  label: string;
-  items: Skill[];
+  label: string
+  items: Skill[]
 }
 
 export const skillGroups: SkillGroup[] = [
@@ -102,4 +102,4 @@ export const skillGroups: SkillGroup[] = [
       { name: 'OpenTelemetry', href: 'https://opentelemetry.io', icon: siOpentelemetry },
     ],
   },
-];
+]

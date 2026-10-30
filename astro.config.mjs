@@ -1,8 +1,13 @@
-import { defineConfig, fontProviders } from 'astro/config';
-import sitemap from '@astrojs/sitemap';
-import expressiveCode from 'astro-expressive-code';
-import mdx from '@astrojs/mdx';
-import { FALLBACK, MONO_CANDIDATES, PROPORTIONAL_CANDIDATES, STORAGE_KEY } from './src/dev-toolbar/font-candidates.ts';
+import { defineConfig, fontProviders } from 'astro/config'
+import sitemap from '@astrojs/sitemap'
+import expressiveCode from 'astro-expressive-code'
+import mdx from '@astrojs/mdx'
+import {
+  FALLBACK,
+  MONO_CANDIDATES,
+  PROPORTIONAL_CANDIDATES,
+  STORAGE_KEY,
+} from './src/dev-toolbar/font-candidates.ts'
 
 // Dev-only anti-FOUT guard for Font Lab — mirrors the "Set theme + `.js`
 // before first paint" inline script in BaseLayout.astro, but for whichever
@@ -21,9 +26,9 @@ function buildFontFlickerGuardScript() {
     fallback: FALLBACK[c.spacing],
     href: c.source.href,
     fontStretch: c.fontStretch ?? '100%',
-  }));
-  const stretchKey = `${STORAGE_KEY}-stretch`;
-  const weightOffsetKey = `${STORAGE_KEY}-weight-offset`;
+  }))
+  const stretchKey = `${STORAGE_KEY}-stretch`
+  const weightOffsetKey = `${STORAGE_KEY}-weight-offset`
   return `(function () {
   try {
     var id = localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
@@ -53,7 +58,7 @@ function buildFontFlickerGuardScript() {
       document.documentElement.style.setProperty('--font-display-weight-offset', String(weightOffset));
     }
   } catch (e) {}
-})();`;
+})();`
 }
 
 // https://astro.build/config
@@ -90,7 +95,7 @@ export default defineConfig({
       // (`[data-theme='${theme.name}']`) matches this site's [data-theme]
       // convention on <html>, set by the runtime theme script.
       customizeTheme(theme) {
-        theme.name = theme.type;
+        theme.name = theme.type
       },
       // Bound to the site's live tokens so code blocks follow the theme for
       // free. `--line` was retired with the bento — a code block is a surface
@@ -126,7 +131,7 @@ export default defineConfig({
             name: 'Color Lab',
             icon: 'grid',
             entrypoint: new URL('./src/dev-toolbar/color-lab.ts', import.meta.url),
-          });
+          })
         },
       },
     },
@@ -146,9 +151,9 @@ export default defineConfig({
             name: 'Font Lab',
             icon: 'file-search',
             entrypoint: new URL('./src/dev-toolbar/font-lab.ts', import.meta.url),
-          });
+          })
           if (command === 'dev') {
-            injectScript('head-inline', buildFontFlickerGuardScript());
+            injectScript('head-inline', buildFontFlickerGuardScript())
           }
         },
       },
@@ -203,4 +208,4 @@ export default defineConfig({
       fallbacks: ['Georgia', 'serif'],
     },
   ],
-});
+})

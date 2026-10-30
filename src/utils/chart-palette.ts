@@ -24,25 +24,25 @@ const CHART_HUES = [
   ['#908983', 'var(--chart-2)'], // STEEL
   ['#a8763f', 'var(--chart-3)'], // CLAY
   ['#5a8c6e', 'var(--chart-4)'], // MOSS
-] as const;
+] as const
 
 const INK_RAMP = [
   ['#737376', 'var(--faint)'], // = light --faint
   ['#262629', 'var(--ink)'], // = light --ink
-] as const;
+] as const
 
-const PALETTE = [...CHART_HUES, ...INK_RAMP];
+const PALETTE = [...CHART_HUES, ...INK_RAMP]
 
-export const ACCENT = CHART_HUES[0][0];
-export const FAINT = INK_RAMP[0][0];
-export const INK = INK_RAMP[1][0];
+export const ACCENT = CHART_HUES[0][0]
+export const FAINT = INK_RAMP[0][0]
+export const INK = INK_RAMP[1][0]
 
 /** Sentinel hexes for a categorical series, in --chart-1..4 order. */
-export const RANGE = CHART_HUES.map(([hex]) => hex);
+export const RANGE = CHART_HUES.map(([hex]) => hex)
 /** CSS-var equivalents of RANGE, for markup rendered outside Plot (e.g. the legend). */
-export const RANGE_CSS_VARS = CHART_HUES.map(([, cssVar]) => cssVar);
+export const RANGE_CSS_VARS = CHART_HUES.map(([, cssVar]) => cssVar)
 
 /** Rewrite every sentinel hex in a rendered SVG string to its CSS var equivalent. */
 export function swapToCssVars(svg: string): string {
-  return PALETTE.reduce((acc, [hex, cssVar]) => acc.replace(new RegExp(hex, 'gi'), cssVar), svg);
+  return PALETTE.reduce((acc, [hex, cssVar]) => acc.replace(new RegExp(hex, 'gi'), cssVar), svg)
 }

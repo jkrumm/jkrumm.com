@@ -12,26 +12,26 @@
  * the shape below only needs `level` — extracting them would be unused
  * complexity.
  */
-import { parseHTML } from 'linkedom';
+import { parseHTML } from 'linkedom'
 
 export interface ActivityDay {
-  date: string;
-  level: 0 | 1 | 2 | 3 | 4;
+  date: string
+  level: 0 | 1 | 2 | 3 | 4
 }
 
 export interface ActivityData {
-  total: number;
-  days: ActivityDay[];
-  fetchedAt: string;
+  total: number
+  days: ActivityDay[]
+  fetchedAt: string
 }
 
-const CONTRIBUTIONS_URL = (handle: string) => `https://github.com/users/${handle}/contributions`;
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const MIN_DAYS = 350;
-const MAX_DAYS = 380;
+const CONTRIBUTIONS_URL = (handle: string) => `https://github.com/users/${handle}/contributions`
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+const MIN_DAYS = 350
+const MAX_DAYS = 380
 
 function isLevel(value: number): value is ActivityDay['level'] {
-  return value >= 0 && value <= 4 && Number.isInteger(value);
+  return value >= 0 && value <= 4 && Number.isInteger(value)
 }
 
 /**
@@ -41,45 +41,45 @@ function isLevel(value: number): value is ActivityDay['level'] {
 export async function fetchGithubActivity(handle: string): Promise<ActivityData> {
   const response = await fetch(CONTRIBUTIONS_URL(handle), {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; jkrumm.com build)' },
-  });
+  })
   if (!response.ok) {
-    throw new Error(`GitHub contributions fetch failed: ${response.status}`);
+    throw new Error(`GitHub contributions fetch failed: ${response.status}`)
   }
-  const html = await response.text();
-  const { document } = parseHTML(html);
+  const html = await response.text()
+  const { document } = parseHTML(html)
 
-  const grid = document.querySelector('table.ContributionCalendar-grid');
+  const grid = document.querySelector('table.ContributionCalendar-grid')
   if (!grid) {
-    throw new Error('GitHub contributions: no ContributionCalendar-grid table found');
+    throw new Error('GitHub contributions: no ContributionCalendar-grid table found')
   }
 
-  const heading = document.querySelector('#js-contribution-activity-description');
-  const totalMatch = heading?.textContent?.match(/[\d,]+/);
+  const heading = document.querySelector('#js-contribution-activity-description')
+  const totalMatch = heading?.textContent?.match(/[\d,]+/)
   if (!totalMatch) {
-    throw new Error('GitHub contributions: could not read the total from the heading');
+    throw new Error('GitHub contributions: could not read the total from the heading')
   }
-  const total = Number.parseInt(totalMatch[0].replace(/,/g, ''), 10);
+  const total = Number.parseInt(totalMatch[0].replace(/,/g, ''), 10)
   if (!Number.isFinite(total)) {
-    throw new Error('GitHub contributions: total did not parse to a number');
+    throw new Error('GitHub contributions: total did not parse to a number')
   }
 
-  const cells = [...grid.querySelectorAll('td.ContributionCalendar-day[data-date]')];
+  const cells = [...grid.querySelectorAll('td.ContributionCalendar-day[data-date]')]
   const days: ActivityDay[] = cells.map((cell) => {
-    const date = cell.getAttribute('data-date') ?? '';
-    const level = Number.parseInt(cell.getAttribute('data-level') ?? '', 10);
+    const date = cell.getAttribute('data-date') ?? ''
+    const level = Number.parseInt(cell.getAttribute('data-level') ?? '', 10)
     if (!ISO_DATE.test(date) || !isLevel(level)) {
-      throw new Error(`GitHub contributions: malformed cell (date=${date}, level=${level})`);
+      throw new Error(`GitHub contributions: malformed cell (date=${date}, level=${level})`)
     }
-    return { date, level };
-  });
+    return { date, level }
+  })
 
   if (days.length < MIN_DAYS || days.length > MAX_DAYS) {
-    throw new Error(`GitHub contributions: expected ~365 days, got ${days.length}`);
+    throw new Error(`GitHub contributions: expected ~365 days, got ${days.length}`)
   }
 
-  days.sort((a, b) => a.date.localeCompare(b.date));
+  days.sort((a, b) => a.date.localeCompare(b.date))
 
-  return { total, days, fetchedAt: new Date().toISOString() };
+  return { total, days, fetchedAt: new Date().toISOString() }
 }
 
 /**
@@ -92,11 +92,11 @@ export async function getGithubActivity(
   fallback: ActivityData,
 ): Promise<ActivityData> {
   try {
-    return await fetchGithubActivity(handle);
+    return await fetchGithubActivity(handle)
   } catch (error) {
     console.warn(
       `[github-activity] live fetch failed, using committed snapshot: ${(error as Error).message}`,
-    );
-    return fallback;
+    )
+    return fallback
   }
 }

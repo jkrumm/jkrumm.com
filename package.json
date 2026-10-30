@@ -1,10 +1,8 @@
 {
   "name": "jkrumm-com",
-  "type": "module",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "bun@1.4.3",
-  "comment": "Astro 7 needs Node >=22.12; this machine's default is Node 20, so every Astro command is pinned to Bun's runtime (node-compat 24) via `bun --bun <bin>`. Referencing the bin path directly avoids recursing into the `astro` script.",
+  "type": "module",
   "scripts": {
     "dev": "bash scripts/dev.sh",
     "start": "bun --bun node_modules/.bin/astro dev",
@@ -38,5 +36,7 @@
     "oxlint-tsgolint": "7.0.2005",
     "simple-icons": "16.31.0",
     "typescript": "6.0.3"
-  }
+  },
+  "packageManager": "bun@1.4.3",
+  "comment": "Astro 7 needs Node >=22.12; this machine's default is Node 20, so every Astro command is pinned to Bun's runtime (node-compat 24) via `bun --bun <bin>`. Referencing the bin path directly avoids recursing into the `astro` script."
 }
