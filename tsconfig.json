@@ -7,9 +7,8 @@
   "exclude": ["dist", "dist-print", "out", "design_handoff_portfolio", "scripts"],
   "compilerOptions": {
     "strict": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   }
 }

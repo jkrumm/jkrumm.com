@@ -48,7 +48,7 @@ function buildWeeks<T extends { date: string }>(days: T[]): (T | null)[][] {
   const weeks: (T | null)[][] = [];
   for (const day of days) {
     const weekday = new Date(`${day.date}T00:00:00Z`).getUTCDay();
-    if (weekday === 0 || weeks.length === 0) weeks.push(new Array(7).fill(null));
+    if (weekday === 0 || weeks.length === 0) weeks.push(Array.from({ length: 7 }, () => null));
     weeks[weeks.length - 1][weekday] = day;
   }
   return weeks;

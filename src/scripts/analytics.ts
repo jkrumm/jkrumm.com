@@ -124,7 +124,7 @@ function initClicks(): void {
       track('email-click');
       return;
     }
-    if (/\/johannes-krumm-resume\.pdf$/.test(href)) {
+    if (href.endsWith('/johannes-krumm-resume.pdf')) {
       track('resume-download');
       return;
     }

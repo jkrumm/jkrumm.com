@@ -15,7 +15,10 @@
     "shots": "bun scripts/shots.ts",
     "activity": "bun scripts/activity.ts",
     "resume": "bun scripts/resume.ts",
-    "linkedin": "bun scripts/linkedin.ts"
+    "linkedin": "bun scripts/linkedin.ts",
+    "lint": "oxlint -c .oxlintrc.json --type-aware .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "0.4.1",
@@ -30,6 +33,9 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
+    "oxfmt": "0.72.0",
+    "oxlint": "1.87.0",
+    "oxlint-tsgolint": "7.0.2005",
     "simple-icons": "16.31.0",
     "typescript": "6.0.3"
   }

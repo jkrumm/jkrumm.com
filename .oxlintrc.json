@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc"],
+  "categories": { "correctness": "error" },
+  "ignorePatterns": ["dist/**", ".astro/**", "out/**", "dist-print/**", "public/**", ".claude/**"],
+  "rules": {
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/await-thenable": "error",
+    "typescript/no-explicit-any": "error"
+  },
+  "overrides": [
+    {
+      "files": ["scripts/**"],
+      "rules": {
+        "typescript/no-explicit-any": "off",
+        "typescript/no-misused-spread": "off"
+      }
+    },
+    {
+      "files": ["src/env.d.ts"],
+      "rules": { "typescript/triple-slash-reference": "off" }
+    }
+  ]
+}

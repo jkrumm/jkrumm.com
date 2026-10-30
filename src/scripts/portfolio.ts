@@ -156,7 +156,10 @@ function initContactForm(): void {
 
   const send = async (): Promise<boolean> => {
     const data = new FormData(form);
-    const field = (name: string): string => String(data.get(name) ?? '');
+    const field = (name: string): string => {
+      const value = data.get(name);
+      return typeof value === 'string' ? value : '';
+    };
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -14,7 +14,10 @@ help: ## List available targets
 	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "  \033[36m%-8s\033[0m %s\n", $$1, $$2}'
 
-check: ## Run the same validation CI runs (astro check + astro build)
+check: ## Frozen install, oxfmt --check, oxlint --type-aware, astro check + build
+	bun install --frozen-lockfile
+	bun run format:check
+	bun run lint
 	bun run build
 
 deploy: ## Deploy is CI-only; push to master triggers it

@@ -29,8 +29,10 @@ live here.
 - `bun run build` = `astro check` + `astro build` — the exact local validation CI
   runs (the Dockerfile's `RUN bun run build`). Must stay green (0 errors/warnings)
   on any source change.
-- `make check` wraps it (`bun run build`). There is no separate lint, format or
-  test step in this repo.
+- `make check` = frozen install, `oxfmt --check` (`bun run format:check`),
+  `oxlint --type-aware` (`bun run lint`), then `bun run build`. `bun run format`
+  fixes formatting. There is no test step in this repo. Bun is pinned via
+  `packageManager`.
 - Don't run `bun run dev` for the user — they validate running apps manually.
 - Local HTTPS dev host: `https://jkrumm.test` (Caddy → `localhost:7728`).
 
