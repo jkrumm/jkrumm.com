@@ -51,6 +51,11 @@ live here.
 
 - Health URL: `https://jkrumm.com/` — `make verify` curls it and exits non-zero
   when the site is not live and healthy.
+- `project.yaml` (factory manifest): `deploy.mode make`, one target (`vps`,
+  `verify: make verify`), 10m hold. `make version` prints the deployed commit
+  sha, read from the live footer's build-commit link (the site has no other
+  version surface) — so it reports the last *built* commit, which the daily
+  scheduled rebuild also moves.
 - Uptime Kuma monitor: none — no jkrumm.com site monitor is declared in the homelab's
   `uptime-kuma/monitors.yaml`.
 - OTel `service.name`: `none` — the site is a static nginx container with no

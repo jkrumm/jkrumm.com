@@ -6,7 +6,7 @@
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check deploy verify logs diagrams
+.PHONY: help check deploy verify version logs diagrams
 
 DIAGRAMS_SRC ?= $(HOME)/SourceRoot/dotfiles/docs/archive/diagrams
 
@@ -25,6 +25,11 @@ deploy: ## Deploy is CI-only; push to master triggers it
 
 verify: ## Probe production — exits 0 when jkrumm.com is live and healthy
 	curl -fsS https://jkrumm.com/ >/dev/null
+
+version: ## Print the deployed commit sha (read from the live footer's build-commit link)
+	@sha=$$(curl -fsS https://jkrumm.com/ | grep -oE 'github\.com/jkrumm/jkrumm\.com/commit/[0-9a-f]{7,40}' | head -1 | grep -oE '[0-9a-f]+$$'); \
+	test -n "$$sha" || { echo "no build commit found on https://jkrumm.com/" >&2; exit 1; }; \
+	git rev-parse --verify --quiet "$$sha^{commit}" || echo "$$sha"
 
 logs: ## Show the last 200 lines of production logs, then exit (no follow)
 	ssh vps 'docker logs --tail 200 "$$(docker ps -qf label=com.docker.compose.service=jkrumm-com | head -1)"'

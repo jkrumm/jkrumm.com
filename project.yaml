@@ -1,0 +1,12 @@
+# How the factory ships this project (software-factory docs/design.md §9).
+apiVersion: factory/v2
+name: jkrumm.com
+deploy:
+  mode: make # a push to master deploys via CI (RollHook); `make version` reads the live build commit, `make verify` probes the site
+  targets:
+    - { name: vps, host: vps, verify: make verify }
+  hold: 10m # CI build + rolling swap takes a few minutes
+  migrations: []
+ship:
+  - { paths: ['**'], via: push }
+leads: 1
