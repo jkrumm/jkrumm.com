@@ -73,7 +73,6 @@ the spec table is still the stated design intent.
 jkrumm.com was built from the **spec table**, so:
 
 - `--accent` dark `#8ec5ff` = spec exactly
-- both `--accent-hover` values (`#0069a8` / `#51a2ff`) = spec exactly
 - `--accent-fill` `#0077bd` (both schemes) = spec exactly
 - five of six status solids = spec exactly
 
@@ -104,7 +103,6 @@ for `color-mix(in srgb, x n%, transparent)`.
 | `--muted` | `#525255` | `#d4d4d8` | `--vx-muted` — identical | adopt-basalt-value |
 | `--faint` | `#737376` | `#a1a1a4` | `--vx-faint` — identical | adopt-basalt-value |
 | `--accent` | `#0084d1` | `#8ec5ff` | `--vx-accent` `#4374a6` / `#a2c3f0` (spec: `#0077bd` / `#8ec5ff`) | keep-jkrumm-value |
-| `--accent-hover` | `#0069a8` | `#51a2ff` | `--vx-accentHover` `#3c6895` / `#65a2e3` (spec: = jkrumm) | keep-jkrumm-value |
 | `--accent-glow` | `mix(--accent 16%)` | `mix(--accent 22%)` | no equivalent | keep-jkrumm-value |
 | `--accent-fill` | `#0077bd` | `#0077bd` | `--vx-accentFill` `#4374a6` both (spec: = jkrumm) | keep-jkrumm-value, adopt-basalt-role |
 | `--on-accent` | `#ffffff` | `#ffffff` | `--vx-onAccent` — identical | adopt-basalt-value |
@@ -112,15 +110,13 @@ for `color-mix(in srgb, x n%, transparent)`.
 | `--status-warning` | `#b5750f` | `#e0a83a` | `--vx-status-warn` `#b07808` / `#e6a53d` (spec: = jkrumm) | keep-jkrumm-value |
 | `--status-error` | `#b53f3f` | `#e06c6c` | `--vx-status-bad` `#b5403d` / `#e06761` (spec: `#b53f3f` / `#e0685f`) | keep-jkrumm-value |
 
-Depth and tints, ported as constructions rather than values:
+Depth, ported as a construction rather than a value:
 
 | jkrumm token | light | dark | basalt |
 |-|-|-|-|
 | `--shadow-ring` | `0 0 0 1px var(--ring)` | `inset 0 0 0 1px var(--ring)` | no direct equivalent — extracted from `--vx-shadow-card`'s ring half |
-| `--shadow-card` | `0 1px 2px rgb(28 25 23 / .05), 0 0 0 1px var(--ring)` | `0 1px 3px rgb(0 0 0 / .4), inset 0 0 0 1px var(--ring)` | `--vx-shadow-card` — structurally identical, incl. the outset→inset flip |
-| `--tint-*` | `mix(--status-* 12%)` | inherited | basalt's `--vx-good`/`--vx-warn`/`--vx-bad` (18% / 8% / 18%) — same law, jkrumm uses one uniform 12% |
 
-Not ported: basalt's `--vx-surface-border`, `--vx-surface-elevated`,
+Not ported: basalt's `--vx-accentHover`, `--vx-shadow-card` (jkrumm has no lifted-card tier; only `--shadow-ring`), the `--vx-good`/`--vx-warn`/`--vx-bad` tints, basalt's `--vx-surface-border`, `--vx-surface-elevated`,
 `--vx-surface-subtle`, `--vx-surface-overlay`, `--vx-surface-field`,
 `--vx-shadow-ctrl`, `--vx-shadow-overlay`, the chart primitives
 (`--vx-axis`/`--vx-grid`/`--vx-tooltip*`/`--vx-legendText`), the 12 categorical
@@ -143,13 +139,13 @@ jkrumm.com's old single `--hairline` mapped to **`--vx-divider`**, not to the
 name-lookalike `--vx-surface-hairline`. Porting the *name* instead of the *role*
 is the classic silent mistake here: you get a hairline that is either invisible
 (too light, because it was tuned to sit inside a shadow) or doubled (a `border`
-plus the ring already baked into `--shadow-card`).
+plus the ring already baked into `--shadow-ring`).
 
 Current usage across `src/`: `--divider` draws the two chrome hairlines
 (`SiteFooter` top edge, `RowList` row rule), the Writing year rule (as a
 `background` on a 1px element), an inset rule in `Contact`, and three rules inside
 `.prose` (`hr`, `td`, `.footnotes`) — reading surfaces, off the stage. `--ring` is
-referenced **zero** times outside the two `--shadow-*` definitions in
+referenced **zero** times outside the two `--shadow-ring` definitions in
 `global.css`. That is the invariant: if `--ring` ever appears in a `border`
 declaration, it is a bug.
 
@@ -159,8 +155,7 @@ declaration, it is a bug.
 never a bare `border` property.**
 
 ```css
---shadow-ring: 0 0 0 1px var(--ring);                                /* edge, no drop */
---shadow-card: 0 1px 2px rgb(28 25 23 / 0.05), 0 0 0 1px var(--ring); /* lifted */
+--shadow-ring: 0 0 0 1px var(--ring); /* edge, no drop — the only depth token */
 ```
 
 Dark flips the ring to `inset` (a white mix reads as an inner edge on a dark
@@ -204,9 +199,7 @@ Opacity is always `color-mix`, never `rgba()`:
 glow stops following `--accent` across the theme switch. basalt exports this as
 `alpha(token, a)` from `basalt-ui/tokens`; jkrumm.com writes the `color-mix`
 inline. Every translucent token here (`--panel-hover`, `--divider`, `--ring`,
-`--accent-glow`, `--tint-*`) follows it. The two literal `rgb(… / …)` drops inside
-`--shadow-card` are the deliberate exception — those are shadow *shade*, not a
-tinted token, and basalt writes them the same way.
+`--accent-glow`) follows it.
 
 `--accent-glow` itself has no basalt counterpart (basalt uses a plain
 `outline-color: var(--vx-accent)` for focus), but its construction is basalt's
