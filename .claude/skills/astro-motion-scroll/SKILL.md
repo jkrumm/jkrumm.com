@@ -11,8 +11,8 @@ it codifies what already works in `jkrumm.com` and the traps this exact stack
 sets for you.
 
 **Stack facts.** Static Astro 7, Bun runtime. No UI framework — static markup
-plus one imperative script (`src/scripts/portfolio.ts`, ~112 lines). Motion
-`12.42.2` is the only client dep; import vanilla APIs from `motion` (`animate`,
+plus one imperative script (`src/scripts/portfolio.ts`: reveals, scroll-spy, the
+Contact form's fetch submit). Motion `13.4.0` is the only client dep; import vanilla APIs from `motion` (`animate`,
 `inView`, `scroll`), never `motion/react`. **The page uses DOCUMENT scroll** —
 there is no inner scroll container. The former `#jk-scroll` is deleted along with
 the bento layout (see §5).
