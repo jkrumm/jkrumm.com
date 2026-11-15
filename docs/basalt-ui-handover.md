@@ -8,7 +8,7 @@ that produced it.
 
 ## Why
 
-jkrumm.com (Astro 7, static, no React, 8 direct dependencies) evaluated basalt-ui
+jkrumm.com (Astro 7, static, no React, a handful of direct dependencies) evaluated basalt-ui
 v1.2.0 and **hand-ported the colour values** into its own `global.css` instead of
 installing the package. The capability was there — `buildPaletteCss` is publicly
 reachable from `basalt-ui/tokens` and runs framework-free under both Node 20 and
