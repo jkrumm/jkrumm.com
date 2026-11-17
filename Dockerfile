@@ -16,7 +16,7 @@ COPY . .
 # time — the daily scheduled deploy exists to refresh the former.
 RUN bun run build
 
-FROM nginx:1.30-alpine
+FROM nginx:1.31-alpine
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 EXPOSE 80
