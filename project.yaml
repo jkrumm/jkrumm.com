@@ -1,4 +1,4 @@
-# How the factory ships this project (software-factory docs/design.md §9).
+# How the factory ships this project (software-factory docs/project.md).
 apiVersion: factory/v2
 name: jkrumm.com
 deploy:
@@ -6,10 +6,8 @@ deploy:
   targets:
     - { name: vps, host: vps, verify: make verify }
   hold: 10m # CI build + rolling swap takes a few minutes
-  migrations: []
 ship:
-  - { paths: ['**'], via: push }
-leads: 1
+  - { via: push }
 signals:
   github:
     author: jkrumm
