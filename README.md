@@ -86,7 +86,8 @@ no second frame.
 
 ## Known gaps
 
-The contact form is markup only — it posts nowhere and the submit is disabled
-until it is wired to `email-gateway`. `/photos` is a stub: the Photography
+The contact form posts JSON to `email-gateway` (`CONTACT_ENDPOINT` in
+`src/consts.ts`) and falls back to a `mailto:` link when the request fails.
+`/photos` is a stub: the Photography
 section ships only if there are real photos worth showing.
 ```
