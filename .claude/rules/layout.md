@@ -6,6 +6,9 @@ paths:
 
 # Layout model (borderless document)
 
+Exempt: the print sheet (`src/components/resume/ResumeSheet.astro`) is a paper
+document with its own pt-based type system. None of these invariants apply to it.
+
 **One grid, every surface.** `.shell` in `global.css` is a named-column grid:
 `side` (the 212px sticky rail) · 64px gutter · `main` (680px column) · `full`
 (edge to edge). `.shell > *` defaults to `main`; `.bleed` opts out to `full`.

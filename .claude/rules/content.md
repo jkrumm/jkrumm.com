@@ -20,7 +20,7 @@ After changing anything the `default` target shows, run `bun run resume default`
 and commit the regenerated PDF with it. The print sheet
 (`src/components/resume/ResumeSheet.astro`) is a paper document with its own
 type system in pt (Source Serif 4, `--font-serif`, used nowhere else) — the
-layout-model invariants above do not apply to it. This repo is public: no
+layout invariants in `layout.md` do not apply to it. This repo is public: no
 phone, address or private email in `facts.ts`.
 
 The Activity section's GitHub heatmap falls back to the committed snapshot
