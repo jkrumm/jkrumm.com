@@ -41,8 +41,9 @@ Applied to elements in `.astro` markup:
   transition for that element; `none` opts an element out.
 - `transition:persist` — keeps an element (and its DOM/JS state) alive across
   navigation instead of re-rendering it. Useful for chrome that shouldn't reset
-  (e.g. a persistent player); the top/bottom bars here re-render fine, so they
-  don't need it today.
+  (e.g. a persistent player). No element on the site uses it today; the
+  identity rail (`src/components/chrome/Sidebar.astro`) is a candidate only if
+  it ever needs to keep state across navigation.
 
 ## The lifecycle contract (why this matters for animation)
 
