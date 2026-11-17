@@ -46,4 +46,11 @@ Always-apply rules for any scroll/animation work. The **how** lives in the
   do it (a researched decision, not a default). Do not add animation dependencies
   without that proof. (No scroll-snap anywhere — see the skill.)
 
+Scroll-spy is generic, not per-surface: it drives every `a[data-nav-link]` whose
+`href="#…"` resolves to an element on the page (`getElementById`, not a
+`[data-section]` marker). One implementation lights up both the homepage section
+nav and an article's h2/h3 TOC in the Sidebar rail; the active target is the last
+one whose top has crossed a line near the top of the viewport, so the last heading
+wins at the bottom of the page. No second, TOC-specific `aria-current` exists.
+
 See the `astro-motion-scroll` skill for the working patterns and `LEARNINGS.md`.
