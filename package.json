@@ -27,7 +27,7 @@
     "astro": "7.4.8",
     "astro-expressive-code": "0.44.3",
     "linkedom": "0.18.15",
-    "motion": "13.4.0"
+    "motion": "14.9.0"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.12",
