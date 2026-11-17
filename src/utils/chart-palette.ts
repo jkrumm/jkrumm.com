@@ -12,8 +12,8 @@
  * paint time, same as any other themed element.
  *
  * PALETTE is the single source of truth: it drives both the sentinel values
- * handed to Plot (RANGE/ACCENT/FAINT/INK) and the CSS-var swap, so they
- * cannot drift apart. ACCENT/FAINT/INK mirror global.css's light
+ * handed to Plot (RANGE/ACCENT/FAINT) and the CSS-var swap, so they
+ * cannot drift apart. ACCENT/FAINT (and the INK swap row) mirror global.css's light
  * --accent/--faint/--ink; STEEL/CLAY/MOSS are chart-only categorical series
  * hues with no other CSS-token counterpart.
  */
@@ -35,7 +35,6 @@ const PALETTE = [...CHART_HUES, ...INK_RAMP]
 
 export const ACCENT = CHART_HUES[0][0]
 export const FAINT = INK_RAMP[0][0]
-export const INK = INK_RAMP[1][0]
 
 /** Sentinel hexes for a categorical series, in --chart-1..4 order. */
 export const RANGE = CHART_HUES.map(([hex]) => hex)
