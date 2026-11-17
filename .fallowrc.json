@@ -1,0 +1,3 @@
+{
+  "entry": ["src/dev-toolbar/*.ts"]
+}
