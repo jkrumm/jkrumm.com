@@ -71,7 +71,7 @@ if Phase-2 testing shows the static degrade reads as broken rather than merely
 plainer. When `caniuse.com/wf-scroll-driven-animations` shows Firefox green, the
 `@supports` branch just stops being exercised — no code change needed.
 
-## Motion `scroll()` — verified API (motion 12.x; repo is on 12.42.2)
+## Motion `scroll()` — verified API (motion 14.x; repo is on 14.9.0)
 
 ```js
 import { scroll, animate } from 'motion';
@@ -89,8 +89,7 @@ const cancel = scroll(
 ```
 
 - **Callback form:** `scroll((progress, info) => { … }, options)` — `progress` is
-  `0→1` (Motion v11 put `progress` first, `info` second). v12 changed only the
-  gesture callbacks (`inView`/`hover`/`press` first arg), **not** `scroll()`.
+  `0→1`, `info.y` carries `current`, `offset`, `progress`, `scrollLength`, `velocity`.
 - **`container`** — the scrollable element. Pass the `#jk-scroll` DOM node.
   Default is `window`; wrong for this layout.
 - **`target`** — a child tracked as it moves through the scrollport (uses layout
@@ -98,7 +97,7 @@ const cancel = scroll(
 - **`offset`** — `[ "<target> <container>", … ]`. Points: numbers `0–1`, names
   `start|center|end`, `px`, `%`, `vh`/`vw`. `['start end','end start']` = full
   pass through the scrollport; `['start start','end end']` = the default.
-- **`trackContentSize: true`** — re-measure if content size changes (lazy images).
+- **`trackContentSize: true`** is a `scrollInfo()` option, not `scroll()`'s — re-measure if content size changes (lazy images).
 - **`axis: 'y'`** default.
 
 ## Pinning architecture (`position: sticky` — same for CSS and Motion)
@@ -150,6 +149,6 @@ performed with `position: sticky`" — so the markup below is shared.
 
 - caniuse — scroll-driven animations (Firefox gap): `caniuse.com/wf-scroll-driven-animations`
 - Motion `scroll()` docs: `motion.dev/docs/scroll`
-- Motion upgrade guide (v11/v12 callback change): `motion.dev/docs/upgrade-guide`
+- Motion upgrade guide: `motion.dev/docs/upgrade-guide`
 - MDN `animation-timeline: view()` / `scroll()` (custom containers)
 - WebKit scroll-driven-animations guide (reduced-motion wrapping)
