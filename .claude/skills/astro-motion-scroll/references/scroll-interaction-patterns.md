@@ -123,7 +123,7 @@ the DOM (`opacity`, not `display:none`) for a11y.
 
 ---
 
-## 3. Motion `scroll()` API cheatsheet (motion.dev, vanilla, v12.x)
+## 3. Motion `scroll()` API cheatsheet (motion.dev, vanilla, v14.x, verified against 14.9.0)
 
 ```js
 import { scroll, animate, inView } from "motion";
@@ -137,7 +137,7 @@ import { scroll, animate, inView } from "motion";
   the native **`ScrollTimeline`** (compositor, off-main-thread) where supported.
   Prefer for heavy transform/opacity scrubs.
 
-**Options:** `{ container, target, axis:'y'|'x', offset, trackContentSize }`.
+**Options:** `{ source, container, target, axis:'y'|'x', offset }`. `trackContentSize` is a `scrollInfo()` option, not `scroll()`'s.
 - `container` — the scrolling element. **Omit it here** — the site uses document
   scroll; the `#jk-scroll` container it used to point at is deleted.
 - `target` — a child; progress = its position within the container. Tracked by
@@ -150,7 +150,7 @@ import { scroll, animate, inView } from "motion";
 **Callback `info`:** `(progress, info)` → `info.y.{current,offset,progress,
 scrollLength,velocity}`, `info.time`.
 
-**`inView(target, (el, entry) => { return leaveCb }, { root, margin, amount, once })`**
+**`inView(target, (el, entry) => { return leaveCb }, { root, margin, amount })`**
 — IntersectionObserver wrapper; `amount:'some'|'all'|0..1`.
 
 **Teardown:** both `scroll()` and `inView()` **return a cleanup function** — push
