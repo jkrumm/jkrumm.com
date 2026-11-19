@@ -69,7 +69,7 @@ Terminal-aesthetic satisfaction comes from three places, not from a CRT theme: J
 4. **No decorative images.** jakub's 8 identical fake thumbnails triple the height of his Writing section and carry zero information. If a project has no real screenshot, it gets no image slot.
 5. **No inverted hover.** dushimire dims the title on hover, which reads as disabled. Brighten, plate, or leave alone.
 6. **No hidden navigation.** charliedeets' corner pill and jakub's total absence of nav both strand the visitor. The sidebar nav has persistent text labels at all breakpoints.
-7. **No second copy of the frame.** The current `IndexLayout.astro` L87-103 carries an independent duplicate of the fail-toward-line frame — deleting `PageBox` does not touch it. Every surface uses the same shell or there is no invariant.
+7. **No second copy of the frame.** ~~The current `IndexLayout.astro` L87-103 carries an independent duplicate of the fail-toward-line frame — deleting `PageBox` does not touch it.~~ **Resolved:** `src/layouts/IndexLayout.astro:3-4` now states the layout "carries no frame of its own"; its lines 84-103 hold only `.index-shell` and `.masthead` rules. Every surface uses the same shell or there is no invariant.
 8. **No dead tokens.** dushimire ships unused `--card`, `--chart-1..5`, `--sidebar-*`; leerob ships an entire unused shadcn block. If `--line` survives with a role definition naming a deleted system, the bento reflex grows back.
 9. **No stacked mechanisms on one list.** chrisrodriguez uses tabs + a 360px clip + a gradient fade + a "Show more" button to hide 15 one-line items.
 10. **No contrast failures.** ambrosino's `oklch(70%)` muted at 14.5px is ~2.5:1; charliedeets' `#888` on `#fafafa` is ~3.3:1; marijanapav's 40%-alpha muted is far below AA. The faintest text tier must clear 4.5:1 at body size and 3:1 at 14px+.
@@ -131,7 +131,9 @@ Prose (`.prose`) keeps its own scale but caps H2 at 20px and H3 at 16px/620.
 
 ### Color
 
-Delete `--line`, `--panel`, `--panel-hover`, `--bar-bg`. Replace with a single ink + a four-step ramp derived by `color-mix`, plus one surface step:
+> **Proposal, not adopted.** The shipped ink ramp is `--ink`, `--ink-2`, `--muted`, `--faint` (`src/styles/global.css:67-70`). `--text-1`..`--text-4`, `--surface` and `--base-hue` do not exist in the code. `--panel` and `--panel-hover` remain live (`global.css:56-57`; used by `Callout.astro`, `Kbd.astro`, `Sidebar.astro`, `Projects.astro`), so the deletion below did not happen.
+
+Proposed (not adopted): delete `--line`, `--panel`, `--panel-hover`, `--bar-bg`. Replace with a single ink + a four-step ramp derived by `color-mix`, plus one surface step:
 
 ```css
 --base-hue: 250;                       /* one number reskins the site */
@@ -239,4 +241,4 @@ One hairline at `--text-4`, full-bleed (`grid-column: full`) with contents const
 
 **Reveal script vs CSS-only stagger.** paco's `[data-animate]{--stagger:N}` + one keyframe removes JS entirely and satisfies the zero-client-JS goal outright; the repo's Motion `inView` is already built, tested, once-only, and correctly guarded. **Decision: keep Motion for now** (the `.reveal` progressive-enhancement contract is the site's strongest existing invariant and rewriting it mid-redesign risks the no-JS path), but the CSS-only stagger is the correct follow-up once the layout settles — it would drop the client bundle to just the accordion and the theme toggle.
 
-**Photography section.** The 14 sites are near-unanimous that decorative imagery is dead weight, and `photos.astro` is currently a 54-line stub. **Decision: the Photography section ships only if there are real photos with a real reason to be there** — as a full-bleed (`grid-column: full`) strip of 3–4 ringed images at a fixed `aspect-ratio`, CDN-hosted per the `/img` skill, never as a grid of placeholder tiles. Otherwise cut the section and the stub page rather than shipping jakub's identical-thumbnail failure.
+**Photography section.** The 14 sites are near-unanimous that decorative imagery is dead weight, and `photos.astro` is currently a 12-line stub. **Decision: the Photography section ships only if there are real photos with a real reason to be there** — as a full-bleed (`grid-column: full`) strip of 3–4 ringed images at a fixed `aspect-ratio`, CDN-hosted per the `/img` skill, never as a grid of placeholder tiles. Otherwise cut the section and the stub page rather than shipping jakub's identical-thumbnail failure.
